@@ -5,11 +5,11 @@ use thiserror::Error;
 use serde::{Serialize, Deserialize};
 use chrono::NaiveDate;
 use thousands::Separable;
+use rust_decimal::Decimal;
 
-use super::operation_kind::OperationKind;
-use super::operation_flow::OperationFlow;
-use super::system_kind::SystemKind;
-use super::regular_kind::RegularKind;
+
+use crate::core::wallet::operation_kind::OperationKind;
+use crate::core::wallet::operation_flow::OperationFlow;
 
 /// Error type for Operation
 #[derive(Debug, Error)]
@@ -20,21 +20,26 @@ pub enum OperationError {
 /// Struct representing a wallet operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Operation {
+    pub id: usize,
     pub kind: OperationKind,
     pub flow: OperationFlow,
     pub date: NaiveDate,
-    pub amount: f64,
+    pub amount: Decimal,
     pub description: String,
+    pub void_of: Option<usize>,
 }
 /// Methods for Operation
 impl Operation {
 
+    /// New operation
     pub fn new(
+        id: usize,
         kind: OperationKind,
         flow: OperationFlow,
         dt: &str,
-        amount: f64,
+        amount: Decimal,
         desc: impl Into<String>,
+        void_of: Option<usize>,
     ) -> Result<Self, OperationError>
     {
 
@@ -46,39 +51,50 @@ impl Operation {
         let naive_date = NaiveDate::parse_from_str(dt, "%Y-%m-%d")?;
 
         Ok(Self {
+            id: id,
             kind: kind,
             flow: flow,
             date: naive_date,
             amount: amount,
             description:description,
+            void_of: void_of,
         })
     }
-    /// Create a new System Operation
-    pub fn new_system_operation(
-        kind: SystemKind,
-        flow: OperationFlow,
-        dt: &str,
-        amount: f64,
-        desc: impl Into<String>,
-    ) -> Result<Self, OperationError>
-    {
-        Ok(Self::new(OperationKind::System(kind), flow, dt, amount,desc)?)
 
+    /// Check if an operation is voided
+    pub fn is_voided(&self, all_ops: &[&Operation]) -> bool {
+        all_ops.iter().any(|op| {
+            op.kind.is_void() && op.void_of == Some(self.id)
+        })
     }
-    /// Create a new Regular Operation
+
+    /// Date of the void Operation
     #[allow(dead_code)]
-    pub fn new_regular_operation(
-        kind: RegularKind,
-        flow: OperationFlow,
-        dt: &str,
-        amount: f64,
-        desc: impl Into<String>,
-    ) -> Result<Self, OperationError>
-    {
-        Ok(Self::new(OperationKind::Regular(kind), flow, dt, amount,desc)?)
+    pub fn void_date(&self, all_ops: &[Operation]) -> Option<NaiveDate> {
+        all_ops.iter()
+            .find(|op| op.kind.is_void() && op.void_of == Some(self.id))
+            .map(|op| op.date)
     }
 
+    /// Return the signed financial impact of the operation.
+    /// Credit  -> +amount
+    /// Debit   -> -amount
+    /// VOID    -> reversed sign
+    pub fn signed_amount(&self) -> Decimal {
+        let base = match self.flow {
+            OperationFlow::Credit => self.amount,
+            OperationFlow::Debit  => -self.amount,
+            OperationFlow::None   => Decimal::ZERO,
+        };
+
+        if self.kind.is_void() {
+            -base
+        } else {
+            base
+        }
+    }
 }
+
 /// Implement Display for Operation
 impl fmt::Display for Operation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

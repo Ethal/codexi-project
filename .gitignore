@@ -8,6 +8,7 @@ Cargo.lock
 *.csv
 *.txt
 *.zip
+*.json
 !Cargo.toml
 CHANGELOG.md
 .DS_Store

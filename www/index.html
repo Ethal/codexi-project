@@ -172,6 +172,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto text-uppercase small fw-bold">
                     <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#analytics">Analytics</a></li>
                     <li class="nav-item"><a class="nav-link" href="#integrity">Integrity</a></li>
                     <li class="nav-item"><a class="nav-link" href="#commands">Commands</a></li>
                     <li class="nav-item">
@@ -191,8 +192,9 @@
 
                     <div class="d-grid d-md-flex flex-column gap-3">
                         <div class="d-block">
-                            <a href="https://github.com/ethal/codexi/releases" class="btn btn-amber btn-lg px-5 shadow-sm">
-                                <i class="bi bi-download me-2"></i>Download v1.0.0
+                            <a href="https://github.com/ethal/codexi/releases" target="_blank" rel="noopener"
+                                class="btn btn-amber btn-lg px-5 shadow-sm">
+                                <i class="bi bi-download me-2"></i>Download v2.0.0
                             </a>
                         </div>
                         <div class="d-flex gap-3">
@@ -249,7 +251,42 @@
             </div>
         </div>
     </section>
-
+    <section id="analytics" class="py-5 bg-black" style="border-top: 1px solid #1a1a1a;">
+        <div class="container">
+            <div class="row align-items-center flex-row-reverse">
+                <div class="col-lg-6">
+                    <h2 class="mb-4">Insightful <span class="accent">Analytics</span></h2>
+                    <p class="mb-4">Don't just track numbers. Understand your behavior with a professional dashboard built directly into your terminal.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-3 d-flex align-items-center">
+                            <i class="bi bi-bar-chart-fill accent me-3"></i>
+                            <span><strong class="text-white">Savings Rate:</strong> Dynamic visualization of your monthly surplus.</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-center">
+                            <i class="bi bi-fire accent me-3"></i>
+                            <span><strong class="text-white">Daily Burning Rate:</strong> Track your average daily spending at a glance.</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-center">
+                            <i class="bi bi-filter-square accent me-3"></i>
+                            <span><strong class="text-white">Smart Filtering:</strong> Automatically hides system adjustments to focus on real habits.</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-center">
+                            <i class="bi bi-arrow-repeat accent me-3"></i>
+                            <span>
+                                <strong class="text-white">Net Mode:</strong>
+                                Void operations are counted only when using <code>--net</code>, preserving historical accuracy.
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card p-1 bg-white shadow-lg border-0">
+                        <img src="assets/img/stats_dashboard.png" alt="Codexi Stats Dashboard" class="img-fluid rounded shadow">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
     <section id="integrity" class="py-5 bg-black" style="border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a;">
         <div class="container">
             <div class="row align-items-center">
@@ -264,6 +301,16 @@
                         <div class="me-3 accent mt-1"><i class="bi bi-lock-fill"></i></div>
                         <div><strong class="text-white">CLOSE:</strong> <span class="text-muted">Seals a period. Archived transactions are formally locked in separate files.</span></div>
                     </div>
+                    <div class="mb-3 d-flex align-items-start">
+                        <div class="me-3 accent mt-1"><i class="bi bi-sliders"></i></div>
+                        <div>
+                            <strong class="text-white">ADJUST:</strong>
+                            <span class="text-muted">
+                                Explicit balance correction, tracked for integrity but excluded from behavioral analytics.
+                            </span>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="col-lg-6">
                     <div class="card p-0 overflow-hidden">
@@ -298,9 +345,9 @@ cargo build --release</code></pre>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><code>init</code></td>
+                                <td><code>system init</code></td>
                                 <td>Initialize genesis balance and date.</td>
-                                <td>codexi init 150.00 2026-01-01</td>
+                                <td>codexi system init 2026-01-01 150.00 </td>
                             </tr>
                             <tr>
                                 <td><code>credit</code></td>
@@ -316,6 +363,11 @@ cargo build --release</code></pre>
                                 <td><code>search</code></td>
                                 <td>Filter and view history.</td>
                                 <td>codexi search --last 10</td>
+                            </tr>
+                            <tr>
+                                <td><code>report stats</code></td>
+                                <td>Generate the visual analytics dashboard.</td>
+                                <td>codexi report stats --from 2026-01-01</td>
                             </tr>
                         </tbody>
                     </table>
@@ -346,7 +398,7 @@ cargo build --release</code></pre>
                         <p class="small mb-0">Instant point-in-time copy of your active ledger file.</p>
                     </div>
                     <div class="card p-4">
-                        <code class="mb-2 d-inline-block">data restore-snapshot</code>
+                        <code class="mb-2 d-inline-block">data restore</code>
                         <p class="small mb-0">Rollback to a previously saved .snp file safely.</p>
                     </div>
                 </div>
@@ -357,6 +409,7 @@ cargo build --release</code></pre>
     <footer class="py-5 border-top border-secondary mt-5">
         <div class="container text-center">
             <p class="mb-2 fw-bold accent">Codexi Financial Tool</p>
+            <p class="small text-muted mb-0">Current release: <strong class="accent">v2.0.0</strong></p>
             <p class="small text-secondary mb-4">Hosted at <a href="https://codexi.ethal.fr" class="text-decoration-none accent">codexi.ethal.fr</a></p>
             <div class="d-flex justify-content-center gap-4">
                 <a href="mailto:codexi@ethal.fr" class="text-secondary text-decoration-none small"><i class="bi bi-envelope-fill me-1"></i> codexi@ethal.fr</a>

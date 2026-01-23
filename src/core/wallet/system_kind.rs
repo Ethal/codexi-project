@@ -16,15 +16,18 @@ pub enum SystemKind {
     Init,
     Adjust,
     Close,
+    Void,
 }
 /// Methods for SystemKind
 impl SystemKind {
+
     /// Get the string representation of the specific system kind
     pub fn as_str(&self) -> &'static str {
         match self {
             SystemKind::Init => "Initialize",
             SystemKind::Adjust => "Adjust",
             SystemKind::Close => "Close",
+            SystemKind::Void => "Void",
         }
     }
     /// Try to create a SystemKind from a string
@@ -33,6 +36,7 @@ impl SystemKind {
             "init" => Ok(SystemKind::Init),
             "adjust" => Ok(SystemKind::Adjust),
             "close" => Ok(SystemKind::Close),
+            "void" => Ok(SystemKind::Void),
             _ => Err(SystemKindError::Unknown(s.to_string())),
         }
     }
