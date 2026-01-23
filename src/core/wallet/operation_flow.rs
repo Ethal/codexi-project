@@ -3,6 +3,8 @@
 use std::fmt;
 use thiserror::Error;
 use serde::{Serialize, Deserialize};
+use rust_decimal::Decimal;
+
 
 /// Error type for OperationFlow
 #[derive(Debug, Error)]
@@ -61,18 +63,18 @@ impl OperationFlow {
         *self = self.opposite();
     }
     /// Get the sign associated with the flow
-    pub fn to_sign(&self) -> f64 {
+    pub fn to_sign(&self) ->  Decimal {
         match self {
-            OperationFlow::Debit => -1.0,
-            OperationFlow::Credit => 1.0,
-            OperationFlow::None => 0.0,
+            OperationFlow::Debit => Decimal::NEGATIVE_ONE,
+            OperationFlow::Credit => Decimal::ONE,
+            OperationFlow::None => Decimal::ZERO,
         }
     }
     /// Create an OperationFlow from a sign
-    pub fn from_sign(sign: f64) -> Self {
-        if sign > 0.0 {
+    pub fn from_sign(sign: Decimal) -> Self {
+        if sign > Decimal::ZERO {
             OperationFlow::Credit
-        } else if sign < 0.0 {
+        } else if sign < Decimal::ZERO {
             OperationFlow::Debit
         } else {
             OperationFlow::None

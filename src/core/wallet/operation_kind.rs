@@ -3,8 +3,8 @@
 use std::fmt;
 use thiserror::Error;
 use serde::{Serialize, Deserialize};
-use super::system_kind::SystemKind;
-use super::regular_kind::RegularKind;
+use crate::core::wallet::system_kind::SystemKind;
+use crate::core::wallet::regular_kind::RegularKind;
 
 /// Error type for OperationKind
 #[derive(Debug, Error)]
@@ -20,6 +20,7 @@ pub enum OperationKind {
 }
 /// Methods for OperationKind
 impl OperationKind {
+
     /// Check if the OperationKind is a System kind
     pub fn is_system(&self) -> bool {
         matches!(self, OperationKind::System(_))
@@ -28,6 +29,10 @@ impl OperationKind {
     pub fn is_regular(&self) -> bool {
         matches!(self, OperationKind::Regular(_))
     }
+    /// Check if the operation is purely structural operation (Init/Close)
+    pub fn is_structural(&self) -> bool {
+        matches!(self, OperationKind::System(SystemKind::Init | SystemKind::Close))
+    }
     /// Get the type of OperationKind as a string
     pub fn kind_type(&self) -> &'static str {
         match self {
@@ -35,6 +40,12 @@ impl OperationKind {
             OperationKind::Regular(_) => "Regular",
         }
     }
+
+    /// Check if the OperationKind is a Void
+    pub fn is_void(&self) -> bool {
+        matches!(self, OperationKind::System(SystemKind::Void))
+    }
+
     /// Get the string representation of the specific kind
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -55,7 +66,7 @@ impl OperationKind {
         }
 
         Err(OperationKindError::Unknown(lower.to_string()))
-    }   
+    }
 }
 /// Implement TryFrom<&str> for OperationKind
 impl TryFrom<&str> for OperationKind {
@@ -64,7 +75,6 @@ impl TryFrom<&str> for OperationKind {
         OperationKind::try_from_str(s)
     }
 }
-
 /// Implement From<OperationKind> for &'static str
 impl From<OperationKind> for &'static str {
     fn from(t: OperationKind) -> Self {
