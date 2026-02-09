@@ -43,7 +43,7 @@ impl Codexi {
             let file_path = dir.join("archives").join(arch);
             let old_codexi = Self::load_format_v1(&file_path)?;
             let codexi: Codexi = Self::migrate_v1_to_v2(old_codexi);
-            codexi.save_archive(&close_date)?;
+            codexi.save_archive(&codexi, &close_date)?;
             log::info!("migarte archive: {:?}", &file_path);
         }
         Ok(())

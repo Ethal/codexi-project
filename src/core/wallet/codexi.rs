@@ -289,7 +289,9 @@ impl Codexi {
 
         // Save the archive if there are transactions to archive.
         if !archived_operations.is_empty() {
-            self.save_archive(close_date_str)?;
+            let mut archive_export = self.clone();
+            archive_export.operations = archived_operations.clone();
+            self.save_archive(&archive_export, close_date_str)?;
             log::info!("{} operations archived", archived_operations.len());
         }
 

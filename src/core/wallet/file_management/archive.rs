@@ -28,7 +28,7 @@ impl Codexi {
         Ok(files)
     }
     /// Save an archive file
-    pub fn save_archive(&self, close_date_str: &str ) -> Result<()> {
+    pub fn save_archive(&self, data: &Codexi, close_date_str: &str ) -> Result<()> {
 
         let data_dir =  get_data_dir()?;
         let archive_dir = data_dir.join("archives");
@@ -38,7 +38,7 @@ impl Codexi {
         let filename = format!("codexi_{}.cld", close_date_str);
         let archive_path = archive_dir.join(filename);
 
-        Self::write_cbor(&archive_path, self)?;
+        Self::write_cbor(&archive_path, &data)?;
 
         log::info!("Archived to {:?}", archive_path);
         Ok(())
