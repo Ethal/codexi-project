@@ -1,0 +1,349 @@
+// src/logic/account/account.rs
+
+use chrono::NaiveDate;
+use nulid::Nulid;
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
+
+use crate::core::validate_text_rules;
+use crate::logic::{
+    account::{
+        AccountAnchors, AccountError, AccountType, CheckpointRef, FinancialAction,
+        OperationContainer,
+    },
+    operation::{Operation, OperationFlow},
+};
+
+// meta data relaed to the account
+#[derive(Serialize, Default, Deserialize, Debug, Clone)]
+pub struct AccountMeta {
+    pub iban: Option<String>,
+    pub color: Option<String>,
+    pub display_order: Option<u32>,
+    pub tags: Option<Vec<String>>,
+    pub note: Option<String>,
+}
+
+/// Struct representing the an account
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Account {
+    pub id: Nulid,    // Id
+    pub name: String, // Account name
+    pub account_type: AccountType,
+    pub bank_id: Option<Nulid>,             // Nulid of the Bank
+    pub currency_id: Option<Nulid>,         // Main currency id for the account
+    pub carry_forward_balance: Decimal,     // for internal calculation
+    pub open_date: NaiveDate, // Open date of the account,typivcaly the date of the init.
+    pub terminated_date: Option<NaiveDate>, // Close date of the account.
+    pub operations: Vec<Operation>, // Operation list
+    pub(crate) current_balance: Decimal,
+    pub(crate) checkpoints: Vec<CheckpointRef>,
+    pub anchors: AccountAnchors,
+    #[serde(default)]
+    pub meta: AccountMeta, // Account meta data
+}
+/// Methods for account
+impl Account {
+    pub fn new(
+        open_date: NaiveDate,
+        name_user: String,
+        bank_id: Option<Nulid>,
+        currency_id: Option<Nulid>,
+    ) -> Result<Self, AccountError> {
+        let id = Nulid::new()?;
+
+        let min = 0;
+        let max = 50;
+        let name: String = if let Err(_e) = validate_text_rules(&name_user, min, max) {
+            "New Account".to_string()
+        } else {
+            name_user
+        };
+
+        let meta = AccountMeta::default();
+        let operations: Vec<Operation> = Vec::new();
+        let checkpoints: Vec<CheckpointRef> = Vec::new();
+
+        Ok(Self {
+            id,
+            name,
+            account_type: AccountType::default(),
+            bank_id,
+            currency_id,
+            operations,
+            carry_forward_balance: Decimal::ZERO, // will be update with init, or close.
+            open_date,                            // wiil be update with the init date.
+            terminated_date: None,                // wil be update by a close account.
+            current_balance: Decimal::ZERO,
+            checkpoints,
+            anchors: AccountAnchors::default(),
+            meta,
+        })
+    }
+
+    ///Return the Operation or None
+    pub fn get_operation_by_id(&self, op_id: Nulid) -> Option<&Operation> {
+        self.operations.iter().find(|op| op.id == op_id)
+    }
+    /// Return the mutable Operation or None
+    pub fn get_operation_by_id_mut(&mut self, id: Nulid) -> Option<&mut Operation> {
+        self.operations.iter_mut().find(|op| op.id == id)
+    }
+
+    /// Recalculates all anchors based on the current operation vector.
+    pub fn refresh_anchors(&mut self) {
+        self.anchors.rebuild_from(&self.operations);
+    }
+
+    pub fn resolve_id(&self, input: &str) -> Result<Nulid, AccountError> {
+        if input.len() == 26 {
+            // Full ID → direct parse
+            input
+                .parse()
+                .map_err(|_| AccountError::OperationNotFound(input.to_string()))
+        } else {
+            // short ID → contextual search
+            self.find_operation_by_short_id(input)
+        }
+    }
+
+    pub fn find_operation_by_short_id(&self, short: &str) -> Result<Nulid, AccountError> {
+        let short = short.to_uppercase();
+        let matches: Vec<&Operation> = self
+            .operations
+            .iter()
+            .filter(|op| op.id.to_string().ends_with(&short))
+            .collect();
+
+        match matches.len() {
+            0 => Err(AccountError::OperationNotFound(short)),
+            1 => Ok(matches[0].id),
+            _ => Err(AccountError::AmbiguousShortId(format!(
+                "Multiple operations match '{}', use more characters",
+                short
+            ))),
+        }
+    }
+
+    /// Update Operations with an operation and return the id of the operation
+    pub fn commit_operation(&mut self, op: Operation) -> Nulid {
+        self.anchors.update(&op);
+        let id = op.id;
+        let op_date = op.date;
+        self.operations.push(op);
+        self.operations
+            .sort_by(|a, b| a.date.cmp(&b.date).then(a.id.cmp(&b.id)));
+        self.rebuild_balances_from(op_date);
+        id
+    }
+    /// Rebuild the balance
+    pub fn rebuild_balances_from(&mut self, from_date: NaiveDate) {
+        // find the balance before from_date
+        let running_before: Decimal = self
+            .operations
+            .iter()
+            .filter(|op| op.date < from_date)
+            .fold(Decimal::ZERO, |acc, op| match op.flow {
+                OperationFlow::Credit => acc + op.amount,
+                OperationFlow::Debit => acc - op.amount,
+                OperationFlow::None => acc,
+            });
+
+        let mut running = running_before;
+        for op in self.operations.iter_mut().filter(|op| op.date >= from_date) {
+            running = match op.flow {
+                OperationFlow::Credit => running + op.amount,
+                OperationFlow::Debit => running - op.amount,
+                OperationFlow::None => running,
+            };
+            op.balance = running;
+        }
+        self.current_balance = self
+            .operations
+            .last()
+            .map(|op| op.balance)
+            .unwrap_or(Decimal::ZERO);
+    }
+
+    /// Determine if a specific operation can be undone (Void)
+    pub fn can_void(&self, op_id: Nulid) -> Result<bool, AccountError> {
+        // current date
+        let today = chrono::Local::now().date_naive();
+
+        // check if void is allow as per the current date
+        match self.financial_policy(FinancialAction::Void(op_id), today) {
+            Ok(_) => Ok(true),   // Ok
+            Err(_) => Ok(false), // not Ok
+        }
+    }
+}
+
+impl OperationContainer for Account {
+    fn operations(&self) -> &[Operation] {
+        &self.operations
+    }
+}
+
+/*------------------------ TEST ------------------------*/
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::parse_date;
+    use crate::logic::operation::{
+        OperationBuilder, OperationFlow, OperationKind, RegularKind, SystemKind,
+    };
+    use rust_decimal_macros::dec;
+
+    // Helper to create an empty account
+    fn setup_empty_account() -> Account {
+        // init
+        Account::new(
+            parse_date("2025-09-01".into()).unwrap(),
+            "Test".into(),
+            None,
+            None,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_refresh_anchors_unordered_data() {
+        let mut account = setup_empty_account();
+
+        // add operation not in the order and not by using the commit_operation
+        // Build the operation
+        let op = OperationBuilder::default()
+            .date(parse_date("2026-01-10").unwrap())
+            .kind(OperationKind::System(SystemKind::Checkpoint))
+            .flow(OperationFlow::Credit)
+            .amount(dec!(10))
+            .description("description".to_string())
+            .build()
+            .unwrap();
+        account.operations.push(op);
+
+        let op = OperationBuilder::default()
+            .date(parse_date("2026-01-20").unwrap())
+            .kind(OperationKind::System(SystemKind::Checkpoint))
+            .flow(OperationFlow::Credit)
+            .amount(dec!(10))
+            .description("description".to_string())
+            .build()
+            .unwrap();
+        account.operations.push(op); // the latest one
+
+        let op = OperationBuilder::default()
+            .date(parse_date("2026-01-15").unwrap())
+            .kind(OperationKind::System(SystemKind::Checkpoint))
+            .flow(OperationFlow::Credit)
+            .amount(dec!(10))
+            .description("description".to_string())
+            .build()
+            .unwrap();
+        account.operations.push(op);
+
+        // before refresh anchor is none
+        assert_eq!(account.anchors.last_checkpoint, None);
+
+        account.refresh_anchors();
+
+        // after the refresh, shall be the latest date
+        assert_eq!(
+            account.anchors.last_checkpoint,
+            Some(parse_date("2026-01-20").unwrap())
+        );
+    }
+
+    #[test]
+    fn test_audit_invalid_history() {
+        let mut account = setup_empty_account();
+
+        // 1. Initialisation normal at 01/03
+        let init_date = parse_date("2026-03-01").unwrap();
+        let op = OperationBuilder::default()
+            .date(init_date)
+            .kind(OperationKind::System(SystemKind::Init))
+            .flow(OperationFlow::Credit)
+            .amount(dec!(10))
+            .description("description".to_string())
+            .build()
+            .unwrap();
+        account.commit_operation(op);
+
+        // 2. manual  corruption : insert of  débit at 01/02 (BEFORE the init)
+        // we dont use the financial policy , direct push
+        let op = OperationBuilder::default()
+            .date(parse_date("2026-02-01").unwrap())
+            .kind(OperationKind::Regular(RegularKind::Transaction))
+            .flow(OperationFlow::Credit)
+            .amount(dec!(10))
+            .description("fraudulent".to_string())
+            .build()
+            .unwrap();
+
+        account.operations.push(op);
+
+        // sort to simulate a file properly corrupted
+        account.operations.sort_by_key(|o| o.date);
+        account.refresh_anchors();
+
+        // 3. audit shall fail financial_policy can not accept  a débit before the Init
+        let result = account.audit();
+        assert!(
+            result.is_err(),
+            "The audit should detect an operation before init"
+        );
+    }
+
+    #[test]
+    fn test_audit_locked_period_violation() {
+        let mut account = setup_empty_account();
+        let d1 = parse_date("2026-01-01").unwrap();
+        let d2 = parse_date("2026-01-15").unwrap();
+        let d3 = parse_date("2026-01-30").unwrap();
+
+        // Init -> Checkpoint at 30/01
+        account.commit_operation(
+            OperationBuilder::default()
+                .date(d1)
+                .kind(OperationKind::System(SystemKind::Init))
+                .flow(OperationFlow::Credit)
+                .amount(dec!(100))
+                .description("ok".to_string())
+                .build()
+                .unwrap(),
+        );
+        account.commit_operation(
+            OperationBuilder::default()
+                .date(d3)
+                .kind(OperationKind::System(SystemKind::Checkpoint))
+                .flow(OperationFlow::Credit)
+                .amount(dec!(100))
+                .description("ok".to_string())
+                .build()
+                .unwrap(),
+        );
+
+        // Corrupted : insert débit at 15/01 (period close par d3)
+        account.operations.push(
+            OperationBuilder::default()
+                .date(d2)
+                .kind(OperationKind::Regular(RegularKind::Transaction))
+                .flow(OperationFlow::Debit)
+                .amount(dec!(10))
+                .description("fraudulent".to_string())
+                .build()
+                .unwrap(),
+        );
+
+        account.operations.sort_by_key(|o| o.date);
+        account.refresh_anchors();
+
+        // The audit shall détect than d2 is <= the checkpoint d3 during the replay
+        assert!(
+            account.audit().is_err(),
+            "The audit shall reject an operation in a close period"
+        );
+    }
+}

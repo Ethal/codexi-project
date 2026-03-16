@@ -1,0 +1,38 @@
+[package]
+name = "codexi"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Error
+thiserror  = { workspace = true }
+
+#Date/Time
+chrono = { workspace = true }
+
+# Id
+nulid = { workspace = true }
+
+# Serialization / Deserialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml =  { workspace = true }
+csv  =  { workspace = true }
+bincode =  { workspace = true }
+serde_cbor =  { workspace = true }
+
+# Checksum
+sha2 =  { workspace = true }
+
+# Decimal to replace f64
+rust_decimal = { workspace = true }
+rust_decimal_macros =  { workspace = true }
+
+# Backup/restore
+zip = { workspace = true }
+walkdir = { workspace = true }
+
+# Utilities
+directories = { workspace = true }
+thousands = { workspace = true }
+derive_builder = { workspace = true }

@@ -1,6 +1,10 @@
-/target
-Cargo.lock
-.cargo/
+# directories
+/target/
+/workspace/
+/backup/
+/**/*.old
+
+# files
 *.sh
 *.bin
 *.toml
@@ -9,6 +13,20 @@ Cargo.lock
 *.txt
 *.zip
 *.json
-!Cargo.toml
-CHANGELOG.md
+*.env
+*.log
+*.html
+MENU.md
+TODO.md
+
+# IDE
+.zed
+
+# Os
 .DS_Store
+
+# To be kept
+!Cargo.toml
+!categories_en.json
+!categories_fr.json
+!currencies.json
