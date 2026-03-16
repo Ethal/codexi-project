@@ -20,4 +20,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cargo build
-      - run: cargo testjobs:
+      - run: cargo test
