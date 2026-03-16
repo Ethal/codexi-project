@@ -1,0 +1,20 @@
+[
+  { "name": "Alimentation",         "note": "Courses, supermarché" },
+  { "name": "Restaurant & Café",    "note": "Repas à l'extérieur" },
+  { "name": "Transport",            "note": "Carburant, transports en commun" },
+  { "name": "Logement",             "note": "Loyer, charges, assurance habitation" },
+  { "name": "Santé",                "note": "Médecin, pharmacie, mutuelle" },
+  { "name": "Loisirs",              "note": "Sport, culture, divertissement" },
+  { "name": "Vêtements",            "note": "Habillement, chaussures" },
+  { "name": "Éducation",            "note": "Cours, livres, formations" },
+  { "name": "Voyage",               "note": "Hôtel, avion, vacances" },
+  { "name": "Abonnements",          "note": "Streaming, presse, logiciels" },
+  { "name": "Télécom",              "note": "Téléphone, internet" },
+  { "name": "Banque & Frais",       "note": "Frais bancaires, commissions" },
+  { "name": "Impôts & Taxes",       "note": "Impôt sur le revenu, taxe foncière" },
+  { "name": "Épargne",              "note": "Versements épargne, investissements" },
+  { "name": "Salaire",              "note": "Revenu principal" },
+  { "name": "Revenus annexes",      "note": "Freelance, primes, autres revenus" },
+  { "name": "Remboursements",       "note": "Remboursements reçus" },
+  { "name": "Divers",               "note": null }
+]

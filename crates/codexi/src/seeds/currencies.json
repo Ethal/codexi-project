@@ -1,0 +1,15 @@
+[
+  { "code": "EUR", "symbol": "€",  "decimal_places": 2, "note": "Euro" },
+  { "code": "USD", "symbol": "$",  "decimal_places": 2, "note": "US Dollar" },
+  { "code": "GBP", "symbol": "£",  "decimal_places": 2, "note": "British Pound" },
+  { "code": "CHF", "symbol": "Fr", "decimal_places": 2, "note": "Swiss Franc" },
+  { "code": "JPY", "symbol": "¥",  "decimal_places": 0, "note": "Japanese Yen" },
+  { "code": "CAD", "symbol": "CA$","decimal_places": 2, "note": "Canadian Dollar" },
+  { "code": "AUD", "symbol": "A$", "decimal_places": 2, "note": "Australian Dollar" },
+  { "code": "SGD", "symbol": "S$", "decimal_places": 2, "note": "Singapore Dollar" },
+  { "code": "HKD", "symbol": "HK$","decimal_places": 2, "note": "Hong Kong Dollar" },
+  { "code": "NOK", "symbol": "kr", "decimal_places": 2, "note": "Norwegian Krone" },
+  { "code": "SEK", "symbol": "kr", "decimal_places": 2, "note": "Swedish Krona" },
+  { "code": "DKK", "symbol": "kr", "decimal_places": 2, "note": "Danish Krone" },
+  { "code": "IDR", "symbol": "Rp", "decimal_places": 0, "note": "Indonesian Rupiah" }
+]

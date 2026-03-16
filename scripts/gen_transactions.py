@@ -33,25 +33,22 @@ def generate_transaction(d):
         description = random.choice(descriptions_credit)
         amount = round(random.uniform(30, 80), 2)
 
-    cmd = f'./target/release/codexi {type_tx} {d} {amount} "{description}"'
+    cmd = f'./target/release/codexi-cli {type_tx} {d} {amount} "{description}"'
     return cmd
 
 # Generate a system adjust command
 def generate_system_adjust(d):
     amount = round(random.uniform(50.0, 100.0), 2)
-    return f'./target/release/codexi system adjust {d} {amount}'
-
-# Generate a system adjust command
-def generate_system_void(cmd):
-    id = random.randint(0, cmd)
-    return f'./target/release/codexi system void {id}'
+    return f'./target/release/codexi-cli history adjust {d} {amount}'
 
 # Generate all dates
 current_date = start_date
 all_commands = []
 
 init_amount = round(random.uniform(50.0, 100.0), 2)
-cmd = f'./target/release/codexi system init {start_date} {init_amount}'
+cmd = f'./target/release/codexi-cli account create {start_date} "testing"'
+all_commands.append(cmd)
+cmd = f'./target/release/codexi-cli history init {start_date} {init_amount}'
 all_commands.append(cmd)
 
 random_system_command = random.randint(min_system_cmd, max_system_cmd)
@@ -68,7 +65,6 @@ while current_date <= end_date:
 
         # If the counter reaches zero, the system adjust command is created.
         if random_system_command <= 0:
-            all_commands.append(generate_system_void(id))
             all_commands.append(generate_system_adjust(current_date))
             # Counter Reset
             random_system_command = random.randint(min_system_cmd, max_system_cmd)
@@ -82,5 +78,5 @@ with open("generate_transactions.sh", "w") as f:
     for cmd in all_commands:
         f.write(cmd + "\n")
 
-print(f"{len(all_commands)} Transactions generated for 2025 in generate_transactions.sh")
+print(f"{len(all_commands)} Transactions generated in generate_transactions.sh")
 print(f"Performed a cargo build --release before launch the bash script")

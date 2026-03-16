@@ -1,0 +1,20 @@
+[
+  { "name": "Groceries",            "note": "Supermarket, food shopping" },
+  { "name": "Restaurant & Café",    "note": "Dining out, takeaway" },
+  { "name": "Transport",            "note": "Fuel, public transport" },
+  { "name": "Housing",              "note": "Rent, utilities, home insurance" },
+  { "name": "Health",               "note": "Doctor, pharmacy, insurance" },
+  { "name": "Leisure",              "note": "Sport, culture, entertainment" },
+  { "name": "Clothing",             "note": "Apparel, shoes" },
+  { "name": "Education",            "note": "Courses, books, training" },
+  { "name": "Travel",               "note": "Hotel, flights, holidays" },
+  { "name": "Subscriptions",        "note": "Streaming, press, software" },
+  { "name": "Telecom",              "note": "Phone, internet" },
+  { "name": "Bank & Fees",          "note": "Bank charges, commissions" },
+  { "name": "Taxes",                "note": "Income tax, property tax" },
+  { "name": "Savings",              "note": "Savings deposits, investments" },
+  { "name": "Salary",               "note": "Main income" },
+  { "name": "Side Income",          "note": "Freelance, bonuses, other income" },
+  { "name": "Refunds",              "note": "Received refunds" },
+  { "name": "Miscellaneous",        "note": null }
+]

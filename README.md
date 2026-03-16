@@ -1,9 +1,9 @@
 # 📔 Codexi CLI
 
-**A high-integrity, anchor-based financial ledger built in Rust.**
+**A high-integrity, anchor-based personal financial ledger built in Rust.**
 > 🌐 [codexi.ethal.fr](https://codexi.ethal.fr)
 
-![Rust](https://img.shields.io/badge/Rust-1.90.0-c5a059?logo=rust&style=flat-square)![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square) ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-black?style=flat-square)
+![Rust](https://img.shields.io/badge/Rust-1.93.1-c5a059?logo=rust&style=flat-square) ![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square) ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-black?style=flat-square)
 
 ![Codexi Financial Analytics Dashboard](docs/screenshots/stats_dashboard.png)
 
@@ -11,228 +11,225 @@
 
 ## 📔 Description
 
-Codexi is a robust, command-line personal finance management application built in Rust. It focuses on maintaining an accurate, auditable, and secure ledger of transactions through a system of anchor-based integrity checks and automatic archival.
-Codexi favors auditability over restriction: negative balances, corrective adjustments, and void operations are allowed but always explicit, traceable, and verifiable.
+Codexi is a command-line personal finance ledger focused on auditability, traceability, and long-term data integrity. It supports multiple accounts, anchor-based integrity checks, period closing with archival, and a rich analytics dashboard — all stored in a versioned, checksummed binary format.
 
 ## 🧠 Design Philosophy
 
 Codexi does not prevent financial states — it documents them.
-Negative balances, large adjustments, and corrections are allowed by design.
-Integrity is enforced through explicit operations, validation rules, and full auditability — never by silent constraints.
+Negative balances, large adjustments, and corrections are allowed by design. Integrity is enforced through explicit operations and full auditability, never by silent constraints.
+
+---
 
 ## ✨ Features
 
-* **Anchor-Based Integrity:** Ensures transaction history is tamper-proof by checking operation dates against system anchors (`INIT`, `CLOSE`, `ADJUST`).
-* **Auditable Closing:** Periods can be formally closed, archiving all transactions into external files (`.cld`) while replacing them with a single **Carried Forward Balance** in the active ledger.
-* **Advanced Analytics:** All-in-one dashboard with savings rate, daily burning rates, and smart expense tracking.
-* **Multi-format Interoperability:** Export and import your data using JSON, TOML, or CSV formats.
-* **Snapshot Recovery:** Offers internal snapshot functionality for quick rollback before risky operations (like bulk imports).
-* **Data Security:** Full backup to external ZIP archives and internal snapshot functionality for quick rollback.
-* **Exact Monetary Arithmetic:** All amounts are stored using fixed-point decimal arithmetic (no floating-point errors).
-* **Explicit Void Semantics:** Operations are never deleted. Voids create compensating entries, preserving full historical traceability.
-* **Versioned Storage (V2):** Binary storage based on CBOR with magic header, versioning, and checksum verification.
+- **Multi-Account** — manage several accounts, switch active account at any time
+- **Anchor-Based Integrity** — operation dates validated against history anchors (`INIT`, `CLOSE`, `ADJUST`)
+- **Period Closing & Archival** — formally close periods into `.cld` archive files with a carried-forward balance
+- **Financial Analytics Dashboard** — savings rate, daily burn rate, top expenses, system health
+- **HTML Statement Export** — rendered report openable directly in your browser
+- **Multi-format I/O** — export and import via JSON, TOML, or CSV
+- **Snapshot & Backup** — lightweight snapshots for quick rollback, full ZIP backups including archives
+- **Exact Arithmetic** — fixed-point decimal (`rust_decimal`), no floating-point errors
+- **Explicit Void Semantics** — operations are never deleted; voids create compensating entries
+- **Versioned Storage (V3)** — CBOR with magic header, versioning, and checksum
+
+---
 
 ## 🚀 Installation
 
-### Prerequisites
+**Prerequisites:** Rust 1.85+ ([rustup.rs](https://rustup.rs))
 
-You need to have **Rust** and **Cargo** installed. You need **Rust 1.80+** (1.90.0 recommended).
+```bash
+git clone https://github.com/ethal/codexi-project.git
+cd codexi-project
+cargo build --release
+./target/release/codexi-cli --help
+```
 
-### Build from Source
+---
 
-1.  Clone the repository:
-    ```bash
-    git clone [https://github.com/ethal/codexi.git](https://github.com/ethal/codexi.git)
-    cd codexi
-    ```
-2.  Build and run the application using Cargo:
-    ```bash
-    cargo build --release
-    ./target/release/codexi [COMMAND]
-    ```
-*(Note: For simplicity, all subsequent commands assume you run them via `./target/release/codexi`)*
+## 📖 Typical Workflow
 
-## 📖 Usage
+```bash
+# 1. Initialize a new account
+codexi account create 2025-01-01 My Bank Account
+codexi history init 2025-01-01 1500.00
 
-### Core Operations
+# 2. Record daily operations
+codexi credit 2025-01-05 2400.00 Monthly salary
+codexi debit  2025-01-06 45.00  Groceries
 
-| Command | Description | Example |
-| :----- | :----- | :----- |
-| `credit [date] [amount] [description]` | Adds funds to the ledger. | `codexi credit 2025-11-02 1500.00 Monthly Salary` |
-| `debit [date] [amount] [description]` | Records an expense. | `codexi debit 2025-11-02 34.50 Grocery` |
-| `search [Criteria]` | Displays the active transaction ledger with cumulative balances as per search criteria or all active transactions if no criteria | `codexi search` |
+# 3. Consult and analyze
+codexi search
+codexi report balance
+codexi report stats --from 2025-01-01 --to 2025-01-31
 
-### Report Commands
+# 4. Protect your data before risky operations
+codexi data snapshot create
+codexi data import json
 
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `report balance [Criteria]` | Displays the balance of the active transaction ledger. | `codexi report balance` |
-|` report resume` | Displays a resume of the active transaction ledger. | `codexi report resume` |
-|` report stats [Criteria]` | **(New)** Displays a full visual dashboard with analytics. | `codexi report stats` |
+# 5. Close a period at year end
+codexi history close 2025-12-31 Closing Year 2025
+codexi admin backup
+```
 
-### System Commands
+---
 
-These commands manage the integrity and security of the ledger.
+## 🗂️ Command Reference
 
-#### 1. Initialize, Ajustment, Void 
+### Core
+| Command | Description |
+| :--- | :--- |
+| `credit <date> <amount> [desc]` | Record an incoming flow |
+| `debit <date> <amount> [desc]` | Record an outgoing flow |
+| `search(view) [--from] [--to] [--text] [--kind] [--flow] [--min-amount] [--max-amount] [--latest]` | Search and filter operations |
 
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `system init [date] [amount]` | Initialize the ledger with a initial amount. | `codexi system init 2026-01-01 150.00` |
-| `system adjust [date] [amount]` | Adjusts the balance to a given physical amount. | `codexi system adjust 2026-01-05 60.00` |
-| `system void [index]` | Void an existing operation without deleting it. A compensating operation is created to preserve history. | `codexi system void 10` |
+### Account
+| Command | Description |
+| :--- | :--- |
+| `account list` | List all accounts (`*` = active, `c` = closed) |
+| `account create <date> <name>` | Create a new account |
+| `account use <id>` | Switch active account |
+| `account close <id> <date>` | Close an account |
+| `account rename <id> <name>` | Rename an account |
 
+### Report
+| Command | Description |
+| :--- | :--- |
+| `report balance [--from] [--to]` | Debit / credit / balance summary |
+| `report stats [--from] [--to] [--net]` | Full analytics dashboard |
+| `report summary` | Quick overview of the current account |
+| `report statement [--from] [--to] [--open]` | Export an HTML statement |
 
-#### 2. Period Closing and Archival
+### History
+| Command | Description |
+| :--- | :--- |
+| `history init <date> <amount>` | Initialize ledger with a starting balance |
+| `history adjust <date> <amount>` | Adjust balance to a physical amount |
+| `history void <id>` | Void an operation (creates a compensating entry) |
+| `history close <date> [desc]` | Close a period and archive transactions |
+| `history archive` | Manage the archived file |
 
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `system close [date]` | Archives transactions and replaces them with a Carried Forward Balance entry (`CLOSE`). | `codexi system close 2025-11-30` |
-| `system list` | Lists all closed archive files (`.cld`) in the data directory. | `codexi system list` |
-| `system view [filename]` | Displays the operations contained within a specific archive file. | `codexi system view codexi_2025-11-30.cld` |
+| Command | Description |
+| :--- | :--- |
+| `history archive list` | List archive files (`.cld`) |
+| `history archive view <account_id> <date>` | View the content of an archive file |
 
-#### 3. Backup and Restore
+### Data
+| Command | Description |
+| :--- | :--- |
+| `data export <json\|toml\|csv>` | Export active ledger |
+| `data import <json\|toml\|csv>` | Import into active ledger |
+| `data snapshot` | Manage the snapshot of the active ledger |
 
-Backups are created as compressed ZIP files containing the active ledger (`codexi.dat`) and all historical archives (`archives/`).
+| Command | Description |
+| :--- | :--- |
+| `data snapshot create` | Lightweight snapshot of the active ledger |
+| `data snapshot list` | List available snapshots |
+| `data snapshot restore <filename>` | Restore from a snapshot |
+| `data snapshot clean [--keep N]` | Remove old snapshots (keeps 5 by default) |
 
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `system backup` | Creates a full backup ZIP file. Stores it in your system's **Documents** folder by default. | `codexi system backup` |
-| `system backup --target-dir [path]` | Creates a full backup ZIP file at the specified location. | `codexi system backup --target-dir /media/usb/my_codexi.zip` |
-| `system restore [path_to_zip]` | Restores the active ledger and archives from a backup ZIP file. **⚠️ Warning: This will overwrite current data.** | `codexi system restore /home/user/my_backup.zip` |
+### Maintenance
+| Command | Description |
+| :--- | :--- |
+| `admin backup [--target-dir]` | Full ZIP backup (ledger + archives) |
+| `admin restore <filename>` | Restore from a ZIP backup |
+| `admin migrate <version>` | Migrate ledger and archives to a new format version |
+| `admin audit [--rebuild]` | Audit the current account and rebuild balance as per option |
+| `admin clear-data` | ⚠️ Move ledger files to trash |
+| `admin trash` | ⚠️ Manage the trash |
+| `admin infos` | Display ledger metadata and storage info |
+| `admin export-special` | Raw JSON export (no validation) |
+| `admin import-special` | ⚠️ Raw JSON import (no validation) |
+| `admin export-script` | Export current account operations in a script for a replay |
 
-#### 4. Snapshots (Quick Recovery)
+| Command | Description |
+| :--- | :--- |
+| `admin trash restore-trash <datetime>` | ⚠️ Restore from trash |
+| `admin trash purge-trash` | ⚠️ Empty the trash directory |
 
-Snapshots are lightweight backups of **only** the active `codexi.dat` file, primarily used for quick rollback.
+---
 
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `data snapshot` | Creates a timestamped copy of the current `codexi.dat` file. (Used before `import` or bulk changes). | `codexi data snapshot` |
-| `data list` | Lists all available snapshots in the internal directory. | `codexi data list` |
-| `data restore [filename]` | Restores the active ledger from a specific snapshot file. | `codexi data restore codexi_20251208_101727.snp` |
-| `data clean` | Remove old snapshot files, keeping only the 5 most recent ones by default. | `codexi data clean` |
+## 📊 Analytics Dashboard (`report stats`)
 
-#### 5. Data Portability (Import & Export) - Active ledger only 
+- **Smart filtering** — `INIT` and `CLOSE` operations always excluded; `ADJUST` excluded from behavioral metrics
+- **Void semantics** — by default, voided operations are excluded (historical view); use `--net` for net-impact view within a period
+- **Savings Rate Bar** — dynamic indicator, turns to danger mode if expenses exceed income
+- **Daily Burn Rate** — average daily spending over the selected period
+- **System Health** — tracks adjustment ratio to monitor data quality
 
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `data export json` | Exports the active ledger to JSON format. | `codexi data export json` |
-| `data export toml` | Exports the active ledger to TOML format. | `codexi data export toml` |
-| `data export csv` | Exports the active ledger to CSV format. | `codexi data export csv` |
-| `data import json` | Imports operations to active ledger from a JSON file. | `codexi data import json` |
-| `data import toml` | Imports operations to active ledger from a TOML file. | `codexi data import toml` |
-| `data import csv` | Imports operations to active ledger from a CSV file. | `codexi data import csv ` |
+---
 
-### Maintenance Commands
+## 📂 Import / Export
 
-⚠️ The commands **migrate** and **clear** should be used with caution. A backup is **strongly** recommended before to used it.
+Fixed filenames are used for simplicity:
+- **Export** → creates `codexi.<ext>` in the current directory
+- **Import** → expects `codexi.<ext>` in the current directory
 
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `maintenance migrate [version]` | Migrate the cureent ledger and all the associated archive files(.cld). | `codexi maintenance migrate 2` |
-| `maintenance clear` | Delete the file codexi.dat, all the snaphot files (.snp) and all the archive files(.cld). | `codexi maintenance clear` |
-| `maintenance ledger-infos` | Provide some information to the . | `codexi maintenance clear` |
+> ⚠️ Always run `data snapshot` before an import.
 
-- Current storage format version: **V2 (CBOR)**
+JSON and TOML exports include an `export_version` field (currently **V2**) for forward compatibility. These formats are interchange-only and do not carry internal storage metadata.
 
-## 📂 Import/Export Specifications
+---
 
-To ensure simplicity, Codexi uses **fixed filenames** for data exchange.
+## 🛡️ Data Safety Layers
 
-- **Export:** Creates a file named `codexi.[extension]` in your current folder.
+```
+[ Active Ledger ]  --snapshot-->  [ snapshots/ (.snp) ]
+       |
+  system close
+       |
+[ archives/ (.cld) ]  --system backup-->  [ backup.zip ]
+```
 
-- **Import:** Your source file must be named `codexi.[extension]` to be recognized.
+---
 
-
-To ensure simplicity and speed, Codexi uses **fixed filenames** for data exchange.
-
-- **Export:** When you run an export command, Codexi creates a file named `codexi.[extension]` in your current folder.
-
-- **Import:** To import data, you must name your source file `codexi.json`, `codexi.toml`, or `codexi.csv` before running the command.
-
-ℹ️ Import / Export formats (JSON, TOML, CSV) are **interchange formats only**.
-
-JSON and TOML exports include a logical `export_version` field (currently **V1**) to ensure forward compatibility of the data model.
-They are not used for internal storage and do not include storage-level metadata (magic header, checksum, or binary format version).
-
-
-**⚠️ Warning Data Integrity:** It is highly recommended to run `data snapshot` before performing an `import` operation. This allows you to roll back easily if the imported data contains errors or formatting issues.
-
-## 📊 Financial Analytics Dashboard
-Codexi includes a powerful statistics engine designed to give you a clear view of your financial health.
-
-**Smart Filtering Logic**
-To ensure data accuracy, the statistics engine applies an automated filtering layer:
-
-- **Structural Exclusion:** System operations `INIT` (initialization) and `CLOSE` (period closing) are stricly excluded from all calculations to avoid bloating totals.
-
-- **Behavioral Filtering:** `ADJUST` operations are excluded from behavioral metrics but still tracked for system health.
-
-- **Void Semantics (`--net` flag):**
-  - By default, VOID operations do **not** affect totals, and the original voided operation is ignored (historical view).
-  - With `--net`, VOID operations are treated as real financial flows and included in totals at the date of the VOID, providing a net-impact view over a period.
-
-- **Expense Analysis:** `ADJUST` (balancing) and `VOID` operations are automatically hidden from your **Top 5 Expenses** and **Max Single Expense** metrics to focus purely on your consumption behavior.
-
-**Visual Indicators**
-- **Savings Rate Bar:** A dynamic progress bar showing your capacity to save. It turns into a danger bar (`!!!`) if expenses exceed income.
-
-- **Daily Burning Rate:** it tells you exactly how much you spend on average per day.
-
-- **System Health:** Tracks the percentage of adjustments in your ledger to help you maintain high data integrity.
-
-**Time-based statistics**
-Codexi statistics are **strictly time-based**.
-
-When an operation is voided, the reversal is recorded at the date of the VOID.
-The original operation is not removed retroactively.
-To compute the net financial impact within a specific period, use:
-    `codexi report stats --from YYYY-MM-DD --to YYYY-MM-DD --net`
-
-## 🛡️ Data Integrity Workflow
-
-Codexi manages your data through three distinct layers of safety:
-```text
-[ Active Operations ] --(snapshot)--> [ snapshots/ (.snp) ]
-           |
-     (report stats) --------> [ Visual Dashboard ]
-           |
-     (system close)
-           v
- [ archives/ (.cld) ] --(system backup)--> [ Full_Backup.zip ]
- ```
- 
 ## 🗃️ Data Location
-
-Codexi uses standard OS directories for storing its data to ensure compatibility and ease of access.
-
-* **Active Ledger Format:** CBOR (versioned, checksummed)
-* **Active Ledger:** `codexi.dat`
-* **Archives:** `[Data Directory]/archives/`
-* **Snapshots:** `[Data Directory]/snapshots/`
-
-The exact data directory path varies by OS:
 
 | OS | Path |
 | :--- | :--- |
 | **Linux** | `~/.local/share/fr.ethal.codexi/` |
 | **macOS** | `~/Library/Application Support/fr.ethal.codexi/` |
-| **Windows**| `%AppData%\Roaming\fr.ethal.codexi\` |
+
+Files: `codexi.dat` (active ledger) · `archives/` · `snapshots/` · `trash/`
+
+---
+
+## 🏗️ Project Structure
+
+Codexi is organized as a **Cargo workspace** with two crates:
+
+- **`crates/codexi`** — the core library: domain logic, storage, analytics, import/export. No CLI dependency.
+- **`crates/codexi-cli`** — the command-line interface built on top of the library.
+
+This separation keeps the business logic independently testable and reusable.
+
+A companion **`www/`** directory contains the static website hosted at [codexi.ethal.fr](https://codexi.ethal.fr).
+
+---
 
 ## 🧭 Versioning
 
-- **Application version** follows Semantic Versioning (v2.0.0)
-- **Storage version** is independent and currently at V2
-- **Export formats** (JSON / TOML) use their own `export_version` (currently V1)
+| Layer | Version | Notes |
+| :--- | :--- | :--- |
+| Application (CLI) | `0.1.0` | Semantic versioning — active development |
+| Core library | `0.1.0` | Semantic versioning — active development |
+| Storage format | `V3` | CBOR, magic header, checksum |
+| Export format (JSON/TOML/CSV) | `V2` | |
+
+> **Note**: CLI versions `1.0.0` → `2.0.1` correspond to an earlier 
+> single-binary architecture, kept as git tags for reference.
+
+---
 
 ## 🤝 Contributing
 
-Contributions, bug reports, and feature requests are welcome! Feel free to open an issue or submit a pull request on GitHub.
+Bug reports and pull requests are welcome via GitHub.
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+MIT
 
 ## 📬 Author
 
-    ethal <ethal@ethal.fr>
+**ethal** — [tools@ethal.fr](mailto:tools@ethal.fr)
