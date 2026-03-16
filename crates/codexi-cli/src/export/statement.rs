@@ -7,7 +7,7 @@ use thousands::Separable;
 
 use codexi::logic::account::StatementEntry;
 
-const STATEMENT_TEMPLATE: &str = include_str!("../../assets/templates/statement.html");
+const STATEMENT_TEMPLATE: &str = include_str!("../assets/templates/statement.html");
 
 pub fn export_statement_html(entry: StatementEntry) -> Result<String> {
     let mut tera = Tera::default();

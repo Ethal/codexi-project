@@ -1,0 +1,147 @@
+<!--assets/templates/stats.html -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Financial Analytics</title>
+  <style>
+
+    body { font-family: system-ui, sans-serif; margin: 2rem; color: #1a1a1a; }
+
+    h1 { margin-bottom: 0.25rem; }
+    .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 1rem;
+    }
+    .card-title { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    .card-value { font-size: 1.4rem; font-weight: 700; }
+
+    .credit { color: #16a34a; }
+    .debit  { color: #dc2626; }
+    .balance { color: #ffa500; }
+    .neutral { color: #1a1a1a; }
+
+    /* Savings bar */
+    .savings-section { border: 1px solid #ddd; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
+    .savings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .savings-label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+    .savings-rate { font-size: 1.2rem; font-weight: 700; }
+    .bar-bg { background: #e5e7eb; border-radius: 4px; height: 12px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .bar-positive { background: #16a34a; }
+    .bar-negative { background: #dc2626; }
+
+    /* Insights */
+    .section-title {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Top expenses table */
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 6px 10px; font-size: 0.875rem; }
+    th { background: #f5f5f5; text-align: left; font-weight: 600; }
+    td.num { text-align: right; }
+    td.pct { text-align: right; color: #dc2626; }
+
+    hr { border: none; border-top: 1px solid #eee; margin: 1.5rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Financial Analytics</h1>
+  <p class="subtitle">Excl. init and checkpoint &mdash; period: {{ days_count }} days</p>
+
+  <!-- Overview -->
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">Total Credit</div>
+      <div class="card-value credit">{{ total_credit }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Debit</div>
+      <div class="card-value debit">{{ total_debit }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Balance</div>
+      <div class="card-value balance">{{ balance }}</div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">Operations</div>
+      <div class="card-value neutral">{{ operation_count }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Avg / Operation</div>
+      <div class="card-value neutral">{{ average_operation }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Daily Burning Rate</div>
+      <div class="card-value debit">{{ daily_average }}</div>
+    </div>
+  </div>
+
+  <!-- Savings rate bar -->
+  <div class="savings-section">
+    <div class="savings-header">
+      <span class="savings-label">Savings Rate</span>
+      <span class="savings-rate {% if savings_rate_negative %}debit{% else %}credit{% endif %}">{{ savings_rate }}%</span>
+    </div>
+    <div class="bar-bg">
+      <div class="bar-fill {% if savings_rate_negative %}bar-negative{% else %}bar-positive{% endif %}"
+           style="width: {{ savings_bar_pct }}%"></div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Behavioral insights -->
+  <div class="section-title">Behavioral insights &amp; system health (excl. void, voided)</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Max Single Expense</div>
+      <div class="card-value debit">{{ max_single_debit }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Adjustments</div>
+      <div class="card-value neutral">{{ adjustment_count }} ({{ adjustment_percentage }}%)</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Top 5 expenses -->
+  <div class="section-title">Top 5 expenses (excl. adjust, voided, void)</div>
+  <table>
+    <tr>
+      <th>Id</th>
+      <th>Date</th>
+      <th>Description</th>
+      <th>Amount</th>
+      <th>%</th>
+    </tr>
+    {% for exp in top_expenses %}
+    <tr>
+      <td>{{ exp.op_id }}</td>
+      <td>{{ exp.op_date }}</td>
+      <td>{{ exp.description }}</td>
+      <td class="num debit">{{ exp.amount }}</td>
+      <td class="pct">{{ exp.percentage }}%</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+</body>
+</html>
