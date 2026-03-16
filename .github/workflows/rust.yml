@@ -5,7 +5,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  BIN_NAME: codexi
+  BIN_NAME: codexi-cli
 
 jobs:
   build:
