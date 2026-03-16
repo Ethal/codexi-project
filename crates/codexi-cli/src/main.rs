@@ -1,5 +1,12 @@
 // src/main.rs
 
+#![allow(clippy::field_reassign_with_default)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::missing_panics_doc)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::struct_excessive_bools)]
+
 use anyhow::Result;
 use clap::Parser;
 use log::LevelFilter;

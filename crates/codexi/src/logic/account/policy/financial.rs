@@ -218,13 +218,7 @@ mod tests {
     // Helper to create an empty account
     fn setup_empty_account() -> Account {
         // init
-        Account::new(
-            parse_date("2025-09-01".into()).unwrap(),
-            "Test".into(),
-            None,
-            None,
-        )
-        .unwrap()
+        Account::new(parse_date("2025-09-01").unwrap(), "Test".into(), None, None).unwrap()
     }
 
     #[test]

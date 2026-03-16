@@ -15,10 +15,7 @@ use crate::logic::{
 };
 
 impl OperationEntry {
-    pub fn operation_entry(
-        account: &Account,
-        params: &SearchParams,
-    ) -> Result<OperationEntry, SearchError> {
+    pub fn new(account: &Account, params: &SearchParams) -> Result<Self, SearchError> {
         let matched_items = search(account, params)?;
 
         let items: Vec<OperationItem> = matched_items
@@ -26,7 +23,7 @@ impl OperationEntry {
             .map(|item| Self::operation_item(account, item))
             .collect();
 
-        Ok(OperationEntry {
+        Ok(Self {
             operation_count: items.len().to_string(),
             items,
         })
@@ -39,11 +36,7 @@ impl OperationEntry {
 }
 
 impl StatementEntry {
-    pub fn statement_entry(
-        codexi: &Codexi,
-        account_id: &Nulid,
-        params: &SearchParams,
-    ) -> Option<StatementEntry> {
+    pub fn new(codexi: &Codexi, account_id: &Nulid, params: &SearchParams) -> Option<Self> {
         let mut statement_entry = StatementEntry::default();
 
         let (matched_items, account_number, account_name, bank_id, currency_id) = {
@@ -78,8 +71,8 @@ impl StatementEntry {
 
         statement_entry.date_min = date_min;
         statement_entry.date_max = date_max;
-        statement_entry.balance = BalanceItem::from(Balance::balance(&matched_items));
-        statement_entry.counts = Counts::counts(&matched_items);
+        statement_entry.balance = BalanceItem::from(Balance::new(&matched_items));
+        statement_entry.counts = Counts::new(&matched_items);
         statement_entry.items = matched_items.iter().map(Self::statement_item).collect();
 
         Some(statement_entry)

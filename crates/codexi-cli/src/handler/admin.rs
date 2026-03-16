@@ -146,8 +146,8 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
     for account in &codexi.accounts {
         let mut lines = Vec::new();
 
-        lines.push(format!("#!/bin/bash"));
-        lines.push(format!("set -e"));
+        lines.push("#!/bin/bash".to_string());
+        lines.push("set -e".to_string());
         lines.push(String::new());
         lines.push(format!("# Script generated for account: {}", account.name));
         lines.push(format!("# Account ID: {}", account.id));
@@ -181,7 +181,7 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
                     )
                 }
                 OperationKind::System(SystemKind::Void) => {
-                    format!("# VOID op — skip (handled by void_of link on target)")
+                    "# VOID op — skip (handled by void_of link on target)".to_string()
                 }
                 OperationKind::Regular(_) => {
                     if op.links.void_by.is_some() {

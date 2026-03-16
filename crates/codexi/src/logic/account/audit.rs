@@ -180,16 +180,16 @@ impl Account {
     fn audit_double_void(&self, warnings: &mut Vec<CoreWarning>) {
         let mut void_targets: HashMap<Nulid, Nulid> = HashMap::new();
         for op in &self.operations {
-            if let Some(void_of_id) = op.links.void_of {
-                if let Some(existing) = void_targets.insert(void_of_id, op.id) {
-                    warnings.push(CoreWarning {
-                        kind: CoreWarningKind::InvalidData,
-                        message: format!(
-                            "TEST 6: Operation {} is voided twice: by {} and by {}",
-                            void_of_id, existing, op.id
-                        ),
-                    });
-                }
+            if let Some(void_of_id) = op.links.void_of
+                && let Some(existing) = void_targets.insert(void_of_id, op.id)
+            {
+                warnings.push(CoreWarning {
+                    kind: CoreWarningKind::InvalidData,
+                    message: format!(
+                        "TEST 6: Operation {} is voided twice: by {} and by {}",
+                        void_of_id, existing, op.id
+                    ),
+                });
             }
         }
     }

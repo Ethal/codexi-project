@@ -1,4 +1,3 @@
-# .github/workflows/rust.yml
 name: Rust CI
 
 on:
@@ -18,11 +17,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install tools
+        run: rustup component add rustfmt clippy
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Build
-        run: cargo build --locked --verbose
+        run: cargo build --locked
 
       - name: Test
-        run: cargo test --locked --verbose
+        run: cargo test --locked
+
+      - name: Build release
+        run: cargo build --release --locked
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: codexi-${{ matrix.os }}
+          path: target/release/

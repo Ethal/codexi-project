@@ -44,6 +44,21 @@ pub struct SummaryEntry {
     pub anchors: AccountAnchorsItem,
 }
 
+impl SummaryEntry {
+    /// Build a SummaryEntry from items and account.
+    pub fn new(items: &SearchEntry, account: &Account) -> Option<Self> {
+        if items.is_empty() {
+            return None;
+        }
+
+        Some(Self {
+            counts: Counts::new(items),
+            balance: BalanceItem::from(Balance::new(items)),
+            anchors: AccountAnchorsItem::from(&account.anchors),
+        })
+    }
+}
+
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TopExpenseItem {
     pub op_id: String,
@@ -69,25 +84,9 @@ pub struct StatsEntry {
     pub adjustment_percentage: Decimal,
 }
 
-impl SummaryEntry {
-    /// Summary
-    /// Returns a SummaryView struct
-    pub fn summary_entry(items: &SearchEntry, account: &Account) -> Option<SummaryEntry> {
-        if items.is_empty() {
-            return None;
-        }
-
-        Some(SummaryEntry {
-            counts: Counts::counts(items),
-            balance: BalanceItem::from(Balance::balance(items)),
-            anchors: AccountAnchorsItem::from(&account.anchors),
-        })
-    }
-}
-
 impl StatsEntry {
     /// Performed the stats calculations
-    pub fn stats_entry(items: &SearchEntry, net: bool) -> Option<StatsEntry> {
+    pub fn new(items: &SearchEntry, net: bool) -> Option<Self> {
         let active_items: Vec<&SearchItem> = items.active_items().collect();
 
         if active_items.is_empty() {
@@ -190,7 +189,7 @@ impl StatsEntry {
         let days_count = (end - start).num_days() + 1;
         let daily_average = total_debit / Decimal::from(days_count);
 
-        Some(StatsEntry {
+        Some(Self {
             total_credit,
             total_debit,
             balance,

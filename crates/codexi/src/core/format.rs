@@ -1,7 +1,7 @@
 // src/core/format.rs
 
-use nulid::Nulid;
 use chrono::{NaiveDate, NaiveDateTime};
+use nulid::Nulid;
 
 pub fn format_id(id: Nulid) -> String {
     id.to_string()

@@ -3,12 +3,12 @@
 mod bank;
 mod category;
 mod currency;
-mod ui;
+mod display;
 
 pub use bank::view_bank;
 pub use category::view_category;
 pub use currency::view_currency;
-pub use ui::*;
+pub use display::*;
 
 use console::Style;
 const TITLE_STYLE: Style = Style::new().cyan().bold();

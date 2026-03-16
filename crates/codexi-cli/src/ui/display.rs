@@ -337,35 +337,29 @@ pub fn view_stats(stats: &StatsEntry) {
     // Line 1 related to total_credit/op count
     let ops_count_val = format!("{}", stats.operation_count);
     println!(
-        "│ {:<20} │ {:>16} │ {} │",
+        "│ {:<20} │ {:>16} │ {} {:<23} │",
         LABEL_STYLE.apply_to("total credit"),
         CREDIT_STYLE.apply_to(format!("{:.2}", stats.total_credit).separate_with_commas()),
-        format!(
-            "{} {:<23}",
-            LABEL_STYLE.apply_to("ops count:"),
-            VALUE_STYLE.apply_to(ops_count_val)
-        )
+        LABEL_STYLE.apply_to("ops count:"),
+        VALUE_STYLE.apply_to(ops_count_val),
     );
 
     // Line 2 related to total_debit/ avg/op
     let avg_op_val = format!("{:.2}", stats.average_operation);
     println!(
-        "│ {:<20} │ {:>16} │ {} │",
+        "│ {:<20} │ {:>16} │ {} {:<26} │",
         LABEL_STYLE.apply_to("total debit"),
         DEBIT_STYLE.apply_to(format!("{:.2}", stats.total_debit).separate_with_commas()),
-        format!(
-            "{} {:<26}",
-            LABEL_STYLE.apply_to("avg/op:"),
-            VALUE_STYLE.apply_to(avg_op_val)
-        )
+        LABEL_STYLE.apply_to("avg/op:"),
+        VALUE_STYLE.apply_to(avg_op_val)
     );
 
     // Line 3 related to balance
     println!(
-        "│ {:<20} │ {:>16} │ {} │",
+        "│ {:<20} │ {:>16} │ {:<26} │",
         LABEL_STYLE.apply_to("balance"),
         VALUE_STYLE.apply_to(format!("{:.2}", stats.balance).separate_with_commas()),
-        format!("{:<26}", " ".repeat(34))
+        " ".repeat(34)
     );
 
     println!("├──────────────────────┴──────────────────┴────────────────────────────────────┤");

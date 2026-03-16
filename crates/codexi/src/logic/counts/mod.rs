@@ -16,17 +16,18 @@ pub struct Counts {
 }
 
 impl Counts {
-    pub fn counts(items: &SearchEntry) -> Counts {
-        let counts = items.iter().fold(Counts::default(), |mut acc, item| {
+    pub fn new(items: &SearchEntry) -> Self {
+        let mut counts = Counts::default();
+
+        for item in items.iter() {
             match item.operation.kind {
-                OperationKind::Regular(_) => acc.regular += 1,
-                OperationKind::System(SystemKind::Init) => acc.init += 1,
-                OperationKind::System(SystemKind::Adjust) => acc.adjust += 1,
-                OperationKind::System(SystemKind::Void) => acc.void += 1,
-                OperationKind::System(SystemKind::Checkpoint) => acc.checkpoint += 1,
+                OperationKind::Regular(_) => counts.regular += 1,
+                OperationKind::System(SystemKind::Init) => counts.init += 1,
+                OperationKind::System(SystemKind::Adjust) => counts.adjust += 1,
+                OperationKind::System(SystemKind::Void) => counts.void += 1,
+                OperationKind::System(SystemKind::Checkpoint) => counts.checkpoint += 1,
             }
-            acc
-        });
+        }
 
         counts
     }

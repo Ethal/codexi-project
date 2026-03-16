@@ -159,7 +159,7 @@ impl Account {
         let params = SearchParamsBuilder::default().to(Some(date)).build()?;
         let balance_items = search(self, &params)?;
 
-        let current_balance = Balance::balance(&balance_items);
+        let current_balance = Balance::new(&balance_items);
         let difference = physical_amount - current_balance.total();
         // check the difference if equal to zero or below < 0.001 -> Error
         if difference.abs() < dec!(0.001) || difference.abs() == Decimal::ZERO {

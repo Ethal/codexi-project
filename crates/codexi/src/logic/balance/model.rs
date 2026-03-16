@@ -15,7 +15,7 @@ impl Balance {
     /// Calculates the total of credits, debits,
     /// with several date filters (from/to/day/month/year).
     /// Returns a Balance struct.
-    pub fn balance(items: &SearchEntry) -> Balance {
+    pub fn new(items: &SearchEntry) -> Self {
         let mut credit = Decimal::ZERO;
         let mut debit = Decimal::ZERO;
 
@@ -26,7 +26,7 @@ impl Balance {
                 OperationFlow::None => {}
             }
         }
-        Balance { credit, debit }
+        Self { credit, debit }
     }
     pub fn total(&self) -> Decimal {
         self.credit - self.debit

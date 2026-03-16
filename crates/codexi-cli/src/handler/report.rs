@@ -33,7 +33,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 .build()?;
 
             let balance_items = search(account, &params)?;
-            let balance = BalanceItem::from(Balance::balance(&balance_items));
+            let balance = BalanceItem::from(Balance::new(&balance_items));
             if balance.total() == Decimal::ZERO
                 && balance.credit == Decimal::ZERO
                 && balance.debit == Decimal::ZERO
@@ -56,7 +56,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 .build()?;
 
             let search_results = search(account, &params)?;
-            if let Some(stats) = StatsEntry::stats_entry(&search_results, net) {
+            if let Some(stats) = StatsEntry::new(&search_results, net) {
                 if open {
                     let html = export_stats_html(stats)?;
                     let path = FileManagement::export_html(&html, cwd)?;
@@ -72,7 +72,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
         ReportCommand::Summary {} => {
             let params = SearchParamsBuilder::default().build()?;
             let summary_items = search(account, &params)?;
-            if let Some(summary) = SummaryEntry::summary_entry(&summary_items, &account) {
+            if let Some(summary) = SummaryEntry::new(&summary_items, account) {
                 view_summary(&summary);
             } else {
                 msg_warn!("No data available");
@@ -85,9 +85,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 .to(range.to)
                 .build()?;
             let account_id = codexi.get_current_account()?.id;
-            if let Some(statement_results) =
-                StatementEntry::statement_entry(&codexi, &account_id, &params)
-            {
+            if let Some(statement_results) = StatementEntry::new(&codexi, &account_id, &params) {
                 if statement_results.items.is_empty() {
                     msg_warn!("No data available");
                 } else {
@@ -95,7 +93,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                     FileManagement::export_html(&html, cwd)?;
                     msg_info!("statement completed (report.html)");
                     if open {
-                        opener::open_browser(&cwd)?;
+                        opener::open_browser(cwd)?;
                     }
                 }
             } else {
