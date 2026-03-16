@@ -1,5 +1,8 @@
-# .github/workflows/ci.yml
+# .github/workflows/rust.yml
 name: Rust
+
+on:
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
