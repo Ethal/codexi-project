@@ -3,7 +3,7 @@
 **A high-integrity, anchor-based personal financial ledger built in Rust.**
 > 🌐 [codexi.ethal.fr](https://codexi.ethal.fr)
 
-![Rust](https://img.shields.io/badge/Rust-1.93.1-c5a059?logo=rust&style=flat-square) ![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square) ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-black?style=flat-square)
+![Rust](https://img.shields.io/badge/Rust-1.93.1-c5a059?logo=rust&style=flat-square) ![Rust Edition](https://img.shields.io/badge/edition-2024-orange?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square) ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-black?logo=windows&style=flat-square) ![CI](https://img.shields.io/github/actions/workflow/status/ethal/codexi-project/rust.yml?branch=main&style=flat-square&logo=githubactions&label=CI) [![Binaries](https://img.shields.io/badge/Binaries-available-blue?style=flat-square&logo=github)](https://github.com/ethal/codexi-project/releases)
 
 ![Codexi Financial Analytics Dashboard](docs/screenshots/stats_dashboard.png)
 
@@ -232,4 +232,4 @@ MIT
 
 ## 📬 Author
 
-**ethal** — [tools@ethal.fr](mailto:tools@ethal.fr)
+**ethal** — [codexi@ethal.fr](mailto:codexi@ethal.fr)

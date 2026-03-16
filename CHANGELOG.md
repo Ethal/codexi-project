@@ -1,17 +1,21 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
 ---
 
-## [Unreleased]
+## [0.1.0] — 2026-03-16
+
+*First release of the redesigned workspace version.*
 
 ### Added
 - **Multi-account support** — create, list, rename, close accounts; switch active account with `account use`
-- **Balance integrity** — `op.balance` stored on each operation, `rebuild_balances_from` for correction
-- **Audit command** — `admin audit [--rebuild]` with policy replay, balance crossref, void link checks
+- **Balance integrity** — `op.balance` stored on each operation for auditability with `rebuild_balances_from` for correction
+- **Audit command** — `admin audit [--rebuild]` with policy replay, balance cross-reference, void link checks
 - **Structured reporting** — `statement`, `stats`, `summary` with HTML export
 - **AccountAnchors** — consolidated last dates (init, checkpoint, adjust, void, regular) as a dedicated struct
 - **Counts module** — `src/logic/counts` shared across views
-- **Script export** — `admin export-script` generates a replayable shell script per account
+- **Script export** — `admin export-script` generates a replayable shell script for each account
 
 ### Changed
 - **Workspace structure** — project split into two crates: `codexi` (core lib) and `codexi-cli`
@@ -23,7 +27,8 @@
 
 ---
 
-## [2.0.1] — 2026-02-09
+## Previous versions (legacy mono-crate)
+### [2.0.1] — 2026-02-09
 - Mono-crate application (`codexi`)
 
 ---
