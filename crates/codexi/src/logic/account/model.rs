@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use crate::core::validate_text_rules;
 use crate::logic::{
     account::{
-        AccountAnchors, AccountError, AccountType, CheckpointRef, FinancialAction,
-        OperationContainer,
+        AccountAnchors, AccountError, AccountType, CheckpointRef, OperationContainer,
+        TemporalAction, policy::AccountContext,
     },
     operation::{Operation, OperationFlow},
 };
@@ -29,7 +29,7 @@ pub struct AccountMeta {
 pub struct Account {
     pub id: Nulid,    // Id
     pub name: String, // Account name
-    pub account_type: AccountType,
+    pub context: AccountContext,
     pub bank_id: Option<Nulid>,             // Nulid of the Bank
     pub currency_id: Option<Nulid>,         // Main currency id for the account
     pub carry_forward_balance: Decimal,     // for internal calculation
@@ -47,6 +47,7 @@ impl Account {
     pub fn new(
         open_date: NaiveDate,
         name_user: String,
+        account_type: AccountType,
         bank_id: Option<Nulid>,
         currency_id: Option<Nulid>,
     ) -> Result<Self, AccountError> {
@@ -64,10 +65,13 @@ impl Account {
         let operations: Vec<Operation> = Vec::new();
         let checkpoints: Vec<CheckpointRef> = Vec::new();
 
+        let mut context = AccountContext::default();
+        context.account_type = account_type;
+
         Ok(Self {
             id,
             name,
-            account_type: AccountType::default(),
+            context,
             bank_id,
             currency_id,
             operations,
@@ -171,7 +175,7 @@ impl Account {
         let today = chrono::Local::now().date_naive();
 
         // check if void is allow as per the current date
-        match self.financial_policy(FinancialAction::Void(op_id), today) {
+        match self.temporal_policy(TemporalAction::Void(op_id), today) {
             Ok(_) => Ok(true),   // Ok
             Err(_) => Ok(false), // not Ok
         }
@@ -198,7 +202,14 @@ mod tests {
     // Helper to create an empty account
     fn setup_empty_account() -> Account {
         // init
-        Account::new(parse_date("2025-09-01").unwrap(), "Test".into(), None, None).unwrap()
+        Account::new(
+            parse_date("2025-09-01").unwrap(),
+            "Test".into(),
+            AccountType::Current,
+            None,
+            None,
+        )
+        .unwrap()
     }
 
     #[test]
@@ -266,7 +277,7 @@ mod tests {
         account.commit_operation(op);
 
         // 2. manual  corruption : insert of  débit at 01/02 (BEFORE the init)
-        // we dont use the financial policy , direct push
+        // we dont use the temporal policy , direct push
         let op = OperationBuilder::default()
             .date(parse_date("2026-02-01").unwrap())
             .kind(OperationKind::Regular(RegularKind::Transaction))
@@ -282,7 +293,7 @@ mod tests {
         account.operations.sort_by_key(|o| o.date);
         account.refresh_anchors();
 
-        // 3. audit shall fail financial_policy can not accept  a débit before the Init
+        // 3. audit shall fail temporal_policy can not accept  a débit before the Init
         let result = account.audit();
         assert!(
             result.is_err(),

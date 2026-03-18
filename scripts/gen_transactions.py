@@ -33,22 +33,22 @@ def generate_transaction(d):
         description = random.choice(descriptions_credit)
         amount = round(random.uniform(30, 80), 2)
 
-    cmd = f'./target/release/codexi-cli {type_tx} {d} {amount} "{description}"'
+    cmd = f'./target/debug/codexi-cli {type_tx} {d} {amount} "{description}"'
     return cmd
 
 # Generate a system adjust command
 def generate_system_adjust(d):
     amount = round(random.uniform(50.0, 100.0), 2)
-    return f'./target/release/codexi-cli history adjust {d} {amount}'
+    return f'./target/debug/codexi-cli history adjust {d} {amount}'
 
 # Generate all dates
 current_date = start_date
 all_commands = []
 
 init_amount = round(random.uniform(50.0, 100.0), 2)
-cmd = f'./target/release/codexi-cli account create {start_date} "testing"'
+cmd = f'./target/debug/codexi-cli account create {start_date} "testing"'
 all_commands.append(cmd)
-cmd = f'./target/release/codexi-cli history init {start_date} {init_amount}'
+cmd = f'./target/debug/codexi-cli history init {start_date} {init_amount}'
 all_commands.append(cmd)
 
 random_system_command = random.randint(min_system_cmd, max_system_cmd)
@@ -79,4 +79,4 @@ with open("generate_transactions.sh", "w") as f:
         f.write(cmd + "\n")
 
 print(f"{len(all_commands)} Transactions generated in generate_transactions.sh")
-print(f"Performed a cargo build --release before launch the bash script")
+print(f"Performed a cargo build before launch the bash script")

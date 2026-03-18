@@ -10,7 +10,6 @@ use codexi::{
     logic::{
         account::{SearchEntry, StatsEntry, SummaryEntry},
         balance::BalanceItem,
-        codexi::AccountEntry,
         operation::OperationFlow,
     },
 };
@@ -21,7 +20,7 @@ pub fn view_warning(warnings: &[CoreWarning]) {
     let title_text = TITLE_STYLE.apply_to("Warning(s)");
     println!("{}", title_text);
     for warn in warnings {
-        println!(" {}", warn.message);
+        println!(" {}", warn);
     }
 }
 
@@ -73,31 +72,6 @@ pub fn view_codexi_infos(datas: &CodexiInfos) {
 
     println!();
     println!("TOTAL              {:>12}", format_bytes(usage.total_bytes));
-}
-
-/// view to list the account
-pub fn view_account(items: &AccountEntry) {
-    let title_text = TITLE_STYLE.apply_to("Accounts - <id> <name> [currency] [bank]");
-    println!();
-    println!("{}", title_text);
-    for item in items.items.iter() {
-        let marker = if item.current {
-            "(*)"
-        } else if item.close {
-            "(c)"
-        } else {
-            "   "
-        };
-        println!(
-            " {} {} - {} {} {}",
-            marker, item.id, item.name, item.currency, item.bank
-        );
-    }
-    println!();
-    println!(
-        "{}",
-        NOTE_STYLE.apply_to("Note: (*) Current account, (c) Close Account.")
-    );
 }
 
 /// view to list the snapshot file

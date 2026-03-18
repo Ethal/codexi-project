@@ -4,14 +4,21 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
 use codexi::core::parse_date;
-use codexi::logic::account::{Account, SearchParamsBuilder, StatsEntry, search};
+use codexi::logic::account::{Account, AccountType, SearchParamsBuilder, StatsEntry, search};
 use codexi::logic::balance::Balance;
 use codexi::logic::operation::RegularKind;
 use codexi::logic::operation::{OperationFlow, OperationKind};
 
 fn setup_empty_account() -> Account {
     // init
-    Account::new(parse_date("2025-09-01").unwrap(), "Test".into(), None, None).unwrap()
+    Account::new(
+        parse_date("2025-09-01").unwrap(),
+        "Test".into(),
+        AccountType::Current,
+        None,
+        None,
+    )
+    .unwrap()
 }
 
 // Helper function to initialize with known data

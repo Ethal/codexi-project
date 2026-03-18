@@ -15,7 +15,7 @@ impl FileManagement {
             fs::create_dir_all(parent)?;
         }
 
-        Self::write_cbor(&StoreEntity::Codexi(data.clone()), file_path)?;
+        Self::write_storage(&StoreEntity::Codexi(data.clone()), file_path)?;
 
         Ok(())
     }
@@ -27,7 +27,7 @@ impl FileManagement {
             return Ok(Codexi::new(settings)?);
         }
 
-        match Self::read_cbor(file_path)? {
+        match Self::read_storage(file_path)? {
             StoreEntity::Codexi(mut codexi) => {
                 for account in codexi.accounts.iter_mut() {
                     account.refresh_anchors();

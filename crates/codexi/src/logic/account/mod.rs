@@ -22,6 +22,9 @@ pub use container::OperationContainer;
 pub use dto::{OperationEntry, OperationItem, StatementEntry, StatementItem};
 pub use error::AccountError;
 pub use model::{Account, AccountMeta};
-pub use policy::FinancialAction;
+pub use policy::{
+    AccountContext, AccountContextItem, ComplianceAction, CompliancePolicy, LifecycleViolation,
+    TemporalAction,
+};
 pub use reports::{StatsEntry, SummaryEntry};
 pub use search::{SearchEntry, SearchItem, SearchParams, SearchParamsBuilder, search};

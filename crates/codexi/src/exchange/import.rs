@@ -34,7 +34,7 @@ impl ExchangeData {
         Account {
             id: import.id,
             name: import.name.clone(),
-            account_type: import.account_type,
+            context: import.context.clone(),
             bank_id: import.bank_id,                             // Bank Id
             currency_id: import.currency_id,                     // Currency id for the account
             carry_forward_balance: import.carry_forward_balance, // for internal calculation

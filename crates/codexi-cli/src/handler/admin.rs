@@ -155,8 +155,14 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
         lines.push(String::new());
 
         lines.push(format!(
-            "codexi-cli account create {} {}",
-            account.open_date, account.name
+            "codexi-cli account create {} {} --type {}",
+            account.open_date,
+            account.name,
+            account.context.account_type.as_str()
+        ));
+        lines.push(format!(
+            "codexi-cli account set-context -o {} -b {}",
+            account.context.overdraft_limit, account.context.min_balance,
         ));
         for op in &account.operations {
             let line = match op.kind {

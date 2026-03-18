@@ -28,6 +28,8 @@ pub fn validate_text_rules(s: &str, min: usize, max: usize) -> Result<(), String
     Ok(())
 }
 
+/*------------------------ TEST ------------------------*/
+
 #[cfg(test)]
 mod tests {
     use super::*;

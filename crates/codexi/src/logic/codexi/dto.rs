@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::logic::account::AccountContextItem;
 use crate::logic::bank::BankEntry;
 use crate::logic::category::CategoryEntry;
 use crate::logic::currency::CurrencyEntry;
@@ -14,6 +15,7 @@ pub struct AccountItem {
     pub close: bool,
     pub bank: String,
     pub currency: String,
+    pub context: AccountContextItem,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

@@ -37,6 +37,16 @@ pub fn parse_optional_id(id: Option<&str>) -> Result<Option<Nulid>, CoreError> {
     id.map(parse_id).transpose()
 }
 
+pub fn parse_u32(s: &str, field: &str) -> Result<u32, CoreError> {
+    s.parse::<u32>().map_err(|e| CoreError::Number {
+        source: e,
+        field: field.to_string(),
+    })
+}
+pub fn parse_optional_u32(opt_s: &Option<String>, field: &str) -> Result<Option<u32>, CoreError> {
+    opt_s.as_deref().map(|s| parse_u32(s, field)).transpose()
+}
+
 pub fn parse_date(s: &str) -> Result<NaiveDate, CoreError> {
     NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|_| {
         CoreError::InvalidDate(format!(
@@ -44,6 +54,9 @@ pub fn parse_date(s: &str) -> Result<NaiveDate, CoreError> {
             s
         ))
     })
+}
+pub fn parse_optional_date(opt_s: &Option<String>) -> Result<Option<NaiveDate>, CoreError> {
+    opt_s.as_deref().map(parse_date).transpose()
 }
 
 pub fn parse_decimal(s: &str, field: &str) -> Result<Decimal, CoreError> {

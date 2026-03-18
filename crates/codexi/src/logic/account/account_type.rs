@@ -2,11 +2,12 @@
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::str::FromStr;
 
 use crate::logic::account::error::AccountTypeError;
 
 /// Enum representing the type of an account
-#[derive(Debug, Clone, Default, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum AccountType {
     #[default]
     Current,
@@ -32,7 +33,8 @@ impl AccountType {
     }
     /// Try to create an AccountType from a string
     pub fn try_from_str(s: &str) -> Result<Self, AccountTypeError> {
-        match s.trim().to_ascii_lowercase().as_str() {
+        let lower = s.trim().to_ascii_lowercase();
+        match lower.as_ref() {
             "current" | "cur" => Ok(AccountType::Current),
             "saving" | "sav" => Ok(AccountType::Saving),
             "joint" | "joi" => Ok(AccountType::Joint),
@@ -65,6 +67,14 @@ impl From<AccountType> for &'static str {
         t.as_str()
     }
 }
+
+impl FromStr for AccountType {
+    type Err = AccountTypeError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        AccountType::try_from_str(s)
+    }
+}
+
 /// Implement Display for AccountType
 impl fmt::Display for AccountType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

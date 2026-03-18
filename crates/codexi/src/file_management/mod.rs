@@ -2,7 +2,6 @@
 
 mod archive;
 mod backup;
-mod cbor;
 mod envelope;
 mod error;
 mod html;
@@ -10,6 +9,7 @@ mod json;
 mod maintenance;
 mod snapshot;
 mod state;
+mod storage;
 mod toml;
 
 pub struct FileManagement;

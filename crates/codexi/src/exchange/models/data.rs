@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     core::serde_nulid,
     exchange::{ExchangeCheckpointRef, ExchangeOperation},
-    logic::account::{AccountAnchors, AccountMeta, AccountType},
+    logic::account::{AccountAnchors, AccountContext, AccountMeta},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,7 +20,7 @@ pub struct ExchangeData {
     #[serde(default)]
     pub name: String, // Account name
     #[serde(default)]
-    pub account_type: AccountType,
+    pub context: AccountContext,
     #[serde(default, with = "serde_nulid::option")]
     pub bank_id: Option<Nulid>, // Nulid of the Bank
     #[serde(default, with = "serde_nulid::option")]
