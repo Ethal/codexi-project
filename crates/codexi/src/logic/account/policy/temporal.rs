@@ -1,25 +1,25 @@
-// src/logic/account/policy.rs
+// src/logic/account/policy/temporal.rs
 
 use chrono::{Local, NaiveDate};
 use nulid::Nulid;
 
 use crate::logic::{
     account::Account,
-    account::error::FinancialPolicyError,
+    account::policy::TemporalViolation,
     operation::{OperationKind, SystemKind},
 };
 
 #[derive(Debug)]
-pub enum FinancialAction<'a> {
+pub enum TemporalAction<'a> {
     Create(&'a OperationKind), // Create a new operation (Regular, Adjust, Close...)
     Void(Nulid),               // Void(op_id)
 }
 
 impl Account {
     /// Check thet operations is not empty.
-    fn operations_empty(&self, kind: &OperationKind) -> Result<(), FinancialPolicyError> {
+    fn operations_empty(&self, kind: &OperationKind) -> Result<(), TemporalViolation> {
         if self.operations.is_empty() {
-            Err(FinancialPolicyError::HaveNoOperation(format!(
+            Err(TemporalViolation::HaveNoOperation(format!(
                 "{}  count op: {} ",
                 kind.as_str(),
                 self.operations.len()
@@ -29,38 +29,38 @@ impl Account {
         }
     }
     /// Check thet operations is empty.
-    fn operations_not_empty(&self) -> Result<(), FinancialPolicyError> {
+    fn operations_not_empty(&self) -> Result<(), TemporalViolation> {
         if !self.operations.is_empty() {
-            Err(FinancialPolicyError::HaveOperation)
+            Err(TemporalViolation::HaveOperation)
         } else {
             Ok(())
         }
     }
     /// Return an error if only init operation
-    fn has_only_init(&self) -> Result<(), FinancialPolicyError> {
+    fn has_only_init(&self) -> Result<(), TemporalViolation> {
         let has_only_init = self.operations.len() == 1
             && self
                 .operations
                 .iter()
                 .all(|op| matches!(op.kind, OperationKind::System(SystemKind::Init)));
         if has_only_init {
-            return Err(FinancialPolicyError::OnlyInit);
+            return Err(TemporalViolation::OnlyInit);
         }
         Ok(())
     }
     /// Return an error in the account is close(terminated)
-    fn is_terminated(&self) -> Result<(), FinancialPolicyError> {
+    fn is_terminated(&self) -> Result<(), TemporalViolation> {
         if self.terminated_date.is_some() {
-            return Err(FinancialPolicyError::AccountClose);
+            return Err(TemporalViolation::AccountClose);
         }
         Ok(())
     }
-    /// Check the financial policy, if not reach -> Error
-    pub fn financial_policy(
+    /// Check the temporal policy, if not reach -> Error
+    pub fn temporal_policy(
         &self,
-        action: FinancialAction,
+        action: TemporalAction,
         date: NaiveDate,
-    ) -> Result<(), FinancialPolicyError> {
+    ) -> Result<(), TemporalViolation> {
         let today = Local::now().date_naive();
 
         // Check account is close, no opaeration is allowed
@@ -72,13 +72,13 @@ impl Account {
         let last_adj = self.anchors.last_adjust;
 
         match action {
-            FinancialAction::Create(kind) => {
+            TemporalAction::Create(kind) => {
                 match kind {
                     // --- INITIALIZATION ---
                     OperationKind::System(SystemKind::Init) => {
                         self.operations_not_empty()?;
                         if date > today {
-                            return Err(FinancialPolicyError::InvalidData(
+                            return Err(TemporalViolation::InvalidData(
                                 "Init date cannot be in the future".into(),
                             ));
                         }
@@ -88,14 +88,14 @@ impl Account {
                     OperationKind::System(SystemKind::Checkpoint) => {
                         self.operations_empty(kind)?;
                         if date > today {
-                            return Err(FinancialPolicyError::InvalidData(
+                            return Err(TemporalViolation::InvalidData(
                                 "Closing date cannot be in the future".into(),
                             ));
                         }
                         if let Some(cld_dt) = last_chk
                             && date <= cld_dt
                         {
-                            return Err(FinancialPolicyError::InvalidData(format!(
+                            return Err(TemporalViolation::InvalidData(format!(
                                 "Must be > last closing ({})",
                                 cld_dt
                             )));
@@ -103,7 +103,7 @@ impl Account {
                         if let Some(init_dt) = last_init
                             && date < init_dt
                         {
-                            return Err(FinancialPolicyError::InvalidData(
+                            return Err(TemporalViolation::InvalidData(
                                 "Close cannot be before Init".into(),
                             ));
                         }
@@ -114,19 +114,19 @@ impl Account {
                     OperationKind::System(SystemKind::Adjust) => {
                         self.operations_empty(kind)?;
                         if date > today {
-                            return Err(FinancialPolicyError::InvalidData(
+                            return Err(TemporalViolation::InvalidData(
                                 "Adjustment date cannot be in the future".into(),
                             ));
                         }
                         if let Some(cld_dt) = last_chk
                             && date <= cld_dt
                         {
-                            return Err(FinancialPolicyError::InvalidData("Period closed".into()));
+                            return Err(TemporalViolation::InvalidData("Period closed".into()));
                         }
                         if let Some(adj_dt) = last_adj
                             && date < adj_dt
                         {
-                            return Err(FinancialPolicyError::InvalidData(format!(
+                            return Err(TemporalViolation::InvalidData(format!(
                                 "Adjustment date must be >= {}",
                                 adj_dt
                             )));
@@ -139,13 +139,13 @@ impl Account {
                         if let Some(cld_dt) = last_chk
                             && date <= cld_dt
                         {
-                            return Err(FinancialPolicyError::InvalidData("Period closed".into()));
+                            return Err(TemporalViolation::InvalidData("Period closed".into()));
                         }
                         let anchor = last_adj.or(last_init);
                         if let Some(a_dt) = anchor
                             && date < a_dt
                         {
-                            return Err(FinancialPolicyError::InvalidData(format!(
+                            return Err(TemporalViolation::InvalidData(format!(
                                 "Must be >= {}",
                                 a_dt
                             )));
@@ -154,11 +154,11 @@ impl Account {
                 }
             }
 
-            FinancialAction::Void(target_id) => {
+            TemporalAction::Void(target_id) => {
                 self.operations_empty(&OperationKind::System(SystemKind::Void))?;
 
                 if date < today {
-                    return Err(FinancialPolicyError::InvalidData(
+                    return Err(TemporalViolation::InvalidData(
                         "Void operation cannot be in the past".into(),
                     ));
                 }
@@ -166,22 +166,20 @@ impl Account {
                 let target_op = match self.get_operation_by_id(target_id) {
                     Some(op) => op,
                     None => {
-                        return Err(FinancialPolicyError::OperationNotFound(
-                            target_id.to_string(),
-                        ));
+                        return Err(TemporalViolation::OperationNotFound(target_id.to_string()));
                     }
                 };
 
                 // an operation can not be void twice
                 if target_op.links.void_by.is_some() {
-                    return Err(FinancialPolicyError::OperationAlreadyVoided(
+                    return Err(TemporalViolation::OperationAlreadyVoided(
                         target_id.to_string(),
                     ))?;
                 }
 
                 // No void on Init, Adj, Checkpoint
                 if target_op.kind.is_system() {
-                    return Err(FinancialPolicyError::InvalidData(
+                    return Err(TemporalViolation::InvalidData(
                         "System op cannot be voided".into(),
                     ));
                 }
@@ -194,7 +192,7 @@ impl Account {
                 if let Some(sys_dt) = latest_system_dt
                     && target_op.date <= sys_dt
                 {
-                    return Err(FinancialPolicyError::InvalidData(format!(
+                    return Err(TemporalViolation::InvalidData(format!(
                         "Operation #{} is locked by a system operation at {}.",
                         target_id, sys_dt
                     )));
@@ -211,6 +209,7 @@ impl Account {
 mod tests {
     use super::*;
     use crate::core::parse_date;
+    use crate::logic::account::AccountType;
     use crate::logic::operation::{OperationFlow, RegularKind};
     use chrono::Duration;
     use rust_decimal_macros::dec;
@@ -218,7 +217,14 @@ mod tests {
     // Helper to create an empty account
     fn setup_empty_account() -> Account {
         // init
-        Account::new(parse_date("2025-09-01").unwrap(), "Test".into(), None, None).unwrap()
+        Account::new(
+            parse_date("2025-09-01").unwrap(),
+            "Test".into(),
+            AccountType::Current,
+            None,
+            None,
+        )
+        .unwrap()
     }
 
     #[test]
@@ -248,7 +254,7 @@ mod tests {
         account.adjust_balance(today, dec!(50)).unwrap();
 
         // 3. test polycy : void of the yeterday operation shall fail due to the adjust
-        let res = account.financial_policy(FinancialAction::Void(op_id), today);
+        let res = account.temporal_policy(TemporalAction::Void(op_id), today);
 
         assert!(res.is_err(), "void should be lock due to the adjustment");
     }
@@ -258,13 +264,11 @@ mod tests {
         let account = setup_empty_account();
         let tomorrow = Local::now().date_naive() + Duration::days(1); // tomorrow
 
-        let res = account.financial_policy(
-            FinancialAction::Create(&OperationKind::System(SystemKind::Init)),
+        let res = account.temporal_policy(
+            TemporalAction::Create(&OperationKind::System(SystemKind::Init)),
             tomorrow,
         );
 
-        assert!(
-            matches!(res, Err(FinancialPolicyError::InvalidData(msg)) if msg.contains("future"))
-        );
+        assert!(matches!(res, Err(TemporalViolation::InvalidData(msg)) if msg.contains("future")));
     }
 }

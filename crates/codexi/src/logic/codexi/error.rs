@@ -25,10 +25,6 @@ pub enum CodexiError {
     Currency(#[from] CurrencyError),
     #[error("DATA_ACCOUNT: No account with id: {0}")]
     AccountNotFound(String),
-    #[error("DATA_ACCOUNT: Only one account")]
-    OnlyOneAccount,
-    #[error("DATA_ACCOUNT: Can not close the current account")]
-    CloseCurentAccount,
-    #[error("DATA_ACCOUNT: Closing date cannot before opening date {0}")]
-    CloseDateAccount(String),
+    #[error("No current account selected — use `account use <id>` to select one")]
+    NoCurrentAccount,
 }

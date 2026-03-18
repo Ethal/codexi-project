@@ -48,7 +48,7 @@ impl FileManagement {
         fs::create_dir_all(paths.archive_dir(&account_id))?;
 
         let archive = paths.archive_path(&account_id, &checkpoint_date);
-        Self::write_cbor(&StoreEntity::AccountArchive(data.clone()), &archive.path)?;
+        Self::write_storage(&StoreEntity::AccountArchive(data.clone()), &archive.path)?;
 
         Ok(archive.filename)
     }
@@ -60,7 +60,7 @@ impl FileManagement {
     ) -> Result<AccountArchive, FileArchiveError> {
         let archive = paths.archive_path(&account_id, &checkpoint_date);
 
-        match Self::read_cbor(&archive.path)? {
+        match Self::read_storage(&archive.path)? {
             StoreEntity::AccountArchive(archive) => Ok(archive),
             _ => Err(FileArchiveError::Storage(
                 StorageError::InvalidStoreEntity {

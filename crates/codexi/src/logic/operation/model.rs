@@ -9,7 +9,7 @@ use std::fmt;
 use std::path::PathBuf;
 use thousands::Separable;
 
-use crate::core::validate_text_rules;
+use crate::core::{format_date, validate_text_rules};
 use crate::logic::operation::OperationError;
 use crate::logic::operation::OperationFlow;
 use crate::logic::operation::OperationKind;
@@ -111,7 +111,7 @@ impl fmt::Display for Operation {
         write!(
             f,
             "{} | {} | {} | {:.2} | {}",
-            self.date.format("%Y-%m-%d"),
+            format_date(self.date),
             self.kind,
             self.flow,
             self.amount.separate_with_commas(),

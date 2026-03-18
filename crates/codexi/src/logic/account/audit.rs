@@ -8,7 +8,9 @@ use std::collections::HashMap;
 use crate::{
     core::{CoreWarning, CoreWarningKind},
     logic::{
-        account::{Account, AccountAnchors, AccountError, AccountMeta, FinancialAction},
+        account::{
+            Account, AccountAnchors, AccountError, AccountMeta, ComplianceAction, TemporalAction,
+        },
         operation::{Operation, OperationFlow},
     },
 };
@@ -20,7 +22,7 @@ impl Account {
         Self {
             id: self.id,
             name: self.name.clone(),
-            account_type: self.account_type,
+            context: self.context.clone(),
             bank_id: self.bank_id,
             currency_id: self.currency_id,
             carry_forward_balance: Decimal::ZERO, // Sera défini par le premier Init rejoué
@@ -35,7 +37,7 @@ impl Account {
         }
     }
     /// Audit the account
-    /// TEST 1 — policy via replay
+    /// TEST 1 — policy via replay /
     /// TEST 2 — locked period
     /// TEST 3 — balance by opération
     /// TEST 4 — current balance
@@ -60,7 +62,7 @@ impl Account {
         for op in &self.operations {
             if first_op {
                 first_op = false;
-                // No financial policy chek on the fist op — le shadow start from zero
+                // No temporal policy chek on the fist op — le shadow start from zero
                 shadow_account.commit_operation(op.clone());
                 running_balance = match op.flow {
                     OperationFlow::Credit => running_balance + op.amount,
@@ -71,7 +73,9 @@ impl Account {
             }
 
             // TEST 1 : policy on all operation except the first
-            shadow_account.financial_policy(FinancialAction::Create(&op.kind), op.date)?;
+            shadow_account.temporal_policy(TemporalAction::Create(&op.kind), op.date)?;
+            shadow_account
+                .compliance_policy(ComplianceAction::Create(&op.kind, op.flow, op.amount))?;
 
             // TEST 2 : locked period
             // If the operation is a normal transaction, it is not allowed

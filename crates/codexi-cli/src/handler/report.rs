@@ -59,9 +59,9 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
             if let Some(stats) = StatsEntry::new(&search_results, net) {
                 if open {
                     let html = export_stats_html(stats)?;
-                    let path = FileManagement::export_html(&html, cwd)?;
+                    let file_path = FileManagement::export_html(&html, cwd)?;
                     msg_info!("stats completed (report.html)");
-                    opener::open_browser(path)?;
+                    opener::open_browser(file_path)?;
                 } else {
                     view_stats(&stats);
                 }
@@ -90,10 +90,10 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                     msg_warn!("No data available");
                 } else {
                     let html = export_statement_html(statement_results)?;
-                    FileManagement::export_html(&html, cwd)?;
+                    let file_path = FileManagement::export_html(&html, cwd)?;
                     msg_info!("statement completed (report.html)");
                     if open {
-                        opener::open_browser(cwd)?;
+                        opener::open_browser(file_path)?;
                     }
                 }
             } else {

@@ -67,7 +67,7 @@ impl Account {
 mod tests {
     use super::*;
     use crate::logic::{
-        account::{AccountAnchors, AccountMeta, AccountType},
+        account::{AccountAnchors, AccountContext, AccountMeta, AccountType},
         operation::{
             OperationContext, OperationFlow, OperationKind, OperationLinks, OperationMeta,
             SystemKind,
@@ -81,7 +81,7 @@ mod tests {
         Account {
             id: Nulid::new().unwrap(),
             name: "Test Account".to_string(),
-            account_type: AccountType::default(),
+            context: AccountContext::from_type(AccountType::Current),
             bank_id: None,
             currency_id: None,
             carry_forward_balance: dec!(1000),
@@ -122,10 +122,10 @@ mod tests {
     }
 
     #[test]
-    fn test_import_respects_financial_policy() {
+    fn test_import_respects_temporal_policy() {
         let mut account = setup_test_account();
 
-        // Supposons que votre financial_policy interdise les opérations
+        // Supposons que votre temporal_policy interdise les opérations
         // dans le futur (ex: après aujourd'hui)
         let future_date = NaiveDate::from_ymd_opt(2099, 1, 1).unwrap();
 
@@ -144,7 +144,7 @@ mod tests {
 
         let result = account.merge_operations(vec![future_op]);
 
-        // Si votre financial_policy fonctionne, le merge doit échouer ici
+        // Si votre temporal_policy fonctionne, le merge doit échouer ici
         assert!(
             result.is_err(),
             "L'import devrait échouer car la date est hors politique financière"

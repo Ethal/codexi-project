@@ -18,6 +18,7 @@
 *.html
 MENU.md
 TODO.md
+*.dat
 
 # IDE
 .zed

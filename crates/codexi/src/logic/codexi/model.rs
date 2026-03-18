@@ -1,12 +1,12 @@
 // src/logic/codexi/model.rs
 
-use chrono::{Local, NaiveDate};
+use chrono::NaiveDate;
 use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{format_date, format_id};
+use crate::core::format_id;
 use crate::exchange::ImportSummary;
-use crate::logic::account::Account;
+use crate::logic::account::{Account, AccountContextItem, AccountError};
 use crate::logic::bank::BankList;
 use crate::logic::category::CategoryList;
 use crate::logic::codexi::{
@@ -78,12 +78,18 @@ impl Codexi {
         }
     }
     pub fn get_current_account(&self) -> Result<&Account, CodexiError> {
+        if self.current_account == Nulid::nil() {
+            return Err(CodexiError::NoCurrentAccount);
+        }
         self.accounts
             .iter()
             .find(|c| c.id == self.current_account)
             .ok_or_else(|| CodexiError::AccountNotFound(format_id(self.current_account)))
     }
     pub fn get_current_account_mut(&mut self) -> Result<&mut Account, CodexiError> {
+        if self.current_account == Nulid::nil() {
+            return Err(CodexiError::NoCurrentAccount);
+        }
         self.accounts
             .iter_mut()
             .find(|c| c.id == self.current_account)
@@ -107,19 +113,21 @@ impl Codexi {
     /// Close an account
     /// Allowed if not the latest open account, current account, close date below the open_date
     pub fn close_account(&mut self, id: Nulid, date: NaiveDate) -> Result<(), CodexiError> {
-        if self.account_count() <= 1 {
-            return Err(CodexiError::OnlyOneAccount);
-        }
+        // Life cycle rules
         let account = self.get_account_by_id_mut(&id)?;
-        if account.id == id {
-            return Err(CodexiError::CloseCurentAccount);
-        }
-        if account.open_date < date || date > Local::now().date_naive() {
-            return Err(CodexiError::CloseDateAccount(format_date(
-                account.open_date,
-            )));
-        }
+        account
+            .validate_close_date(date)
+            .map_err(AccountError::LifecycleViolation)?;
+
+        // Apply the terminated date
         account.terminated_date = Some(date);
+
+        // codexi rules
+        // Switch current_account to nil if it was the current account
+        if id == self.current_account {
+            self.current_account = Nulid::nil();
+        }
+
         Ok(())
     }
 
@@ -185,6 +193,7 @@ impl Codexi {
         {
             item.currency = currency.code.clone();
         }
+        item.context = AccountContextItem::from(&acc.context);
         item
     }
 }

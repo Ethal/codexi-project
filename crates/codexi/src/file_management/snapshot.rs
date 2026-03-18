@@ -41,7 +41,7 @@ impl FileManagement {
         fs::create_dir_all(&paths.snapshots_dir)?;
 
         let snapshot = paths.snapshot_path();
-        Self::write_cbor(&StoreEntity::Codexi(data.clone()), &snapshot.path)?;
+        Self::write_storage(&StoreEntity::Codexi(data.clone()), &snapshot.path)?;
 
         Ok(snapshot.filename)
     }
@@ -52,7 +52,7 @@ impl FileManagement {
     ) -> Result<Codexi, FileSnapshotError> {
         let file_path = paths.snapshots_dir.join(filename);
 
-        match Self::read_cbor(&file_path)? {
+        match Self::read_storage(&file_path)? {
             StoreEntity::Codexi(codexi) => Ok(codexi),
             _ => Err(FileSnapshotError::Storage(
                 StorageError::InvalidStoreEntity {

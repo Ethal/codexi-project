@@ -16,7 +16,7 @@ use crate::file_management::{
     FileCodexiError, FileEnvelope, FileExchangeError, FileManagement, StorageError, StorageFormat,
     checksum,
 };
-use crate::logic::account::{Account, AccountError}; // new structure
+use crate::logic::account::{Account, AccountError, AccountType}; // new structure
 use crate::logic::codexi::{Codexi, CodexiError, CodexiSettings}; // new structure
 use crate::logic::operation::{Operation, OperationContext}; // new structure
 use crate::logic::operation::{
@@ -206,6 +206,7 @@ fn migrate_v2_to_v3(
     let mut account = Account::new(
         open_date,
         "legacy".to_string(),
+        AccountType::Current,
         Some(Nulid::nil()),
         Some(Nulid::nil()),
     )?;

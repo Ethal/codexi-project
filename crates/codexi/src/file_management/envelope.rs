@@ -33,6 +33,7 @@ pub enum StoreEntity {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum StorageFormat {
     Cbor,
+    Ciborium,
     Unknown,
 }
 
@@ -41,6 +42,7 @@ impl StorageFormat {
     pub fn as_str(&self) -> &'static str {
         match self {
             StorageFormat::Cbor => "Cbor",
+            StorageFormat::Ciborium => "Ciborium",
             StorageFormat::Unknown => "Unknown",
         }
     }
@@ -56,9 +58,6 @@ impl From<StorageFormat> for &'static str {
 /// Implement Display for StorageFormat
 impl fmt::Display for StorageFormat {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            StorageFormat::Cbor => write!(f, "Cbor"),
-            StorageFormat::Unknown => write!(f, "Unknown"),
-        }
+        write!(f, "{}", self.as_str())
     }
 }

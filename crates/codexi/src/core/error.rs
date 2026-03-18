@@ -1,5 +1,6 @@
 // src/core/error.rs
 
+use std::fmt;
 use thiserror::Error;
 
 /// Error type for Core
@@ -12,6 +13,11 @@ pub enum CoreError {
     #[error("VAL_DECIMAL: Decimal error in field, {field}: {source}")]
     Decimal {
         source: rust_decimal::Error,
+        field: String,
+    },
+    #[error("VAL_INT: Number error in field, {field}: {source}")]
+    Number {
+        source: std::num::ParseIntError,
         field: String,
     },
     #[error("VAL_DATE:{0}")]
@@ -42,4 +48,21 @@ pub struct CoreWarning {
 pub enum CoreWarningKind {
     VoidOfNotFound,
     InvalidData,
+    ContextNotApplicable, // ← nouveau
+}
+
+impl CoreWarningKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            CoreWarningKind::VoidOfNotFound => "VoidOfNotFound",
+            CoreWarningKind::InvalidData => "InvalidData",
+            CoreWarningKind::ContextNotApplicable => "ContextNotApplicable",
+        }
+    }
+}
+
+impl fmt::Display for CoreWarning {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.kind.as_str(), self.message)
+    }
 }

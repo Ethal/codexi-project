@@ -64,6 +64,10 @@ pub enum StorageError {
     Io(#[from] std::io::Error),
     #[error("SYS_CBOR: {0}, Try the command migrate <VERSION>")]
     Cbor(#[from] serde_cbor::Error),
+    #[error("SYS_CIBORIUM_SER: {0}, Try the command migrate <VERSION>")]
+    CiboriumSer(#[from] ciborium::ser::Error<std::io::Error>),
+    #[error("SYS_CIBORIUM_DE: {0}, Try the command migrate <VERSION>")]
+    CiboriumDe(#[from] ciborium::de::Error<std::io::Error>),
     #[error("VAL_INVALID_FILE: Not a codexi data file, Try the command migrate <VERSION>")]
     InvalidMagic,
     #[error("VAL_INVALID_VERSION: Found: {found}, Expected: {expected}, Try the migrate command")]

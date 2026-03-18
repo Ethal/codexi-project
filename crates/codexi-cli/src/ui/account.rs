@@ -1,0 +1,56 @@
+// src/ui/account.rs
+
+use codexi::logic::codexi::{AccountEntry, AccountItem};
+
+use crate::ui::{NOTE_STYLE, TITLE_STYLE};
+
+/// view to list of account
+pub fn view_account(items: &AccountEntry) {
+    let title_text = TITLE_STYLE.apply_to("Accounts - <id> <name> <type> [currency] [bank]");
+    println!();
+    println!("{}", title_text);
+    for item in items.items.iter() {
+        let marker = if item.current {
+            "(*)"
+        } else if item.close {
+            "(c)"
+        } else {
+            "   "
+        };
+        println!(
+            " {} {} - {} {} {} {}",
+            marker, item.id, item.name, item.context.account_type, item.currency, item.bank
+        );
+    }
+    println!();
+    println!(
+        "{}",
+        NOTE_STYLE.apply_to("Note: (*) Current account, (c) Close Account.")
+    );
+    println!();
+}
+
+/// view to context t of account
+pub fn view_account_context(item: &AccountItem) {
+    let title_text = TITLE_STYLE.apply_to("Account context");
+    println!();
+    println!("{} {} {}", title_text, item.name, item.currency);
+    println!();
+    println!("Account Type: {}", item.context.account_type);
+    println!("Overdraft limit: {}", item.context.overdraft_limit);
+    println!("Minimun balance: {}", item.context.min_balance);
+    println!(
+        "Deposit locked until: {}",
+        item.context.deposit_locked_until
+    );
+    println!(
+        "Max monthly transactions: {}",
+        item.context.max_monthly_transactions
+    );
+    println!("Allows interest: {}", item.context.allows_interest);
+    println!(
+        "Allows joint signers: {}",
+        item.context.allows_joint_signers
+    );
+    println!();
+}

@@ -59,6 +59,7 @@ pub enum RootCommand {
         #[arg(
             index = 3,
             value_name = "DESCRIPTION...",
+            num_args = 1..,
             help = "Description of the debit operation",
             default_value = "no description"
         )]
@@ -86,6 +87,7 @@ pub enum RootCommand {
 
         #[arg(
             index = 3,
+            num_args = 1..,
             value_name = "DESCRIPTION...",
             help = "Description of the credit operation",
             default_value = "no description"

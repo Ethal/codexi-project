@@ -1,10 +1,12 @@
 // src/ui/mod.rs
 
+mod account;
 mod bank;
 mod category;
 mod currency;
 mod display;
 
+pub use account::*;
 pub use bank::view_bank;
 pub use category::view_category;
 pub use currency::view_currency;

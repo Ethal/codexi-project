@@ -14,8 +14,8 @@ pub use format::{
 };
 pub use fs::{get_config_dir, get_data_dir};
 pub use parse::{
-    parse_date, parse_decimal, parse_flexible_date_range, parse_id, parse_optional_decimal,
-    parse_optional_id, parse_text,
+    parse_date, parse_decimal, parse_flexible_date_range, parse_id, parse_optional_date,
+    parse_optional_decimal, parse_optional_id, parse_optional_u32, parse_text, parse_u32,
 };
 pub use paths::DataPaths;
 pub use validation::validate_text_rules;
