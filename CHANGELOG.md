@@ -23,13 +23,39 @@ All notable changes to this project will be documented in this file.
   Handles chronological and structural rules on operations (date ordering, period locking,
   init/void/checkpoint sequencing). Orthogonal to `CompliancePolicy`.
 
+- **Generic ID resolution (`resolve_id`)** — reusable mechanism to resolve full or short IDs (Nulid) across entities (operations, accounts, etc.). Supports suffix-based lookup with configurable minimum length (`MIN_SHORT_LEN`).
+
+- **Traits `HasNulid` and `ResolveError`** — enable generic ID resolution by decoupling entity identification and error handling from business logic. Allows reuse across multiple domains (Account, Bank, Currency, Category, ...).
+
+- **Transfer between accounts** — creates two linked `Regular::Transfer` operations
+  (Debit on source, Credit on destination). Always operates from the current account.
+  Exchange rate is calculated automatically as `amount_to / amount_from` — net effective
+  rate including all fees, no manual input required.
+
+- **Cross-currency transfer** — supports transfers between accounts with different
+  currencies (e.g. EUR → IDR). The net exchange rate reflects the real cost of the
+  transfer, fees included.
+
+- **Transfer void** — voiding a transfer operation automatically voids both linked
+  operations atomically. Uses the existing `void` command transparently — no separate
+  command needed. Void is rejected if the twin operation is archived.
+
+- **Cross-linked transfer references** — each transfer operation carries `transfer_id`
+  (twin operation) and `transfer_account_id` (twin account) in `OperationLinks`,
+  following the same symmetric pattern as `void_of`/`void_by`.
+
+- **Short ID support in CLI commands** — entities can now be referenced using the last characters of their ID instead of the full 26-character Nulid.
+
 - Command `account set-context` to update the configurable parameters of the current account.
 - Command `account context` to view the context of the current account.
-- Command `account create` now accepts an optional account type argument
-  (Current, Joint, Saving, Deposit, Business, Student). Defaults to Current.
+- Command `account create` now accepts an optional account type argument (Current, Joint, Saving, Deposit, Business, Student). Defaults to Current.
+- Command `transfer <DATE> <AMOUNT_FROM> <AMOUNT_TO> <ACCOUNT_ID_TO> [DESCRIPTION]`
+- Command `void` now handles both regular operations and transfer operations transparently.
 
 ### Changed
 - Command `account list` now shows the account type.
+- Refactored ID resolution logic — moved from account-specific implementation to a generic utility (`resolve_id`), improving consistency and reducing duplication.
+- Commands such as `account use` and `operation void` now support short ID input with validation (minimum length and ambiguity detection).
 
 ### Deprecated
 - **File storage format** migrated from `Cbor` (`serde_cbor`, abandoned upstream) to
@@ -42,6 +68,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Option `--open` for commands `report stats` and `report statement` that did not open
   the default browser in some cases.
+
 ---
 
 ## [0.1.0] — 2026-03-16
