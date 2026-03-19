@@ -5,7 +5,7 @@ use anyhow::Result;
 use codexi::{
     core::{DataPaths, parse_date, parse_decimal, parse_id, parse_text},
     file_management::FileManagement,
-    logic::account::{SearchParamsBuilder, AccountError, search},
+    logic::account::{AccountError, SearchParamsBuilder, search},
     logic::operation::Operation,
     logic::utils::resolve_id,
 };
@@ -52,17 +52,14 @@ pub fn handle_history_command(command: HistoryCommand, paths: &DataPaths) -> Res
             msg_info!("Close period of the {} completed", date);
         }
         HistoryCommand::Void { id } => {
-            let id_n = resolve_id::<Operation, AccountError>(
-                &id,
-                &account.operations,
-            )?;
-            account.void_operation(id_n)?;
+            let mut codexi = FileManagement::load_current_state(paths)?;
+            let op_id = {
+                let account = codexi.get_current_account()?;
+                resolve_id::<Operation, AccountError>(&id, &account.operations)?
+            };
+            codexi.void_from_current(op_id)?;
             FileManagement::save_current_state(&codexi, paths)?;
-            msg_info!(
-                "Operation short: #{} long: #{} successfully void.",
-                id,
-                id_n
-            );
+            msg_info!("Operation {} voided.", op_id);
         }
         HistoryCommand::Archive(archive) => match archive.command {
             ArchiveCommand::List {} => {

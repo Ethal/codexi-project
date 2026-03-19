@@ -23,6 +23,8 @@ pub enum TemporalViolation {
     OperationAlreadyVoided(String),
     #[error("FIN_OP: Operation #{0} not found")]
     OperationNotFound(String),
+    #[error("Transfer cannot be voided: twin operation is archived in account {account_id}")]
+    TransferTwinArchived { account_id: String },
 }
 
 #[derive(Debug, Error)]

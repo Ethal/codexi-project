@@ -31,6 +31,16 @@ pub enum CodexiError {
     AmbiguousShortId(String),
     #[error("DATA_ACCOUNT: Invalid short id {0}, expected {1} characters minimum")]
     InvalidShortId(String, usize),
+    #[error("VAL_TRANSFER: Source and destination accounts must be different")]
+    TransferSameAccount,
+    #[error("VAL_TRANSFER: Account {0} has no currency set — required for transfer")]
+    TransferNoCurrency(String),
+    #[error("VAL_TRANSFER: Amount must be greater than zero")]
+    TransferInvalidAmount,
+    #[error("VAL_TRANSFER: Twin operation not found — may be archived")]
+    TransferTwinArchived,
+    #[error("VAL_TRANSFER: Operation {0} is not a transfer")]
+    NotATransfer(String),
 }
 
 impl ResolveError for CodexiError {
@@ -41,6 +51,6 @@ impl ResolveError for CodexiError {
         CodexiError::AmbiguousShortId(input)
     }
     fn invalid(input: String, min: usize) -> Self {
-        CodexiError::InvalidShortId(input,min)
+        CodexiError::InvalidShortId(input, min)
     }
 }

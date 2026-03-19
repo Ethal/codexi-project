@@ -51,7 +51,7 @@ pub enum RootCommand {
             index = 2,
             value_name = "AMOUNT",
             required = true,
-            allow_negative_numbers = true,
+            allow_negative_numbers = false,
             help = "Amount of the debit operation"
         )]
         amount: String,
@@ -80,7 +80,7 @@ pub enum RootCommand {
             index = 2,
             value_name = "AMOUNT",
             required = true,
-            allow_negative_numbers = true,
+            allow_negative_numbers = false,
             help = "Amount of the credit operation"
         )]
         amount: String,
@@ -90,6 +90,53 @@ pub enum RootCommand {
             num_args = 1..,
             value_name = "DESCRIPTION...",
             help = "Description of the credit operation",
+            default_value = "no description"
+        )]
+        description: Vec<String>,
+    },
+    /// Add a transfer operation beetween account
+    /// transfer <DATE> <AMOUNT_FROM> <AMOUNT_TO> <TO_ID> [DESCRIPTION]
+    Transfer {
+        #[arg(
+            index = 1,
+            value_name = "DATE",
+            required = true,
+            help = "Date of the debit operation (YYYY-MM-DD)"
+        )]
+        date: String,
+
+        #[arg(
+            index = 2,
+            value_name = "AMOUNT_FROM",
+            required = true,
+            allow_negative_numbers = false,
+            help = "Amount of the current account to be tranfer"
+        )]
+        amount_from: String,
+
+        #[arg(
+            index = 3,
+            value_name = "AMOUNT_TO",
+            required = true,
+            allow_negative_numbers = false,
+            help = "Amount of the destination account to be tranfer"
+        )]
+        amount_to: String,
+
+        #[arg(
+            index = 4,
+            value_name = "ACCOUNT_ID_TO",
+            required = true,
+            allow_negative_numbers = false,
+            help = "Account id of the destination account "
+        )]
+        account_id_to: String,
+
+        #[arg(
+            index = 5,
+            value_name = "DESCRIPTION...",
+            num_args = 1..,
+            help = "Description of the debit operation",
             default_value = "no description"
         )]
         description: Vec<String>,

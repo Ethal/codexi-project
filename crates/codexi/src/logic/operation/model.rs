@@ -20,6 +20,7 @@ pub struct OperationLinks {
     pub void_of: Option<Nulid>,
     pub void_by: Option<Nulid>,
     pub transfer_id: Option<Nulid>,
+    pub transfer_account_id: Option<Nulid>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
