@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::{
     core::CoreError,
-    logic::{account::AccountError, bank::BankError, currency::CurrencyError},
+    logic::{account::AccountError, bank::BankError, currency::CurrencyError, utils::ResolveError},
 };
 
 #[derive(Debug, Error)]
@@ -25,6 +25,22 @@ pub enum CodexiError {
     Currency(#[from] CurrencyError),
     #[error("DATA_ACCOUNT: No account with id: {0}")]
     AccountNotFound(String),
-    #[error("No current account selected — use `account use <id>` to select one")]
+    #[error("DATA_ACCOUNT: No current account selected — use `account use <id>` to select one")]
     NoCurrentAccount,
+    #[error("DATA_ACCOUNT: Multiple account match '{0}', use more characters")]
+    AmbiguousShortId(String),
+    #[error("DATA_ACCOUNT: Invalid short id {0}, expected {1} characters minimum")]
+    InvalidShortId(String, usize),
+}
+
+impl ResolveError for CodexiError {
+    fn not_found(input: String) -> Self {
+        CodexiError::AccountNotFound(input)
+    }
+    fn ambiguous(input: String) -> Self {
+        CodexiError::AmbiguousShortId(input)
+    }
+    fn invalid(input: String, min: usize) -> Self {
+        CodexiError::InvalidShortId(input,min)
+    }
 }

@@ -12,6 +12,7 @@ use crate::logic::{
         TemporalAction, policy::AccountContext,
     },
     operation::{Operation, OperationFlow},
+    utils::HasNulid,
 };
 
 // meta data relaed to the account
@@ -149,6 +150,12 @@ impl Account {
             Ok(_) => Ok(true),   // Ok
             Err(_) => Ok(false), // not Ok
         }
+    }
+}
+
+impl HasNulid for Account {
+    fn id(&self) -> Nulid {
+        self.id
     }
 }
 
