@@ -59,6 +59,12 @@ impl CurrencyList {
             .find(|c| &c.id == id)
             .ok_or_else(|| CurrencyError::CurrencyNotFound(format_id(*id)))
     }
+    pub fn currency_id_by_code(&self, code: &str) -> Option<Nulid> {
+        self.currencies
+            .iter()
+            .find(|c| c.code == code)
+            .map(|c| c.id)
+    }
 
     pub fn count(&self) -> usize {
         self.currencies.len()
