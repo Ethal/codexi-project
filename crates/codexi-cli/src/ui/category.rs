@@ -1,8 +1,9 @@
 // src/ui/dictionnaries.rs
 
+use codexi::core::format_id_short;
 use codexi::logic::category::CategoryEntry;
 
-use crate::ui::{TITLE_STYLE, format_long_id_to_short};
+use crate::ui::TITLE_STYLE;
 
 /// view to list of the category
 pub fn view_category(datas: &CategoryEntry) {
@@ -16,7 +17,7 @@ pub fn view_category(datas: &CategoryEntry) {
             println!(
                 " {} {} {:<20} {}",
                 c.id,
-                format_long_id_to_short(&c.id),
+                format_id_short(&c.id),
                 c.name,
                 c.note.clone().unwrap_or_default()
             );

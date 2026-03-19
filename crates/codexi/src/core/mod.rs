@@ -8,9 +8,12 @@ mod paths;
 pub mod serde_nulid;
 mod validation;
 
+pub const ID_MIN_SHORT_LEN: usize = 5;
+
 pub use error::{CoreError, CoreWarning, CoreWarningKind};
 pub use format::{
-    format_date, format_date_time_long, format_date_time_short, format_id, format_time,
+    format_date, format_date_time_long, format_date_time_short, format_id, format_id_short,
+    format_time,
 };
 pub use fs::{get_config_dir, get_data_dir};
 pub use parse::{

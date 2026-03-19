@@ -1,8 +1,9 @@
 // src/ui/dictionnaries.rs
 
+use codexi::core::format_id_short;
 use codexi::logic::bank::BankEntry;
 
-use crate::ui::{TITLE_STYLE, format_long_id_to_short};
+use crate::ui::TITLE_STYLE;
 
 /// view to list of the bank
 pub fn view_bank(datas: &BankEntry) {
@@ -16,7 +17,7 @@ pub fn view_bank(datas: &BankEntry) {
             println!(
                 " {} {} {} {} {}",
                 b.id,
-                format_long_id_to_short(&b.id),
+                format_id_short(&b.id),
                 b.name,
                 b.branch.clone().unwrap_or_default(),
                 b.note.clone().unwrap_or_default()

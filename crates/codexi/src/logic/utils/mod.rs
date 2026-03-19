@@ -2,4 +2,4 @@
 
 mod resolve_id;
 
-pub use resolve_id::{resolve_id, ResolveError, HasNulid, MIN_SHORT_LEN};
+pub use resolve_id::{HasNulid, ResolveError, resolve_id};

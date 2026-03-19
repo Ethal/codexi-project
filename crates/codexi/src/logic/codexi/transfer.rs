@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use nulid::Nulid;
 use rust_decimal::Decimal;
 
-use crate::core::format_id;
+use crate::core::{format_id, format_id_short};
 use crate::logic::{
     account::{AccountError, ComplianceAction, TemporalAction},
     codexi::{Codexi, CodexiError},
@@ -107,7 +107,11 @@ impl Codexi {
         op_from.context.exchange_rate = exchange_rate;
 
         // --- Build destination operation (Credit) ---
-        let desc_to = format!("TRANSFER FROM {}: {}", format_id(from_id), description);
+        let desc_to = format!(
+            "TRANSFER FROM {}: {}",
+            format_id_short(&format_id(from_id)),
+            description
+        );
         let mut links_to = OperationLinks::default();
         links_to.transfer_id = Some(op_from_id);
         links_to.transfer_account_id = Some(from_id);
