@@ -3,7 +3,6 @@
 use chrono::NaiveDate;
 use nulid::Nulid;
 use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 
 use crate::core::format_id;
 use crate::logic::{
@@ -36,11 +35,6 @@ impl Codexi {
             return Err(CodexiError::TransferSameAccount);
         }
 
-        // Amounts must be positive
-        if amount_from <= dec!(0) || amount_to <= dec!(0) {
-            return Err(CodexiError::TransferInvalidAmount);
-        }
-
         // Both accounts must exist and have a currency set
         let currency_from = self
             .get_account_by_id(&from_id)?
@@ -51,9 +45,6 @@ impl Codexi {
             .get_account_by_id(&to_id)?
             .currency_id
             .ok_or_else(|| CodexiError::TransferNoCurrency(format_id(to_id)))?;
-
-        // Calculate effective exchange rate : amount_to / amount_from
-        let exchange_rate = amount_to / amount_from;
 
         let kind = OperationKind::Regular(RegularKind::Transfer);
 
@@ -98,7 +89,6 @@ impl Codexi {
 
         let mut ctx_from = OperationContext::default();
         ctx_from.currency_id = Some(currency_from);
-        ctx_from.exchange_rate = exchange_rate;
 
         let mut op_from = OperationBuilder::default()
             .date(date)
@@ -112,7 +102,9 @@ impl Codexi {
             .map_err(AccountError::Operation)?;
 
         let op_from_id = op_from.id;
-        op_from.context.exchange_rate = ctx_from.exchange_rate;
+        // Calculate effective exchange rate : amount_to / amount_from
+        let exchange_rate = amount_to / amount_from;
+        op_from.context.exchange_rate = exchange_rate;
 
         // --- Build destination operation (Credit) ---
         let desc_to = format!("TRANSFER FROM {}: {}", format_id(from_id), description);
@@ -122,7 +114,6 @@ impl Codexi {
 
         let mut ctx_to = OperationContext::default();
         ctx_to.currency_id = Some(currency_to);
-        ctx_to.exchange_rate = Decimal::ONE; // destination side — rate already on source
 
         // Pre-set the id we reserved earlier
         let mut op_to = OperationBuilder::default()
@@ -189,6 +180,7 @@ impl Codexi {
             let op = acc
                 .get_operation_by_id(op_id)
                 .ok_or_else(|| AccountError::OperationNotFound(format_id(op_id)))?;
+
             // Only collect twin info if transfer_id AND transfer_account_id are set
             match (op.links.transfer_id, op.links.transfer_account_id) {
                 (Some(tid), Some(aid)) => Some((tid, aid)),
@@ -224,7 +216,7 @@ impl Codexi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::logic::account::{Account, AccountType};
+    use crate::logic::account::{Account, AccountType, ComplianceViolation};
     use crate::logic::codexi::{Codexi, CodexiSettings};
     use chrono::NaiveDate;
     use rust_decimal_macros::dec;
@@ -371,14 +363,24 @@ mod tests {
             dec!(100_000),
             "test".into(),
         );
-        assert!(matches!(res, Err(CodexiError::TransferInvalidAmount)));
+        assert!(matches!(
+            res,
+            Err(CodexiError::Account(AccountError::ComplianceViolation(
+                ComplianceViolation::InvalidAmount { amount: _ }
+            )))
+        ));
     }
 
     #[test]
     fn transfer_amount_to_zero_fails() {
         let (mut codexi, _, to_id) = setup_codexi_two_accounts();
         let res = codexi.transfer(transfer_date(), dec!(100), to_id, dec!(0), "test".into());
-        assert!(matches!(res, Err(CodexiError::TransferInvalidAmount)));
+        assert!(matches!(
+            res,
+            Err(CodexiError::Account(AccountError::ComplianceViolation(
+                ComplianceViolation::InvalidAmount { amount: _ }
+            )))
+        ));
     }
 
     #[test]
