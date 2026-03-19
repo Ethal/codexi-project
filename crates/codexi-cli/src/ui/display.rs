@@ -5,7 +5,7 @@ use rust_decimal::prelude::ToPrimitive;
 use thousands::Separable;
 
 use codexi::{
-    core::CoreWarning,
+    core::{CoreWarning, format_id_short},
     file_management::CodexiInfos,
     logic::{
         account::{SearchEntry, StatsEntry, SummaryEntry},
@@ -152,7 +152,7 @@ pub fn view_search(items: &SearchEntry) {
             amount_style.apply_to(format!("{:.2}", item.operation.amount).separate_with_commas());
 
         let index_str = item.operation.id.to_string();
-        let index_text = LABEL_STYLE.apply_to(format!("#{}", &index_str[(index_str.len() - 5)..]));
+        let index_text = LABEL_STYLE.apply_to(format!("#{}", format_id_short(&index_str)));
 
         println!(
             "│{:<7}│{}│{}│{:>18}│{:>18}│{:<40}│",

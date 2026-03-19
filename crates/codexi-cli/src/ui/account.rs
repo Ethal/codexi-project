@@ -1,12 +1,14 @@
 // src/ui/account.rs
 
+use codexi::core::format_id_short;
 use codexi::logic::codexi::{AccountEntry, AccountItem};
 
 use crate::ui::{NOTE_STYLE, TITLE_STYLE};
 
 /// view to list of account
 pub fn view_account(items: &AccountEntry) {
-    let title_text = TITLE_STYLE.apply_to("Accounts - <id> <name> <type> [currency] [bank]");
+    let title_text =
+        TITLE_STYLE.apply_to("Accounts - <id> <short id> <name> <type> [currency] [bank]");
     println!();
     println!("{}", title_text);
     for item in items.items.iter() {
@@ -18,8 +20,14 @@ pub fn view_account(items: &AccountEntry) {
             "   "
         };
         println!(
-            " {} {} - {} {} {} {}",
-            marker, item.id, item.name, item.context.account_type, item.currency, item.bank
+            " {} {} {} - {} {} {} {}",
+            marker,
+            item.id,
+            format_id_short(&item.id),
+            item.name,
+            item.context.account_type,
+            item.currency,
+            item.bank
         );
     }
     println!();
@@ -32,24 +40,27 @@ pub fn view_account(items: &AccountEntry) {
 
 /// view to context t of account
 pub fn view_account_context(item: &AccountItem) {
-    let title_text = TITLE_STYLE.apply_to("Account context");
+    let title_text_1 = TITLE_STYLE.apply_to("Account");
+    let title_text_2 = TITLE_STYLE.apply_to("context");
     println!();
-    println!("{} {} {}", title_text, item.name, item.currency);
-    println!();
-    println!("Account Type: {}", item.context.account_type);
-    println!("Overdraft limit: {}", item.context.overdraft_limit);
-    println!("Minimun balance: {}", item.context.min_balance);
     println!(
-        "Deposit locked until: {}",
+        "{}({} {}) {}",
+        title_text_1, item.name, item.currency, title_text_2
+    );
+    println!(" Account Type: {}", item.context.account_type);
+    println!(" Overdraft limit: {}", item.context.overdraft_limit);
+    println!(" Minimun balance: {}", item.context.min_balance);
+    println!(
+        " Deposit locked until: {}",
         item.context.deposit_locked_until
     );
     println!(
-        "Max monthly transactions: {}",
+        " Max monthly transactions: {}",
         item.context.max_monthly_transactions
     );
-    println!("Allows interest: {}", item.context.allows_interest);
+    println!(" Allows interest: {}", item.context.allows_interest);
     println!(
-        "Allows joint signers: {}",
+        " Allows joint signers: {}",
         item.context.allows_joint_signers
     );
     println!();

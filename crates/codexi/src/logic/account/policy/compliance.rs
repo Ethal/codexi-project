@@ -14,7 +14,8 @@ use crate::logic::{
 /// Contains the full context of the operation to be validated.
 #[derive(Debug)]
 pub enum ComplianceAction<'a> {
-    /// Creating a transaction: type + direction + gross amount (always positive)
+    /// Creating a transaction: type + direction + gross amount (always positive for Regular,
+    /// may be signed for System ops calculated internally e.g. Init, Adjust)
     Create(&'a OperationKind, OperationFlow, Decimal),
     /// Reversal of a transaction — accounting adjustment, always goes through
     Void,
@@ -24,6 +25,12 @@ pub enum ComplianceAction<'a> {
 /// Receives a ComplianceAction containing kind, flow and amount.
 /// Each implementation decides what to check based on the kind.
 /// Numeric values always come from AccountContext.
+///
+/// Amount contract:
+///   - Regular(_)         → amount must be strictly positive (user-provided, validated here)
+///   - System(Init|Adjust)→ amount is always positive (pre-sanitized via .abs() by caller)
+///   - System(Checkpoint) → no financial validation
+///   - System(Void)       → no financial validation
 pub trait CompliancePolicy {
     fn validate(
         &self,
@@ -37,23 +44,36 @@ pub trait CompliancePolicy {
             ComplianceAction::Void => Ok(()),
 
             ComplianceAction::Create(kind, flow, amount) => {
-                let signed = amount * flow.to_sign();
                 match kind {
-                    // Checkpoint — end of period, not an actual transaction
+                    // Checkpoint — end of period, not an actual financial movement
                     OperationKind::System(SystemKind::Checkpoint) => Ok(()),
 
-                    // System void — already handled by ComplianceAction::Void
+                    // System Void — already handled by ComplianceAction::Void
                     // but in case it goes through Create
                     OperationKind::System(SystemKind::Void) => Ok(()),
 
-                    // Init and Adjust — regularizations, overdraft only
+                    // Init and Adjust — internal regularizations.
+                    // Amount is pre-sanitized via .abs() by the caller (action.rs),
+                    // flow is derived via OperationFlow::from_sign().
+                    // Only overdraft is checked — no quota, no min_balance.
                     OperationKind::System(SystemKind::Init)
                     | OperationKind::System(SystemKind::Adjust) => {
+                        // Amount is guaranteed positive by caller — compute signed directly
+                        let signed = amount * flow.to_sign();
                         self.validate_overdraft(ctx, current_balance, signed)
                     }
 
-                    // Regular — full validation
+                    // Regular (Transaction, Fee, Transfer, Refund) — full validation.
+                    // Amount must be strictly positive — user-provided value, validated here
+                    // before operation.build() to give a meaningful compliance error early.
+                    // flow carries the direction (Debit/Credit).
                     OperationKind::Regular(_) => {
+                        // ← MODIFIED: amount > 0 check moved here from operation.build()
+                        // for Regular ops to provide a compliance-level error with context
+                        if amount <= Decimal::ZERO {
+                            return Err(ComplianceViolation::InvalidAmount { amount });
+                        }
+                        let signed = amount * flow.to_sign();
                         self.validate_full(ctx, current_balance, signed, monthly_count)
                     }
                 }
@@ -62,7 +82,7 @@ pub trait CompliancePolicy {
     }
 
     /// Checks only the overdraft limit.
-    /// Used for Init and Adjust.
+    /// Used for Init and Adjust — no quota, no min_balance.
     fn validate_overdraft(
         &self,
         ctx: &AccountContext,
@@ -80,7 +100,9 @@ pub trait CompliancePolicy {
     }
 
     /// Checks overdraft + min_balance + monthly quota.
-    /// Used for Regular — can be overridden per type (e.g., Saving, Deposit).
+    /// Used for Regular (Transaction, Fee, Transfer, Refund).
+    /// Can be overridden per account type (e.g. Saving, Deposit).
+    /// Receives signed amount — caller is responsible for computing it.
     fn validate_full(
         &self,
         ctx: &AccountContext,
@@ -98,7 +120,7 @@ pub trait CompliancePolicy {
             });
         }
 
-        // Minimum balance — only if no overdraft allowed
+        // Minimum balance — only enforced when no overdraft is allowed
         if ctx.overdraft_limit == Decimal::ZERO && resulting < ctx.min_balance {
             return Err(ComplianceViolation::MinBalanceViolated {
                 minimum: ctx.min_balance,
@@ -143,14 +165,16 @@ impl CompliancePolicy for SavingPolicy {
         signed: Decimal,
         monthly_count: u32,
     ) -> Result<(), ComplianceViolation> {
-        // A savings account can never be negative
+        // A savings account can never go negative — no overdraft allowed
         if current_balance + signed < Decimal::ZERO {
             return Err(ComplianceViolation::NotAllowed {
                 reason: "saving account cannot go negative",
             });
         }
-        // Delegate to common behavior for the rest
-        // Directly call the shared logic via the trait method
+
+        // Delegate remaining checks to shared logic
+        // Note: overdraft check is skipped here since savings accounts
+        // are already blocked from going negative above
         let resulting = current_balance + signed;
 
         if ctx.overdraft_limit == Decimal::ZERO && resulting < ctx.min_balance {
@@ -177,7 +201,7 @@ impl CompliancePolicy for DepositPolicy {
         signed: Decimal,
         monthly_count: u32,
     ) -> Result<(), ComplianceViolation> {
-        // Withdrawal blocked before maturity date
+        // Withdrawal (negative signed amount) blocked before maturity date
         if signed < Decimal::ZERO
             && let Some(locked_until) = ctx.deposit_locked_until
             && Local::now().date_naive() < locked_until
@@ -187,7 +211,7 @@ impl CompliancePolicy for DepositPolicy {
             });
         }
 
-        // Delegate to common behavior
+        // Delegate to common checks
         let resulting = current_balance + signed;
         if resulting < ctx.overdraft_limit.neg() {
             return Err(ComplianceViolation::OverdraftExceeded {
@@ -235,6 +259,7 @@ impl Account {
     /// Single entry point called from action.rs,
     /// after temporal_policy() and before commit_operation().
     pub fn compliance_policy(&self, action: ComplianceAction) -> Result<(), ComplianceViolation> {
+        // Monthly count is only relevant for Regular operations
         let monthly_count = match action {
             ComplianceAction::Create(kind, _, _) if kind.is_regular() => {
                 self.monthly_operation_count(chrono::Local::now().date_naive())
@@ -251,7 +276,7 @@ impl Account {
     }
 
     /// Counts active Regular operations for the month corresponding to `date`.
-    /// Voided operations (void_by set) are excluded.
+    /// Voided operations (void_by set) are excluded from the count.
     pub fn monthly_operation_count(&self, date: chrono::NaiveDate) -> u32 {
         self.operations
             .iter()
@@ -366,7 +391,6 @@ mod tests {
 
     #[test]
     fn init_ignores_monthly_quota() {
-
         let action = ComplianceAction::Create(
             &OperationKind::System(SystemKind::Init),
             OperationFlow::Credit,

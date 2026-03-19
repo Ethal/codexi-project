@@ -8,8 +8,10 @@ use codexi::{
     core::{DataPaths, format_date, parse_date, parse_decimal, parse_optional_decimal, parse_text},
     file_management::FileManagement,
     logic::{
-        account::{SearchParamsBuilder, search},
+        account::{Account, SearchParamsBuilder, search},
+        codexi::CodexiError,
         operation::{OperationFlow, OperationKind, RegularKind},
+        utils::resolve_id,
     },
     types::DateRange,
 };
@@ -33,7 +35,6 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
     let skip_confirm = cli.yes;
 
     match cli.command {
-        RootCommand::Account(args) => handle_account_command(args.command, paths)?,
         RootCommand::Debit {
             date,
             amount,
@@ -87,6 +88,33 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 description.join(" ")
             );
         }
+        RootCommand::Transfer {
+            date,
+            amount_from,
+            amount_to,
+            account_id_to,
+            description,
+        } => {
+            let mut codexi = FileManagement::load_current_state(paths)?;
+
+            let date = parse_date(&date)?;
+            let amount_from_d = parse_decimal(&amount_from, "amount fom")?;
+            let amount_to_d = parse_decimal(&amount_to, "amount to")?;
+            let acc_id_to = resolve_id::<Account, CodexiError>(&account_id_to, &codexi.accounts)?;
+            let desc = parse_text(description.clone());
+
+            codexi.transfer(date, amount_from_d, acc_id_to, amount_to_d, desc.clone())?;
+
+            FileManagement::save_current_state(&codexi, paths)?;
+            msg_info!(
+                "Transfer operation added: {} {} {} to {} {}",
+                date,
+                amount_from_d,
+                amount_to_d,
+                acc_id_to,
+                desc
+            );
+        }
 
         RootCommand::Search {
             from,
@@ -133,8 +161,9 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
         RootCommand::Data(args) => handle_data_command(args.command, cwd, paths, skip_confirm)?,
         RootCommand::History(args) => handle_history_command(args.command, paths)?,
         RootCommand::Admin(args) => handle_admin_command(args.command, cwd, paths, skip_confirm)?,
-        RootCommand::Currency(args) => handle_currency_command(args.command, paths)?,
+        RootCommand::Account(args) => handle_account_command(args.command, paths)?,
         RootCommand::Bank(args) => handle_bank_command(args.command, paths)?,
+        RootCommand::Currency(args) => handle_currency_command(args.command, paths)?,
         RootCommand::Category(args) => handle_category_command(args.command, paths)?,
     }
     Ok(())

@@ -52,7 +52,7 @@ cargo build --release
 
 ```bash
 # 1. Initialize a new account
-codexi account create 2025-01-01 My Bank Account
+codexi account create 2025-01-01 My Bank Account --type Current
 codexi history init 2025-01-01 1500.00
 
 # 2. Record daily operations
@@ -82,16 +82,36 @@ codexi admin backup
 | :--- | :--- |
 | `credit <date> <amount> [desc]` | Record an incoming flow |
 | `debit <date> <amount> [desc]` | Record an outgoing flow |
+| `transfer <date> <amount_from> <amount_to> <account_id_to> [desc]` | Record transfer from current account to other account |
 | `search(view) [--from] [--to] [--text] [--kind] [--flow] [--min-amount] [--max-amount] [--latest]` | Search and filter operations |
 
 ### Account
 | Command | Description |
 | :--- | :--- |
 | `account list` | List all accounts (`*` = active, `c` = closed) |
-| `account create <date> <name>` | Create a new account |
+| `account create <date> <name> [--type]` | Create a new account |
 | `account use <id>` | Switch active account |
 | `account close <id> <date>` | Close an account |
 | `account rename <id> <name>` | Rename an account |
+| `account context` | view the context of the current account |
+| `account set-bank <bank id>` | set bank to current account |
+| `account set-currency <currency id>` | set currency to current account |
+| `account set-context [--overdraft] [--balance-min] [--max-monthly-transactions] [--deposit-locked-until] [--interest] [--signers]` | set context to current account |
+
+### Bank
+| Command | Description |
+| :--- | :--- |
+| `bank list` | List all the bank available |
+
+### Currency
+| Command | Description |
+| :--- | :--- |
+| `currency list` | List all the currency available |
+
+### Category
+| Command | Description |
+| :--- | :--- |
+| `category list` | List all the category available |
 
 ### Report
 | Command | Description |
@@ -190,6 +210,7 @@ JSON and TOML exports include an `export_version` field (currently **V2**) for f
 | :--- | :--- |
 | **Linux** | `~/.local/share/fr.ethal.codexi/` |
 | **macOS** | `~/Library/Application Support/fr.ethal.codexi/` |
+| **Windows**| `%AppData%\Roaming\fr.ethal.codexi\` |
 
 Files: `codexi.dat` (active ledger) · `archives/` · `snapshots/` · `trash/`
 

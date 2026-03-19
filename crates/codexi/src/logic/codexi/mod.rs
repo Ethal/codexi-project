@@ -7,6 +7,7 @@ mod migration_v1;
 mod migration_v2;
 mod model;
 mod settings;
+mod transfer;
 
 pub use dto::{AccountEntry, AccountItem, CodexiContext};
 pub use error::CodexiError;

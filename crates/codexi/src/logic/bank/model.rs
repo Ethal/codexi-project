@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::{format_id, validate_text_rules};
 use crate::logic::bank::{BankError, BankItem};
+use crate::logic::utils::HasNulid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Bank {
@@ -30,6 +31,12 @@ impl Bank {
             branch: branch.map(str::to_owned),
             note: note.map(str::to_owned),
         })
+    }
+}
+
+impl HasNulid for Bank {
+    fn id(&self) -> Nulid {
+        self.id
     }
 }
 

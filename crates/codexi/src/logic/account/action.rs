@@ -7,7 +7,7 @@ use rust_decimal_macros::dec;
 use std::mem;
 use std::path::PathBuf;
 
-use crate::core::{DataPaths, format_date};
+use crate::core::{DataPaths, format_date, format_id, format_id_short};
 use crate::logic::{
     account::{
         Account, AccountArchive, AccountError, CheckpointRef, ComplianceAction,
@@ -77,7 +77,10 @@ impl Account {
         let op_amount = target_op.amount;
         let description = format!(
             "VOID #{}: {} ({} {:.2})",
-            void_id, target_op.description, target_op.flow, target_op.amount
+            format_id_short(&format_id(void_id)),
+            target_op.description,
+            target_op.flow,
+            target_op.amount
         );
 
         self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount))?;

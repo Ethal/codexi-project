@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::{format_id, validate_text_rules};
 use crate::logic::category::{CategoryError, CategoryItem};
+use crate::logic::utils::HasNulid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Category {
@@ -27,6 +28,12 @@ impl Category {
             name: name.to_string(),
             note: note.map(str::to_owned),
         })
+    }
+}
+
+impl HasNulid for Category {
+    fn id(&self) -> Nulid {
+        self.id
     }
 }
 

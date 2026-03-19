@@ -23,6 +23,8 @@ pub enum TemporalViolation {
     OperationAlreadyVoided(String),
     #[error("FIN_OP: Operation #{0} not found")]
     OperationNotFound(String),
+    #[error("Transfer cannot be voided: twin operation is archived in account {account_id}")]
+    TransferTwinArchived { account_id: String },
 }
 
 #[derive(Debug, Error)]
@@ -44,6 +46,9 @@ pub enum ComplianceViolation {
 
     #[error("Invalid context value: {reason}")]
     InvalidContextValue { reason: &'static str },
+
+    #[error("Invalid amount: {amount} — must be strictly positive for regular operations")]
+    InvalidAmount { amount: Decimal },
 }
 
 #[derive(Debug, Error)]
