@@ -11,13 +11,17 @@ use codexi::{
         account::{SearchEntry, StatsEntry, SummaryEntry},
         balance::BalanceItem,
         operation::OperationFlow,
+        utils::MIN_SHORT_LEN,
     },
 };
 
+
 use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, LABEL_STYLE, NOTE_STYLE, TITLE_STYLE, VALUE_STYLE};
 
-pub fn format_long_id_to_short (id: &str) -> String {
-    format!("{}", &id[(id.len() - 5)..])
+pub fn format_long_id_to_short(id: &str) -> String {
+    let len = id.len();
+    let start = len.saturating_sub(MIN_SHORT_LEN);
+    id[start..].to_string()
 }
 
 pub fn view_warning(warnings: &[CoreWarning]) {

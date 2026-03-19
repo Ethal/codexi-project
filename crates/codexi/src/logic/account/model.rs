@@ -99,36 +99,6 @@ impl Account {
         self.anchors.rebuild_from(&self.operations);
     }
 
-    pub fn resolve_id(&self, input: &str) -> Result<Nulid, AccountError> {
-        if input.len() == 26 {
-            // Full ID → direct parse
-            input
-                .parse()
-                .map_err(|_| AccountError::OperationNotFound(input.to_string()))
-        } else {
-            // short ID → contextual search
-            self.find_operation_by_short_id(input)
-        }
-    }
-
-    pub fn find_operation_by_short_id(&self, short: &str) -> Result<Nulid, AccountError> {
-        let short = short.to_uppercase();
-        let matches: Vec<&Operation> = self
-            .operations
-            .iter()
-            .filter(|op| op.id.to_string().ends_with(&short))
-            .collect();
-
-        match matches.len() {
-            0 => Err(AccountError::OperationNotFound(short)),
-            1 => Ok(matches[0].id),
-            _ => Err(AccountError::AmbiguousShortId(format!(
-                "Multiple operations match '{}', use more characters",
-                short
-            ))),
-        }
-    }
-
     /// Update Operations with an operation and return the id of the operation
     pub fn commit_operation(&mut self, op: Operation) -> Nulid {
         self.anchors.update(&op);

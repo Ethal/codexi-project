@@ -5,6 +5,7 @@ use crate::core::CoreError;
 use crate::file_management::FileArchiveError;
 use crate::logic::account::policy::{ComplianceViolation, LifecycleViolation, TemporalViolation};
 use crate::logic::operation::OperationError;
+use crate::logic::utils::ResolveError;
 
 /// Struct representing the Account Error
 #[derive(Debug, Error)]
@@ -37,8 +38,10 @@ pub enum AccountError {
     ComplianceViolation(#[from] ComplianceViolation),
     #[error("FIN_VALIDATION: {0}")]
     LifecycleViolation(#[from] LifecycleViolation),
-    #[error("OP_VAL: {0}")]
+    #[error("OP_VAL: Multiple operations match '{0}', use more characters")]
     AmbiguousShortId(String),
+    #[error("OP_VAL: Invalid short id {0}, expected {1} characters minimum")]
+    InvalidShortId(String, usize),
 }
 
 /// Error type for search in account
@@ -57,4 +60,16 @@ pub enum SearchError {
 pub enum AccountTypeError {
     #[error("OP_ACCOUNT_TYPE: Unknown account type: {0}")]
     Unknown(String),
+}
+
+impl ResolveError for AccountError {
+    fn not_found(input: String) -> Self {
+        AccountError::OperationNotFound(input)
+    }
+    fn ambiguous(input: String) -> Self {
+        AccountError::AmbiguousShortId(input)
+    }
+    fn invalid(input: String, min: usize) -> Self {
+        AccountError::InvalidShortId(input,min)
+    }
 }

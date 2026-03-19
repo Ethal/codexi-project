@@ -5,7 +5,9 @@ use anyhow::Result;
 use codexi::{
     core::{DataPaths, parse_date, parse_decimal, parse_id, parse_text},
     file_management::FileManagement,
-    logic::account::{SearchParamsBuilder, search},
+    logic::account::{SearchParamsBuilder, AccountError, search},
+    logic::operation::Operation,
+    logic::utils::resolve_id,
 };
 
 use crate::ui::{view_archive, view_search};
@@ -50,7 +52,10 @@ pub fn handle_history_command(command: HistoryCommand, paths: &DataPaths) -> Res
             msg_info!("Close period of the {} completed", date);
         }
         HistoryCommand::Void { id } => {
-            let id_n = account.resolve_id(&id)?;
+            let id_n = resolve_id::<Operation, AccountError>(
+                &id,
+                &account.operations,
+            )?;
             account.void_operation(id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!(

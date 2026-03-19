@@ -13,6 +13,7 @@ use crate::core::{format_date, validate_text_rules};
 use crate::logic::operation::OperationError;
 use crate::logic::operation::OperationFlow;
 use crate::logic::operation::OperationKind;
+use crate::logic::utils::HasNulid;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct OperationLinks {
@@ -102,6 +103,12 @@ impl OperationBuilder {
         }
 
         Ok(op)
+    }
+}
+
+impl HasNulid for Operation {
+    fn id(&self) -> Nulid {
+        self.id
     }
 }
 
