@@ -2,11 +2,11 @@
 
 use codexi::logic::currency::CurrencyEntry;
 
-use crate::ui::TITLE_STYLE;
+use crate::ui::{TITLE_STYLE, format_long_id_to_short};
 
 /// view to list the snapshot file
 pub fn view_currency(datas: &CurrencyEntry) {
-    let title_text = TITLE_STYLE.apply_to("Currencies - <id> <name> <code> <symbol> [note]");
+    let title_text = TITLE_STYLE.apply_to("Currencies - <id> <short id> <name> <code> <symbol> [note]");
     println!();
     println!("{}", title_text);
     if datas.items.is_empty() {
@@ -14,8 +14,9 @@ pub fn view_currency(datas: &CurrencyEntry) {
     } else {
         for c in &datas.items {
             println!(
-                " {} {} {:<3} {}",
+                " {} {} {} {:<3} {}",
                 c.id,
+                format_long_id_to_short(&c.id),
                 c.code,
                 c.symbol,
                 c.note.clone().unwrap_or_default()

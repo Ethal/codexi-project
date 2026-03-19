@@ -16,6 +16,10 @@ use codexi::{
 
 use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, LABEL_STYLE, NOTE_STYLE, TITLE_STYLE, VALUE_STYLE};
 
+pub fn format_long_id_to_short (id: &str) -> String {
+    format!("{}", &id[(id.len() - 5)..])
+}
+
 pub fn view_warning(warnings: &[CoreWarning]) {
     let title_text = TITLE_STYLE.apply_to("Warning(s)");
     println!("{}", title_text);
@@ -152,7 +156,7 @@ pub fn view_search(items: &SearchEntry) {
             amount_style.apply_to(format!("{:.2}", item.operation.amount).separate_with_commas());
 
         let index_str = item.operation.id.to_string();
-        let index_text = LABEL_STYLE.apply_to(format!("#{}", &index_str[(index_str.len() - 5)..]));
+        let index_text = LABEL_STYLE.apply_to(format!("#{}",format_long_id_to_short(&index_str)));
 
         println!(
             "│{:<7}│{}│{}│{:>18}│{:>18}│{:<40}│",
