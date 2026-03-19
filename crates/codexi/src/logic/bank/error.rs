@@ -2,6 +2,8 @@
 
 use thiserror::Error;
 
+use crate::logic::utils::ResolveError;
+
 /// Error type for Bank
 #[derive(Debug, Error)]
 pub enum BankError {
@@ -11,4 +13,20 @@ pub enum BankError {
     BankNotFound(String),
     #[error("VAL_BANK_NAME: Bank name: {0}")]
     InvalidName(String),
+    #[error("DATA_BANK: Multiple operations match '{0}', use more characters")]
+    AmbiguousShortId(String),
+    #[error("DATA_BANK: Invalid short id {0}, expected {1} characters minimum")]
+    InvalidShortId(String, usize),
+}
+
+impl ResolveError for BankError {
+    fn not_found(input: String) -> Self {
+        BankError::BankNotFound(input)
+    }
+    fn ambiguous(input: String) -> Self {
+        BankError::AmbiguousShortId(input)
+    }
+    fn invalid(input: String, min: usize) -> Self {
+        BankError::InvalidShortId(input, min)
+    }
 }

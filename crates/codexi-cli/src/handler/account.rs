@@ -8,7 +8,13 @@ use codexi::{
         parse_optional_id, parse_optional_u32, parse_text,
     },
     file_management::FileManagement,
-    logic::{account::{Account, AccountType}, codexi::CodexiError, utils::resolve_id,}
+    logic::{
+        account::{Account, AccountType},
+        bank::{Bank, BankError},
+        codexi::CodexiError,
+        currency::{Currency, CurrencyError},
+        utils::resolve_id,
+    },
 };
 
 use crate::ui::{view_account, view_account_context, view_warning};
@@ -46,10 +52,7 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
         }
 
         AccountCommand::Use { id } => {
-            let id_n = resolve_id::<Account, CodexiError>(
-                &id,
-                &codexi.accounts,
-            )?;
+            let id_n = resolve_id::<Account, CodexiError>(&id, &codexi.accounts)?;
             codexi.set_current_account(&id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Switched to account {}", id_n);
@@ -71,13 +74,13 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
             msg_info!("Account renamed.");
         }
         AccountCommand::SetBank { id } => {
-            let id_n = parse_id(&id)?;
+            let id_n = resolve_id::<Bank, BankError>(&id, &codexi.banks.banks)?;
             codexi.set_account_bank(&id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Bank set.");
         }
         AccountCommand::SetCurrency { id } => {
-            let id_n = parse_id(&id)?;
+            let id_n = resolve_id::<Currency, CurrencyError>(&id, &codexi.currencies.currencies)?;
             codexi.set_account_currency(&id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Currency set.");
