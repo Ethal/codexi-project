@@ -35,7 +35,7 @@ impl Account {
         description: String,
     ) -> Result<Nulid, AccountError> {
         self.temporal_policy(TemporalAction::Create(&kind), date)?;
-        self.compliance_policy(ComplianceAction::Create(&kind, flow, amount))?;
+        self.compliance_policy(ComplianceAction::Create(&kind, flow, amount), date)?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;
@@ -83,7 +83,7 @@ impl Account {
             target_op.amount
         );
 
-        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount))?;
+        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount), today)?;
 
         let mut links = OperationLinks::default();
         links.void_of = Some(void_id);
@@ -129,7 +129,7 @@ impl Account {
         let op_amount = amount.abs();
         let description = format!("INITIAL AMOUNT {}", op_amount);
 
-        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount))?;
+        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount), date)?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;
@@ -180,7 +180,7 @@ impl Account {
             op_amount, physical_amount,
         );
 
-        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount))?;
+        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount), date)?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;
@@ -289,7 +289,10 @@ impl Account {
         let op_amount = checkpoint_balance.abs();
         let description = format!("BALANCE DEFERRED: {}: {:.2} {}", op_flow, op_amount, desc);
 
-        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount))?;
+        self.compliance_policy(
+            ComplianceAction::Create(&kind, op_flow, op_amount),
+            checkpoint_date,
+        )?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;

@@ -258,18 +258,25 @@ impl Account {
     /// Validates the business policy of the account for a given action.
     /// Single entry point called from action.rs,
     /// after temporal_policy() and before commit_operation().
-    pub fn compliance_policy(&self, action: ComplianceAction) -> Result<(), ComplianceViolation> {
+    pub fn compliance_policy(
+        &self,
+        action: ComplianceAction,
+        date: chrono::NaiveDate,
+    ) -> Result<(), ComplianceViolation> {
         // Monthly count is only relevant for Regular operations
         let monthly_count = match action {
             ComplianceAction::Create(kind, _, _) if kind.is_regular() => {
-                self.monthly_operation_count(chrono::Local::now().date_naive())
+                self.monthly_operation_count(date)
             }
             _ => 0,
         };
 
+        // Balance at operation date — not current_balance
+        let balance_at_date = self.balance_at(date);
+
         policy_for(self.context.account_type).validate(
             &self.context,
-            self.current_balance,
+            balance_at_date,
             action,
             monthly_count,
         )

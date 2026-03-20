@@ -11,12 +11,12 @@ use crate::logic::{
 
 #[derive(Debug)]
 pub enum TemporalAction<'a> {
-    Create(&'a OperationKind), // Create a new operation (Regular, Adjust, Close...)
+    Create(&'a OperationKind), // Create a new operation (Regular, Adjust, Checkpoint...)
     Void(Nulid),               // Void(op_id)
 }
 
 impl Account {
-    /// Check thet operations is not empty.
+    /// Check that operations list is not empty — required before most operations.
     fn operations_empty(&self, kind: &OperationKind) -> Result<(), TemporalViolation> {
         if self.operations.is_empty() {
             Err(TemporalViolation::HaveNoOperation(format!(
@@ -28,7 +28,8 @@ impl Account {
             Ok(())
         }
     }
-    /// Check thet operations is empty.
+
+    /// Check that operations list is empty — required for Init.
     fn operations_not_empty(&self) -> Result<(), TemporalViolation> {
         if !self.operations.is_empty() {
             Err(TemporalViolation::HaveOperation)
@@ -36,7 +37,9 @@ impl Account {
             Ok(())
         }
     }
-    /// Return an error if only init operation
+
+    /// Returns an error if the account contains only an Init operation.
+    /// Used by Checkpoint to ensure there is something to close.
     fn has_only_init(&self) -> Result<(), TemporalViolation> {
         let has_only_init = self.operations.len() == 1
             && self
@@ -48,14 +51,22 @@ impl Account {
         }
         Ok(())
     }
-    /// Return an error in the account is close(terminated)
+
+    /// Returns an error if the account is terminated (closed).
+    /// No operation is allowed on a closed account.
     fn is_terminated(&self) -> Result<(), TemporalViolation> {
         if self.terminated_date.is_some() {
             return Err(TemporalViolation::AccountClose);
         }
         Ok(())
     }
-    /// Check the temporal policy, if not reach -> Error
+
+    /// Validates the temporal policy for a given action.
+    /// Called from action.rs before commit_operation().
+    ///
+    /// Two actions are supported:
+    ///   - Create: validates date ordering, period locking, init sequencing
+    ///   - Void:   validates that the target operation can be voided
     pub fn temporal_policy(
         &self,
         action: TemporalAction,
@@ -63,18 +74,19 @@ impl Account {
     ) -> Result<(), TemporalViolation> {
         let today = Local::now().date_naive();
 
-        // Check account is close, no opaeration is allowed
+        // Account must be open for any operation
         self.is_terminated()?;
-        // Extraction of ancors
-        // Plus de scans ! On utilise le cache
-        let last_init = self.anchors.last_init;
-        let last_chk = self.anchors.last_checkpoint;
-        let last_adj = self.anchors.last_adjust;
+
+        // Extract anchors — no scan, uses cached values
+        let last_init = self.anchors.last_init.as_ref();
+        let last_chk = self.anchors.last_checkpoint.as_ref();
+        let last_adj = self.anchors.last_adjust.as_ref();
 
         match action {
             TemporalAction::Create(kind) => {
                 match kind {
                     // --- INITIALIZATION ---
+                    // Only allowed on an empty account, not in the future.
                     OperationKind::System(SystemKind::Init) => {
                         self.operations_not_empty()?;
                         if date > today {
@@ -84,7 +96,9 @@ impl Account {
                         }
                     }
 
-                    // --- CLOSING (Close) ---
+                    // --- CHECKPOINT ---
+                    // Must be after last checkpoint, after init, not in the future,
+                    // and there must be more than just an Init operation.
                     OperationKind::System(SystemKind::Checkpoint) => {
                         self.operations_empty(kind)?;
                         if date > today {
@@ -92,16 +106,16 @@ impl Account {
                                 "Closing date cannot be in the future".into(),
                             ));
                         }
-                        if let Some(cld_dt) = last_chk
-                            && date <= cld_dt
+                        if let Some(chk) = last_chk
+                            && date <= chk.date
                         {
                             return Err(TemporalViolation::InvalidData(format!(
                                 "Must be > last closing ({})",
-                                cld_dt
+                                chk.date
                             )));
                         }
-                        if let Some(init_dt) = last_init
-                            && date < init_dt
+                        if let Some(init) = last_init
+                            && date < init.date
                         {
                             return Err(TemporalViolation::InvalidData(
                                 "Close cannot be before Init".into(),
@@ -110,7 +124,9 @@ impl Account {
                         self.has_only_init()?;
                     }
 
-                    // --- AJUSTEMENT (Adjust) ---
+                    // --- ADJUST ---
+                    // Must not be in a closed period, must be >= last adjust date,
+                    // not in the future.
                     OperationKind::System(SystemKind::Adjust) => {
                         self.operations_empty(kind)?;
                         if date > today {
@@ -118,31 +134,35 @@ impl Account {
                                 "Adjustment date cannot be in the future".into(),
                             ));
                         }
-                        if let Some(cld_dt) = last_chk
-                            && date <= cld_dt
+                        if let Some(chk) = last_chk
+                            && date <= chk.date
                         {
                             return Err(TemporalViolation::InvalidData("Period closed".into()));
                         }
-                        if let Some(adj_dt) = last_adj
-                            && date < adj_dt
+                        if let Some(adj) = last_adj
+                            && date < adj.date
                         {
                             return Err(TemporalViolation::InvalidData(format!(
                                 "Adjustment date must be >= {}",
-                                adj_dt
+                                adj.date
                             )));
                         }
                     }
 
                     // --- REGULAR OPERATION ---
+                    // Must not be in a closed period.
+                    // Must be >= last adjust or init date.
                     _ => {
                         self.operations_empty(kind)?;
-                        if let Some(cld_dt) = last_chk
-                            && date <= cld_dt
+                        if let Some(chk) = last_chk
+                            && date <= chk.date
                         {
                             return Err(TemporalViolation::InvalidData("Period closed".into()));
                         }
-                        let anchor = last_adj.or(last_init);
-                        if let Some(a_dt) = anchor
+                        let anchor_date = last_adj
+                            .map(|a| a.date)
+                            .or_else(|| last_init.map(|a| a.date));
+                        if let Some(a_dt) = anchor_date
                             && date < a_dt
                         {
                             return Err(TemporalViolation::InvalidData(format!(
@@ -157,6 +177,7 @@ impl Account {
             TemporalAction::Void(target_id) => {
                 self.operations_empty(&OperationKind::System(SystemKind::Void))?;
 
+                // Void must be performed today or in the future — never backdated
                 if date < today {
                     return Err(TemporalViolation::InvalidData(
                         "Void operation cannot be in the past".into(),
@@ -170,32 +191,55 @@ impl Account {
                     }
                 };
 
-                // an operation can not be void twice
+                // An operation cannot be voided twice
                 if target_op.links.void_by.is_some() {
                     return Err(TemporalViolation::OperationAlreadyVoided(
                         target_id.to_string(),
                     ))?;
                 }
 
-                // No void on Init, Adj, Checkpoint
+                // System operations (Init, Adjust, Checkpoint) cannot be voided
                 if target_op.kind.is_system() {
                     return Err(TemporalViolation::InvalidData(
                         "System op cannot be voided".into(),
                     ));
                 }
 
-                let latest_system_dt = [last_init, last_chk, last_adj]
-                    .into_iter()
-                    .flatten() // remove Option::None
-                    .max();
-
-                if let Some(sys_dt) = latest_system_dt
-                    && target_op.date <= sys_dt
+                // --- Checkpoint lock ---
+                // An operation is locked if its date is <= last checkpoint date.
+                // Checkpoint is always strictly locking — no same-day exception.
+                if let Some(chk) = last_chk
+                    && target_op.date <= chk.date
                 {
                     return Err(TemporalViolation::InvalidData(format!(
-                        "Operation #{} is locked by a system operation at {}.",
-                        target_id, sys_dt
+                        "Operation #{} is locked by checkpoint at {}.",
+                        target_id, chk.date
                     )));
+                }
+
+                // --- Adjust lock ---
+                // An operation is locked if it occurred before the last adjust.
+                // Same-day operations are resolved by Nulid ordering:
+                //   target_op.id < last_adjust.id → locked (op was before the adjust)
+                //   target_op.id > last_adjust.id → allowed (op was after the adjust)
+                if let Some(adj) = last_adj {
+                    let locked = if target_op.date < adj.date {
+                        // Strictly before adjust date — always locked
+                        true
+                    } else if target_op.date == adj.date {
+                        // Same day — use Nulid ordering to determine if before or after
+                        target_op.id < adj.id
+                    } else {
+                        // After adjust date — never locked
+                        false
+                    };
+
+                    if locked {
+                        return Err(TemporalViolation::InvalidData(format!(
+                            "Operation #{} is locked by adjustment at {}.",
+                            target_id, adj.date
+                        )));
+                    }
                 }
             }
         }
@@ -214,9 +258,7 @@ mod tests {
     use chrono::Duration;
     use rust_decimal_macros::dec;
 
-    // Helper to create an empty account
     fn setup_empty_account() -> Account {
-        // init
         Account::new(
             parse_date("2025-09-01").unwrap(),
             "Test".into(),
@@ -228,18 +270,15 @@ mod tests {
     }
 
     #[test]
-    fn test_void_locked_by_system_date() {
+    fn test_void_locked_by_adjust() {
         let mut account = setup_empty_account();
         let today = Local::now().date_naive();
-        let yesterday = today - Duration::days(1); // yesterday
+        let yesterday = today - Duration::days(1);
 
-        println!("{}", today);
-        println!("{}", yesterday);
-
-        // init the account
+        // Init
         account.initialize(yesterday, dec!(100)).unwrap();
 
-        // add operation
+        // OP1 — before adjust
         let op_id = account
             .register_transaction(
                 yesterday,
@@ -250,19 +289,83 @@ mod tests {
             )
             .unwrap();
 
-        // adjust account amount
+        // Adjust — locks OP1
         account.adjust_balance(today, dec!(50)).unwrap();
 
-        // 3. test polycy : void of the yeterday operation shall fail due to the adjust
+        // Void OP1 must fail — locked by adjust
         let res = account.temporal_policy(TemporalAction::Void(op_id), today);
+        assert!(res.is_err(), "void should be locked by adjustment");
+    }
 
-        assert!(res.is_err(), "void should be lock due to the adjustment");
+    #[test]
+    fn test_void_after_adjust_same_day_allowed() {
+        let mut account = setup_empty_account();
+        let today = Local::now().date_naive();
+
+        // Init
+        account.initialize(today, dec!(500)).unwrap();
+
+        // OP1 — before adjust, same day
+        account
+            .register_transaction(
+                today,
+                OperationKind::Regular(RegularKind::Transaction),
+                OperationFlow::Debit,
+                dec!(50),
+                "op1".into(),
+            )
+            .unwrap();
+
+        // Adjust — same day
+        account.adjust_balance(today, dec!(400)).unwrap();
+
+        // OP3 — after adjust, same day
+        let op3_id = account
+            .register_transaction(
+                today,
+                OperationKind::Regular(RegularKind::Transaction),
+                OperationFlow::Credit,
+                dec!(100),
+                "op3".into(),
+            )
+            .unwrap();
+
+        // Void OP3 must succeed — it was inserted after the adjust
+        let res = account.temporal_policy(TemporalAction::Void(op3_id), today);
+        assert!(res.is_ok(), "void of op after adjust should be allowed");
+    }
+
+    #[test]
+    fn test_void_before_adjust_same_day_locked() {
+        let mut account = setup_empty_account();
+        let today = Local::now().date_naive();
+
+        // Init
+        account.initialize(today, dec!(500)).unwrap();
+
+        // OP1 — before adjust, same day
+        let op1_id = account
+            .register_transaction(
+                today,
+                OperationKind::Regular(RegularKind::Transaction),
+                OperationFlow::Debit,
+                dec!(50),
+                "op1".into(),
+            )
+            .unwrap();
+
+        // Adjust — same day, after OP1
+        account.adjust_balance(today, dec!(400)).unwrap();
+
+        // Void OP1 must fail — it was inserted before the adjust
+        let res = account.temporal_policy(TemporalAction::Void(op1_id), today);
+        assert!(res.is_err(), "void of op before adjust should be locked");
     }
 
     #[test]
     fn test_create_future_date_fail() {
         let account = setup_empty_account();
-        let tomorrow = Local::now().date_naive() + Duration::days(1); // tomorrow
+        let tomorrow = Local::now().date_naive() + Duration::days(1);
 
         let res = account.temporal_policy(
             TemporalAction::Create(&OperationKind::System(SystemKind::Init)),

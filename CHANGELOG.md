@@ -3,59 +3,66 @@ All notable changes to this project will be documented in this file.
 ---
 
 ## [Unreleased]
-
 > ⚠️ No automatic migration — use `admin export-script` to rebuild your data.
 
 ### Added
 - **AccountContext** — configurable parameters per account instance (overdraft limit,
   minimum balance, monthly transaction quota, deposit lock date, interest, joint signers).
   Each account starts from type defaults and can be individually adjusted.
-
 - **CompliancePolicy** — per-account-type business rules validation (overdraft, minimum
   balance, monthly quota, deposit maturity lock). Each account type has its own policy
   implementation (Current, Saving, Joint, Deposit, Business, Student). Values are read
   from `AccountContext` — never hardcoded.
-
 - **LifecyclePolicy** — account lifecycle rules: account type is immutable once operations
   exist; close date validated against today, `open_date`, and last operation date.
-
 - **TemporalPolicy** — renamed and clarified from the previous `FinancialPolicy`.
   Handles chronological and structural rules on operations (date ordering, period locking,
   init/void/checkpoint sequencing). Orthogonal to `CompliancePolicy`.
-
-- **Generic ID resolution (`resolve_id`)** — reusable mechanism to resolve full or short IDs (Nulid) across entities (operations, accounts, etc.). Supports suffix-based lookup with configurable minimum length (`MIN_SHORT_LEN`).
-
-- **Traits `HasNulid` and `ResolveError`** — enable generic ID resolution by decoupling entity identification and error handling from business logic. Allows reuse across multiple domains (Account, Bank, Currency, Category, ...).
-
+- **`LastAnchor` struct** — replaces bare `Option<NaiveDate>` in `AccountAnchors`.
+  Each anchor now stores both `date` and `id` (Nulid), enabling precise same-day
+  ordering for void and lock decisions. Applied uniformly to all anchor types
+  (`last_init`, `last_adjust`, `last_checkpoint`, `last_void`, `last_regular`).
+- **Generic ID resolution (`resolve_id`)** — reusable mechanism to resolve full or short
+  IDs (Nulid) across entities (operations, accounts, etc.). Supports suffix-based lookup
+  with configurable minimum length (`MIN_SHORT_LEN`).
+- **Traits `HasNulid` and `ResolveError`** — enable generic ID resolution by decoupling
+  entity identification and error handling from business logic. Allows reuse across
+  multiple domains (Account, Bank, Currency, Category, ...).
 - **Transfer between accounts** — creates two linked `Regular::Transfer` operations
   (Debit on source, Credit on destination). Always operates from the current account.
   Exchange rate is calculated automatically as `amount_to / amount_from` — net effective
   rate including all fees, no manual input required.
-
 - **Cross-currency transfer** — supports transfers between accounts with different
   currencies (e.g. EUR → IDR). The net exchange rate reflects the real cost of the
   transfer, fees included.
-
 - **Transfer void** — voiding a transfer operation automatically voids both linked
   operations atomically. Uses the existing `void` command transparently — no separate
   command needed. Void is rejected if the twin operation is archived.
-
 - **Cross-linked transfer references** — each transfer operation carries `transfer_id`
   (twin operation) and `transfer_account_id` (twin account) in `OperationLinks`,
   following the same symmetric pattern as `void_of`/`void_by`.
-
-- **Short ID support in CLI commands** — entities can now be referenced using the last characters of their ID instead of the full 26-character Nulid.
-
+- **Short ID support in CLI commands** — entities can now be referenced using the last
+  characters of their ID instead of the full 26-character Nulid.
 - Command `account set-context` to update the configurable parameters of the current account.
 - Command `account context` to view the context of the current account.
-- Command `account create` now accepts an optional account type argument (Current, Joint, Saving, Deposit, Business, Student). Defaults to Current.
+- Command `account create` now accepts an optional account type argument
+  (Current, Joint, Saving, Deposit, Business, Student). Defaults to Current.
 - Command `transfer <DATE> <AMOUNT_FROM> <AMOUNT_TO> <ACCOUNT_ID_TO> [DESCRIPTION]`
 - Command `void` now handles both regular operations and transfer operations transparently.
 
 ### Changed
 - Command `account list` now shows the account type.
-- Refactored ID resolution logic — moved from account-specific implementation to a generic utility (`resolve_id`), improving consistency and reducing duplication.
-- Commands such as `account use` and `operation void` now support short ID input with validation (minimum length and ambiguity detection).
+- Refactored ID resolution logic — moved from account-specific implementation to a
+  generic utility (`resolve_id`), improving consistency and reducing duplication.
+- Commands such as `account use` and `operation void` now support short ID input with
+  validation (minimum length and ambiguity detection).
+- **`compliance_policy` now takes an explicit `date` parameter** — balance validation
+  uses `balance_at(date)` instead of `current_balance`, ensuring operations inserted at
+  a past date are validated against the correct historical balance. Also fixes
+  `monthly_operation_count` to count operations at the correct month.
+- **Adjust lock granularity** — void of an operation on the same day as an adjust is now
+  resolved by Nulid ordering: operations inserted before the adjust are locked, operations
+  inserted after are allowed. Previously all same-day operations were incorrectly allowed.
 
 ### Deprecated
 - **File storage format** migrated from `Cbor` (`serde_cbor`, abandoned upstream) to
@@ -66,9 +73,14 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 ### Fixed
+- **Compliance validation on past-dated operations** — `compliance_policy` previously
+  used `current_balance` for all validations, allowing overdraft violations when
+  operations were inserted at a past date. Now uses `balance_at(date)` for accurate
+  historical balance at the operation date.
+- **Same-day adjust lock bypass** — operations on the same day as an adjust could
+  incorrectly bypass the void lock. Now resolved precisely using Nulid ordering.
 - Option `--open` for commands `report stats` and `report statement` that did not open
   the default browser in some cases.
-
 ---
 
 ## [0.1.0] — 2026-03-16

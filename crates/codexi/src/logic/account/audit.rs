@@ -51,7 +51,7 @@ impl Account {
         self.audit_double_void(&mut warnings); // TEST 6
 
         // Remembering the FINAL closing anchor of the file
-        let final_checkpoint = self.anchors.last_checkpoint;
+        let final_checkpoint = &self.anchors.last_checkpoint;
         // Create the shadow account
         let mut shadow_account = self.clone_empty();
 
@@ -74,19 +74,21 @@ impl Account {
 
             // TEST 1 : policy on all operation except the first
             shadow_account.temporal_policy(TemporalAction::Create(&op.kind), op.date)?;
-            shadow_account
-                .compliance_policy(ComplianceAction::Create(&op.kind, op.flow, op.amount))?;
+            shadow_account.compliance_policy(
+                ComplianceAction::Create(&op.kind, op.flow, op.amount),
+                op.date,
+            )?;
 
             // TEST 2 : locked period
             // If the operation is a normal transaction, it is not allowed
             // to exist on a date BEFORE or EQUALLY equal to the last checkpoint of the file.
             if op.kind.is_regular()
                 && let Some(final_chk_date) = final_checkpoint
-                && op.date <= final_chk_date
+                && op.date <= final_chk_date.date
             {
                 return Err(AccountError::InvalidData(format!(
                     " TEST 2: Audit Failure: Operation {} (date {}) found in a locked period (Checkpoint at {})",
-                    op.id, op.date, final_chk_date
+                    op.id, op.date, final_chk_date.date
                 )));
             }
 
@@ -202,28 +204,28 @@ impl Account {
         let checks = [
             (
                 "last_init",
-                shadow.anchors.last_init,
-                self.anchors.last_init,
+                &shadow.anchors.last_init,
+                &self.anchors.last_init,
             ),
             (
                 "last_checkpoint",
-                shadow.anchors.last_checkpoint,
-                self.anchors.last_checkpoint,
+                &shadow.anchors.last_checkpoint,
+                &self.anchors.last_checkpoint,
             ),
             (
                 "last_adjust",
-                shadow.anchors.last_adjust,
-                self.anchors.last_adjust,
+                &shadow.anchors.last_adjust,
+                &self.anchors.last_adjust,
             ),
             (
                 "last_void",
-                shadow.anchors.last_void,
-                self.anchors.last_void,
+                &shadow.anchors.last_void,
+                &self.anchors.last_void,
             ),
             (
                 "last_regular",
-                shadow.anchors.last_regular,
-                self.anchors.last_regular,
+                &shadow.anchors.last_regular,
+                &self.anchors.last_regular,
             ),
         ];
         for (name, calculated, stored) in checks {

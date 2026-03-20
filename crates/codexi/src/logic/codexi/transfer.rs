@@ -55,11 +55,10 @@ impl Codexi {
                 .temporal_policy(TemporalAction::Create(&kind), date)
                 .map_err(AccountError::TemporalViolation)?;
             acc_from
-                .compliance_policy(ComplianceAction::Create(
-                    &kind,
-                    OperationFlow::Debit,
-                    amount_from,
-                ))
+                .compliance_policy(
+                    ComplianceAction::Create(&kind, OperationFlow::Debit, amount_from),
+                    date,
+                )
                 .map_err(AccountError::ComplianceViolation)?;
         }
 
@@ -70,11 +69,10 @@ impl Codexi {
                 .temporal_policy(TemporalAction::Create(&kind), date)
                 .map_err(AccountError::TemporalViolation)?;
             acc_to
-                .compliance_policy(ComplianceAction::Create(
-                    &kind,
-                    OperationFlow::Credit,
-                    amount_to,
-                ))
+                .compliance_policy(
+                    ComplianceAction::Create(&kind, OperationFlow::Credit, amount_to),
+                    date,
+                )
                 .map_err(AccountError::ComplianceViolation)?;
         }
 
@@ -82,7 +80,11 @@ impl Codexi {
         // We need op_to_id first to cross-link — so we pre-generate the destination id
         let op_to_id = Nulid::new().map_err(AccountError::Id)?;
 
-        let desc_from = format!("TRANSFER TO {}: {}", format_id(to_id), description);
+        let desc_from = format!(
+            "TRANSFER TO #{}: {}",
+            format_id_short(&format_id(to_id)),
+            description
+        );
         let mut links_from = OperationLinks::default();
         links_from.transfer_id = Some(op_to_id);
         links_from.transfer_account_id = Some(to_id);
@@ -108,7 +110,7 @@ impl Codexi {
 
         // --- Build destination operation (Credit) ---
         let desc_to = format!(
-            "TRANSFER FROM {}: {}",
+            "TRANSFER FROM #{}: {}",
             format_id_short(&format_id(from_id)),
             description
         );

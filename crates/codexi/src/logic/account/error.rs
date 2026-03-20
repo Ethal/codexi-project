@@ -70,6 +70,6 @@ impl ResolveError for AccountError {
         AccountError::AmbiguousShortId(input)
     }
     fn invalid(input: String, min: usize) -> Self {
-        AccountError::InvalidShortId(input,min)
+        AccountError::InvalidShortId(input, min)
     }
 }

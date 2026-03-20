@@ -28,11 +28,11 @@ pub struct AccountAnchorsItem {
 impl From<&AccountAnchors> for AccountAnchorsItem {
     fn from(a: &AccountAnchors) -> Self {
         Self {
-            last_regular: a.last_regular.map(format_date),
-            last_init: a.last_init.map(format_date),
-            last_adjust: a.last_adjust.map(format_date),
-            last_void: a.last_void.map(format_date),
-            last_checkpoint: a.last_checkpoint.map(format_date),
+            last_regular: a.last_regular.clone().map(|la| format_date(la.date)),
+            last_init: a.last_init.clone().map(|la| format_date(la.date)),
+            last_adjust: a.last_adjust.clone().map(|la| format_date(la.date)),
+            last_void: a.last_void.clone().map(|la| format_date(la.date)),
+            last_checkpoint: a.last_checkpoint.clone().map(|la| format_date(la.date)),
         }
     }
 }

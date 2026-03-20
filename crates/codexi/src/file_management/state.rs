@@ -31,7 +31,6 @@ impl FileManagement {
             StoreEntity::Codexi(mut codexi) => {
                 for account in codexi.accounts.iter_mut() {
                     account.refresh_anchors();
-                    account.audit()?;
                 }
                 Ok(codexi)
             }

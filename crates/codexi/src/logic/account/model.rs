@@ -140,6 +140,20 @@ impl Account {
             .unwrap_or(Decimal::ZERO);
     }
 
+    /// Returns the running balance just before the given date.
+    /// Used by compliance_policy to validate against the balance
+    /// at the operation date, not the current balance.
+    pub fn balance_at(&self, date: NaiveDate) -> Decimal {
+        self.operations
+            .iter()
+            .filter(|op| op.date <= date)
+            .fold(Decimal::ZERO, |acc, op| match op.flow {
+                OperationFlow::Credit => acc + op.amount,
+                OperationFlow::Debit => acc - op.amount,
+                OperationFlow::None => acc,
+            })
+    }
+
     /// Determine if a specific operation can be undone (Void)
     pub fn can_void(&self, op_id: Nulid) -> Result<bool, AccountError> {
         // current date
@@ -232,7 +246,7 @@ mod tests {
 
         // after the refresh, shall be the latest date
         assert_eq!(
-            account.anchors.last_checkpoint,
+            account.anchors.last_checkpoint.map(|la| la.date),
             Some(parse_date("2026-01-20").unwrap())
         );
     }
