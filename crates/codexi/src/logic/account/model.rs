@@ -11,7 +11,7 @@ use crate::logic::{
         AccountAnchors, AccountError, AccountType, CheckpointRef, OperationContainer,
         TemporalAction, policy::AccountContext,
     },
-    operation::{Operation, OperationFlow},
+    operation::Operation,
     utils::HasNulid,
 };
 
@@ -100,7 +100,7 @@ impl Account {
         self.anchors.rebuild_from(&self.operations);
     }
 
-    /// Update Operations with an operation and return the id of the operation
+    /// Update Operations with an operation, rebuild the balance and return the id of the operation
     pub fn commit_operation(&mut self, op: Operation) -> Nulid {
         self.anchors.update(&op);
         let id = op.id;
@@ -111,28 +111,25 @@ impl Account {
         self.rebuild_balances_from(op_date);
         id
     }
-    /// Rebuild the balance
+
+    /// Rebuild the balance of all operations from the given date onwards.
+    /// Called after every commit_operation() to keep op.balance and
+    /// current_balance consistent.
     pub fn rebuild_balances_from(&mut self, from_date: NaiveDate) {
-        // find the balance before from_date
+        // Compute running balance just before from_date
         let running_before: Decimal = self
             .operations
             .iter()
             .filter(|op| op.date < from_date)
-            .fold(Decimal::ZERO, |acc, op| match op.flow {
-                OperationFlow::Credit => acc + op.amount,
-                OperationFlow::Debit => acc - op.amount,
-                OperationFlow::None => acc,
-            });
+            .fold(Decimal::ZERO, |acc, op| op.flow.apply(acc, op.amount));
 
+        // Update op.balance for all operations from from_date onwards
         let mut running = running_before;
         for op in self.operations.iter_mut().filter(|op| op.date >= from_date) {
-            running = match op.flow {
-                OperationFlow::Credit => running + op.amount,
-                OperationFlow::Debit => running - op.amount,
-                OperationFlow::None => running,
-            };
+            running = op.flow.apply(running, op.amount);
             op.balance = running;
         }
+
         self.current_balance = self
             .operations
             .last()
@@ -140,20 +137,15 @@ impl Account {
             .unwrap_or(Decimal::ZERO);
     }
 
-    /// Returns the running balance just before the given date.
-    /// Used by compliance_policy to validate against the balance
-    /// at the operation date, not the current balance.
+    /// Returns the running balance at the end of the given date.
+    /// Used by compliance_policy to validate against the correct historical
+    /// balance rather than current_balance.
     pub fn balance_at(&self, date: NaiveDate) -> Decimal {
         self.operations
             .iter()
             .filter(|op| op.date <= date)
-            .fold(Decimal::ZERO, |acc, op| match op.flow {
-                OperationFlow::Credit => acc + op.amount,
-                OperationFlow::Debit => acc - op.amount,
-                OperationFlow::None => acc,
-            })
+            .fold(Decimal::ZERO, |acc, op| op.flow.apply(acc, op.amount))
     }
-
     /// Determine if a specific operation can be undone (Void)
     pub fn can_void(&self, op_id: Nulid) -> Result<bool, AccountError> {
         // current date

@@ -75,6 +75,16 @@ impl OperationFlow {
             OperationFlow::None
         }
     }
+    /// Applies the flow direction to a running balance accumulator.
+    /// Credit adds, Debit subtracts, None is a no-op.
+    /// Used to avoid duplicating the match flow pattern across balance calculations.
+    pub fn apply(&self, acc: Decimal, amount: Decimal) -> Decimal {
+        match self {
+            OperationFlow::Credit => acc + amount,
+            OperationFlow::Debit => acc - amount,
+            OperationFlow::None => acc,
+        }
+    }
 }
 /// Implement TryFrom<&str> for OperationFlow
 impl TryFrom<&str> for OperationFlow {
