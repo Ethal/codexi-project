@@ -908,8 +908,10 @@ fn audit_detects_broken_transfer_link() {
 
     // Manually insert an op with transfer_id but no transfer_account_id
     let fake_transfer_id = Nulid::new().unwrap();
-    let mut links = OperationLinks::default();
-    links.transfer_id = Some(fake_transfer_id);
+    let links = OperationLinks {
+        transfer_id: Some(fake_transfer_id),
+        ..Default::default()
+    };
     // transfer_account_id intentionally left None — broken link
 
     let op = OperationBuilder::default()

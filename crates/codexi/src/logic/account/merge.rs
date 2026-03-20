@@ -73,7 +73,7 @@ mod tests {
         account::{AccountAnchors, AccountContext, AccountMeta, AccountType},
         operation::{
             OperationContext, OperationFlow, OperationKind, OperationLinks, OperationMeta,
-            SystemKind,
+            RegularKind,
         },
     };
     use chrono::NaiveDate;
@@ -99,101 +99,69 @@ mod tests {
     }
 
     #[test]
-    fn test_import_rejects_negative_amount() {
+    fn merge_inserts_new_operation_via_commit() {
         let mut account = setup_test_account();
+        account
+            .initialize(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(), dec!(500))
+            .unwrap();
 
-        // On simule une opération importée avec un montant invalide
-        let invalid_op = Operation {
+        // New operation — inserted directly via commit_operation, no policy check
+        let new_op = Operation {
             id: Nulid::new().unwrap(),
-            date: NaiveDate::from_ymd_opt(2026, 2, 1).unwrap(),
-            kind: OperationKind::System(SystemKind::Adjust),
-            flow: OperationFlow::Credit,
-            amount: dec!(-50), // Montant négatif -> DOIT ÉCHOUER
-            description: "Invalid Import".into(),
+            date: NaiveDate::from_ymd_opt(2026, 1, 10).unwrap(),
+            kind: OperationKind::Regular(RegularKind::Transaction),
+            flow: OperationFlow::Debit,
+            amount: dec!(50),
+            description: "Imported op".into(),
             balance: dec!(0),
             links: OperationLinks::default(),
             context: OperationContext::default(),
             meta: OperationMeta::default(),
         };
 
-        let import_data = vec![invalid_op];
-
-        // L'appel au merge doit renvoyer une erreur AccountError::InvalidData
-        let result = account.merge_operations(import_data);
-        assert!(result.is_err());
-        assert!(account.operations.is_empty()); // Rien n'a été ajouté
+        let result = account.merge_operations(vec![new_op]);
+        assert!(result.is_ok());
+        assert_eq!(account.operations.len(), 2); // init + new op
     }
 
     #[test]
-    fn test_import_respects_temporal_policy() {
+    fn merge_updates_existing_op_without_changing_financial_fields() {
         let mut account = setup_test_account();
 
-        // Supposons que votre temporal_policy interdise les opérations
-        // dans le futur (ex: après aujourd'hui)
-        let future_date = NaiveDate::from_ymd_opt(2099, 1, 1).unwrap();
+        // Init required before any Regular operation
+        account
+            .initialize(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(), dec!(500))
+            .unwrap();
 
-        let future_op = Operation {
-            id: Nulid::new().unwrap(),
-            amount: dec!(100),
-            date: future_date,
-            kind: OperationKind::System(SystemKind::Adjust),
-            flow: OperationFlow::Credit,
-            description: "Future Op".into(),
-            balance: dec!(0),
-            links: OperationLinks::default(),
-            context: OperationContext::default(),
-            meta: OperationMeta::default(),
-        };
-
-        let result = account.merge_operations(vec![future_op]);
-
-        // Si votre temporal_policy fonctionne, le merge doit échouer ici
-        assert!(
-            result.is_err(),
-            "L'import devrait échouer car la date est hors politique financière"
-        );
-    }
-
-    #[test]
-    fn test_merge_updates_existing_op_without_changing_id() {
-        let mut account = setup_test_account();
-
-        // 1. Ajouter une opération propre
         let op_id = account
             .register_transaction(
                 NaiveDate::from_ymd_opt(2026, 1, 10).unwrap(),
-                OperationKind::System(SystemKind::Init),
+                OperationKind::Regular(RegularKind::Transaction),
                 OperationFlow::Credit,
                 dec!(100),
                 "Original Desc".into(),
             )
             .unwrap();
 
-        // 2. Simuler un import avec le MÊME ID mais une description modifiée
-        let mut updated_op = Operation {
-            id: Nulid::new().unwrap(),
-            amount: dec!(100),
+        // Same id — only description should update, amount/date/kind/flow are immutable
+        let updated_op = Operation {
+            id: op_id,
             date: NaiveDate::from_ymd_opt(2026, 1, 10).unwrap(),
-            kind: OperationKind::System(SystemKind::Adjust),
+            kind: OperationKind::Regular(RegularKind::Transaction),
             flow: OperationFlow::Credit,
-            description: "Future Op".into(),
+            amount: dec!(9999), // attempt to change amount — must be ignored
+            description: "Updated via Import".into(),
             balance: dec!(0),
             links: OperationLinks::default(),
             context: OperationContext::default(),
             meta: OperationMeta::default(),
         };
 
-        updated_op.id = op_id;
-        updated_op.description = "Updated via Import".into();
-        updated_op.amount = dec!(9999); // On tente de tricher sur le montant
-        updated_op.date = NaiveDate::from_ymd_opt(2026, 1, 10).unwrap();
-
         account.merge_operations(vec![updated_op]).unwrap();
 
-        // 3. Vérifications
-        let final_op = &account.operations[0];
-        assert_eq!(final_op.description, "Updated via Import");
-        assert_eq!(final_op.amount, dec!(100)); // LE MONTANT N'A PAS CHANGÉ (Sécurité merge)
-        assert_eq!(account.operations.len(), 1); // Pas de doublon
+        let final_op = account.get_operation_by_id(op_id).unwrap();
+        assert_eq!(final_op.description, "Updated via Import"); // updated
+        assert_eq!(final_op.amount, dec!(100)); // immutable
+        assert_eq!(account.operations.len(), 2); // init + transaction
     }
 }

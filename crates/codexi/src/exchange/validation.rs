@@ -78,16 +78,16 @@ pub fn validate_import(import: &ExchangeData) -> Result<Vec<CoreWarning>, Exchan
 
         // transfer_account_id points to an account outside this file — warning only
         // (normal — the twin account lives in a separate file)
-        if let Some(twin_op_id) = op.links.transfer_id {
-            if !ops_by_id.contains_key(&twin_op_id) {
-                warnings.push(CoreWarning {
+        if let Some(twin_op_id) = op.links.transfer_id
+            && !ops_by_id.contains_key(&twin_op_id)
+        {
+            warnings.push(CoreWarning {
                     kind: CoreWarningKind::TransferAccountNotFound,
                     message: format!(
                         "Operation {} references transfer_id {} — twin operation not found in this export, transfer link cannot be verified",
                         op.id, twin_op_id
                     ),
                 });
-            }
         }
 
         // --- Void link validation ---
