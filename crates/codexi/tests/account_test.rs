@@ -816,3 +816,118 @@ fn void_blocked_for_op_before_adjust_same_day() {
         "void of op before adjust same day should be locked"
     );
 }
+
+// ── Lifecycle — set_account_type ─────────────────────────────
+
+#[test]
+fn set_account_type_allowed_on_empty_account() {
+    let mut account = setup_empty_account();
+    let res = account.set_account_type(AccountType::Saving);
+    assert!(res.is_ok());
+    assert_eq!(account.context.account_type, AccountType::Saving);
+}
+
+#[test]
+fn set_account_type_blocked_once_operations_exist() {
+    let mut account = setup_account_with_data();
+    let res = account.set_account_type(AccountType::Saving);
+    assert!(res.is_err());
+    // Type must remain unchanged
+    assert_eq!(account.context.account_type, AccountType::Current);
+}
+
+#[test]
+fn set_account_type_blocked_after_init_only() {
+    let mut account = setup_empty_account();
+    account
+        .initialize(parse_date("2026-01-01").unwrap(), dec!(100))
+        .unwrap();
+    // Even with just an init, type change is blocked
+    let res = account.set_account_type(AccountType::Business);
+    assert!(res.is_err());
+}
+
+// ── Lifecycle — validate_close_date ──────────────────────────
+
+#[test]
+fn close_date_valid() {
+    use chrono::Local;
+    let account = setup_account_with_data();
+    let today = Local::now().date_naive();
+    let res = account.validate_close_date(today);
+    assert!(res.is_ok());
+}
+
+#[test]
+fn close_date_in_future_fails() {
+    use chrono::{Duration, Local};
+    let account = setup_account_with_data();
+    let tomorrow = Local::now().date_naive() + Duration::days(1);
+    let res = account.validate_close_date(tomorrow);
+    assert!(res.is_err());
+}
+
+#[test]
+fn close_date_before_open_date_fails() {
+    let account = setup_account_with_data();
+    // open_date = 2025-09-01, trying 2025-08-31
+    let before_open = parse_date("2025-08-31").unwrap();
+    let res = account.validate_close_date(before_open);
+    assert!(res.is_err());
+}
+
+#[test]
+fn close_date_before_last_operation_fails() {
+    let account = setup_account_with_data();
+    // Last op is 2025-12-15, trying 2025-12-01
+    let before_last = parse_date("2025-12-01").unwrap();
+    let res = account.validate_close_date(before_last);
+    assert!(res.is_err());
+}
+
+#[test]
+fn close_date_on_last_operation_date_is_valid() {
+    let account = setup_account_with_data();
+    // Last op is 2025-12-15 — closing on same day is allowed
+    let last_op_date = parse_date("2025-12-15").unwrap();
+    let res = account.validate_close_date(last_op_date);
+    assert!(res.is_ok());
+}
+
+// ── Lifecycle — audit transfer links ─────────────────────────
+
+#[test]
+fn audit_detects_broken_transfer_link() {
+    use codexi::logic::operation::{OperationBuilder, OperationLinks};
+    use nulid::Nulid;
+
+    let mut account = setup_empty_account();
+    account
+        .initialize(parse_date("2026-01-01").unwrap(), dec!(500))
+        .unwrap();
+
+    // Manually insert an op with transfer_id but no transfer_account_id
+    let fake_transfer_id = Nulid::new().unwrap();
+    let mut links = OperationLinks::default();
+    links.transfer_id = Some(fake_transfer_id);
+    // transfer_account_id intentionally left None — broken link
+
+    let op = OperationBuilder::default()
+        .date(parse_date("2026-01-01").unwrap())
+        .kind(OperationKind::Regular(RegularKind::Transfer))
+        .flow(OperationFlow::Debit)
+        .amount(dec!(50))
+        .description("broken transfer".to_string())
+        .links(links)
+        .build()
+        .unwrap();
+
+    account.operations.push(op);
+    account.refresh_anchors();
+
+    let warnings = account.audit().unwrap();
+    assert!(
+        warnings.iter().any(|w| w.message.contains("TEST 8")),
+        "audit should detect broken transfer link"
+    );
+}

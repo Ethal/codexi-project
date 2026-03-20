@@ -49,6 +49,7 @@ impl Account {
 
         self.audit_void_links(&mut warnings); // TEST 5
         self.audit_double_void(&mut warnings); // TEST 6
+        self.audit_transfer_links(&mut warnings); // TEST 8
 
         // Remembering the FINAL closing anchor of the file
         let final_checkpoint = &self.anchors.last_checkpoint;
@@ -199,6 +200,27 @@ impl Account {
             }
         }
     }
+
+    /// Perfomed and audit and a balance rebuild
+    pub fn audit_and_rebuild(&mut self) -> Result<Vec<CoreWarning>, AccountError> {
+        let warnings = self.audit()?; // si Err → blocking, NO rebuild
+
+        let has_only_balance_warnings = warnings
+            .iter()
+            .all(|w| matches!(w.kind, CoreWarningKind::InvalidData));
+
+        if !warnings.is_empty() && has_only_balance_warnings {
+            self.rebuild_balances_from(
+                self.operations
+                    .first()
+                    .map(|op| op.date)
+                    .unwrap_or_default(),
+            );
+        }
+
+        Ok(warnings)
+    }
+
     /// Audit of the anchors
     fn audit_anchors(&self, shadow: &Account, warnings: &mut Vec<CoreWarning>) {
         let checks = [
@@ -241,23 +263,52 @@ impl Account {
         }
     }
 
-    /// Perfomed and audit and a balance rebuild
-    pub fn audit_and_rebuild(&mut self) -> Result<Vec<CoreWarning>, AccountError> {
-        let warnings = self.audit()?; // si Err → blocking, NO rebuild
+    /// Audit of transfer links — internal consistency only.
+    /// Checks that every operation with a transfer_id also has
+    /// a transfer_account_id set, and vice versa.
+    /// Cross-account link validity (twin exists in the other account)
+    /// cannot be checked here — handled at Codexi level.
+    fn audit_transfer_links(&self, warnings: &mut Vec<CoreWarning>) {
+        for op in &self.operations {
+            let has_transfer_id = op.links.transfer_id.is_some();
+            let has_transfer_acc = op.links.transfer_account_id.is_some();
 
-        let has_only_balance_warnings = warnings
-            .iter()
-            .all(|w| matches!(w.kind, CoreWarningKind::InvalidData));
+            // Both fields must be set together — one without the other is a broken link
+            match (has_transfer_id, has_transfer_acc) {
+                (true, false) => warnings.push(CoreWarning {
+                    kind: CoreWarningKind::InvalidData,
+                    message: format!(
+                        "TEST 8: Operation {} has transfer_id but no transfer_account_id",
+                        op.id
+                    ),
+                }),
+                (false, true) => warnings.push(CoreWarning {
+                    kind: CoreWarningKind::InvalidData,
+                    message: format!(
+                        "TEST 8: Operation {} has transfer_account_id but no transfer_id",
+                        op.id
+                    ),
+                }),
+                _ => {}
+            }
 
-        if !warnings.is_empty() && has_only_balance_warnings {
-            self.rebuild_balances_from(
-                self.operations
-                    .first()
-                    .map(|op| op.date)
-                    .unwrap_or_default(),
-            );
+            // A transfer operation must use Regular::Transfer kind
+            if has_transfer_id
+                && !matches!(
+                    op.kind,
+                    crate::logic::operation::OperationKind::Regular(
+                        crate::logic::operation::RegularKind::Transfer
+                    )
+                )
+            {
+                warnings.push(CoreWarning {
+                    kind: CoreWarningKind::InvalidData,
+                    message: format!(
+                        "TEST 8: Operation {} has transfer_id but kind is not Regular::Transfer",
+                        op.id
+                    ),
+                });
+            }
         }
-
-        Ok(warnings)
     }
 }
