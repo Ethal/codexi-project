@@ -11,13 +11,14 @@ use crate::logic::{
 
 impl Account {
     /// Merges an imported account into self, respecting update rules.
+    /// Validation is assumed to have been done upstream by validate_import().
     pub fn merge_from_import(&mut self, imported: Account) -> Result<ImportSummary, AccountError> {
-        // --- ACCOUNT LEVEL MERGE ---
-        // allow field to be updated
+        // --- Account level merge ---
+        // Only non-financial fields are updated — id, amounts, dates are immutable
         self.name = imported.name;
         self.meta = imported.meta;
 
-        // --- OPERATIONS LEVEL MERGE ---
+        // --- Operations level merge ---
         let mut summary = self.merge_operations(imported.operations)?;
         summary.account_name = self.name.clone();
 
@@ -29,8 +30,8 @@ impl Account {
         imported_ops: Vec<Operation>,
     ) -> Result<ImportSummary, AccountError> {
         let mut summary = ImportSummary::default();
-        // temporary vector for new operation
-        let mut to_process_as_new = Vec::new();
+        // Temporary vector for new operations
+        let mut to_add = Vec::new();
 
         {
             let mut existing_ops: HashMap<Nulid, &mut Operation> =
@@ -39,21 +40,23 @@ impl Account {
             for new_op in imported_ops {
                 summary.total_processed += 1;
                 if let Some(existing) = existing_ops.get_mut(&new_op.id) {
-                    // update field
+                    // Update only non-financial fields — amount, date, kind, flow are immutable
                     existing.description = new_op.description;
                     existing.context = new_op.context;
                     existing.meta = new_op.meta;
                     summary.updated += 1;
                 } else {
-                    // new operation : add to temporary vector
-                    to_process_as_new.push(new_op);
+                    // New operation — defer to avoid borrow conflict
+                    to_add.push(new_op);
                 }
             }
         }
 
-        // add new operations
-        for op in to_process_as_new {
-            self.register_transaction(op.date, op.kind, op.flow, op.amount, op.description)?;
+        // Insert new operations directly via commit_operation.
+        // Validation (amounts, links, temporal) has already been performed
+        // upstream by validate_import() — no need to re-validate here.
+        for op in to_add {
+            self.commit_operation(op);
             summary.created += 1;
         }
 

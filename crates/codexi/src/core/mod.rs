@@ -7,10 +7,11 @@ mod parse;
 mod paths;
 pub mod serde_nulid;
 mod validation;
+mod warning;
 
 pub const ID_MIN_SHORT_LEN: usize = 5;
 
-pub use error::{CoreError, CoreWarning, CoreWarningKind};
+pub use error::CoreError;
 pub use format::{
     format_date, format_date_time_long, format_date_time_short, format_id, format_id_short,
     format_time,
@@ -22,3 +23,4 @@ pub use parse::{
 };
 pub use paths::DataPaths;
 pub use validation::validate_text_rules;
+pub use warning::{CoreWarning, CoreWarningKind};

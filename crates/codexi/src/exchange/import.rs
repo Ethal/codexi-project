@@ -4,7 +4,7 @@ use crate::core::CoreWarning;
 use crate::exchange::{
     ExchangeCheckpointRef, ExchangeData, ExchangeError, ExchangeOperation, validate_import,
 };
-use crate::logic::account::{Account, AccountMeta, CheckpointRef};
+use crate::logic::account::{Account, AccountAnchors, AccountMeta, CheckpointRef};
 use crate::logic::operation::Operation;
 
 impl ExchangeData {
@@ -43,7 +43,7 @@ impl ExchangeData {
             operations,
             current_balance: import.current_balance,
             checkpoints,
-            anchors: import.anchors.clone(),
+            anchors: AccountAnchors::default(),
             meta: AccountMeta::default(),
         }
     }

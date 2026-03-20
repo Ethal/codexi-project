@@ -144,18 +144,19 @@ impl Codexi {
     /// Return a import summary
     pub fn import_account(
         &mut self,
-        imported_account: Account,
+        mut imported_account: Account,
     ) -> Result<ImportSummary, CodexiError> {
         let id = imported_account.id;
         let mut summary = ImportSummary::default();
 
         if let Ok(existing) = self.get_account_by_id_mut(&id) {
-            // The account exist: update / create
+            // Existing account — merge then refresh anchors
             summary = existing.merge_from_import(imported_account)?;
-
+            existing.refresh_anchors(); // ← always recalculate after merge
             Ok(summary)
         } else {
-            // new account
+            // New account — recalculate anchors, never trust imported values
+            imported_account.refresh_anchors(); // ← always recalculate before adding
             let count = imported_account.operations.len();
             self.add_account(imported_account);
             summary.created = count;

@@ -44,6 +44,7 @@ impl Account {
     /// TEST 5 — Symmetry of void/void_of
     /// TEST 6 — double void
     /// TEST 7 — anchors consistency
+    /// TEST 8 - transfer links
     pub fn audit(&self) -> Result<Vec<CoreWarning>, AccountError> {
         let mut warnings = Vec::new();
 

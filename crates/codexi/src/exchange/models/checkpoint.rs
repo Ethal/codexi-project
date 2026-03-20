@@ -1,4 +1,4 @@
-// src/exchannge/models/checpoint.rs
+// src/exchannge/models/checkpoint.rs
 
 use chrono::NaiveDate;
 use rust_decimal::Decimal;

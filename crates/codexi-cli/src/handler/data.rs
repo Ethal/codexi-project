@@ -58,6 +58,9 @@ pub fn handle_data_command(
                 } else {
                     msg_info!("Import TOML completed");
                 }
+                msg_warn!(
+                    "It is recommended to run `admin audit --rebuild` to verify data integrity."
+                );
             }
             ExchangeFormat::Json => {
                 if !skip_confirm && !Prompt::confirm("Import the data?", false)? {
@@ -79,6 +82,9 @@ pub fn handle_data_command(
                 } else {
                     msg_info!("Import JSON completed");
                 }
+                msg_warn!(
+                    "It is recommended to run `admin audit --rebuild` to verify data integrity."
+                );
             }
         },
         DataCommand::Snapshot(snapshot) => match snapshot.command {

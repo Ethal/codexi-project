@@ -16,23 +16,41 @@ Codexi is a command-line personal finance ledger focused on auditability, tracea
 ## 🧠 Design Philosophy
 
 Codexi does not prevent financial states — it documents them.
-Negative balances, large adjustments, and corrections are allowed by design. Integrity is enforced through explicit operations and full auditability, never by silent constraints.
+Negative balances, large adjustments, and corrections are allowed by design.
+Integrity is enforced through explicit operations and full auditability,
+never by silent constraints.
+
+Operations are **immutable once recorded** — financial fields cannot be
+changed after the fact, matching real-world banking practice. Errors are
+corrected by explicit void operations, which create compensating entries
+dated today. This preserves a complete, tamper-evident audit trail.
 
 ---
 
 ## ✨ Features
 
 - **Multi-Account** — manage several accounts, switch active account at any time
-- **Anchor-Based Integrity** — operation dates validated against history anchors (`INIT`, `CLOSE`, `ADJUST`)
-- **Period Closing & Archival** — formally close periods into `.cld` archive files with a carried-forward balance
-- **Financial Analytics Dashboard** — savings rate, daily burn rate, top expenses, system health
+- **Per-Account Policy** — compliance rules (overdraft, minimum balance, monthly quota,
+  deposit lock) configurable per account instance via `account set-context`
+- **Anchor-Based Integrity** — operation dates validated against history anchors
+  (`INIT`, `CLOSE`, `ADJUST`) with same-day precision using Nulid ordering
+- **Period Closing & Archival** — formally close periods into `.cld` archive files
+  with a carried-forward balance
+- **Transfer Between Accounts** — cross-account and cross-currency transfers with
+  automatic net exchange rate calculation; atomic void support
+- **Financial Analytics Dashboard** — savings rate, daily burn rate, top expenses,
+  system health
 - **HTML Statement Export** — rendered report openable directly in your browser
-- **Multi-format I/O** — export and import via JSON, TOML, or CSV
-- **Snapshot & Backup** — lightweight snapshots for quick rollback, full ZIP backups including archives
+- **Multi-format I/O** — export and import via JSON or TOML
+- **Snapshot & Backup** — lightweight snapshots for quick rollback, full ZIP backups
+  including archives
 - **Exact Arithmetic** — fixed-point decimal (`rust_decimal`), no floating-point errors
-- **Explicit Void Semantics** — operations are never deleted; voids create compensating entries
-- **Versioned Storage (V3)** — CBOR with magic header, versioning, and checksum
-
+- **Explicit Void Semantics** — operations are never deleted; voids create compensating
+  entries dated today, matching real-world banking practice
+- **Immutable Operations** — once recorded, financial fields (amount, date, kind, flow)
+  cannot be modified. Only metadata (description, context, tags) can be updated via import.
+- **Versioned Storage (V3)** — Ciborium binary format with magic header, versioning,
+  and SHA-256 checksum
 ---
 
 ## 🚀 Installation
@@ -45,34 +63,41 @@ cd codexi-project
 cargo build --release
 ./target/release/codexi-cli --help
 ```
-
 ---
 
 ## 📖 Typical Workflow
 
 ```bash
 # 1. Initialize a new account
-codexi account create 2025-01-01 My Bank Account --type Current
-codexi history init 2025-01-01 1500.00
+codexi-cli account create 2025-01-01 My Bank Account --type Current
+codexi-cli account set-bank '<bank_id>'        # see: codexi-cli bank list
+codexi-cli account set-currency '<currency_id>' # see: codexi-cli currency list
+codexi-cli account set-context --overdraft 500 --min-balance 0
+codexi-cli history init 2025-01-01 1500.00
 
 # 2. Record daily operations
-codexi credit 2025-01-05 2400.00 Monthly salary
-codexi debit  2025-01-06 45.00  Groceries
+codexi-cli credit 2025-01-05 2400.00 Monthly salary
+codexi-cli debit  2025-01-06 45.00  Groceries
 
-# 3. Consult and analyze
-codexi search
-codexi report balance
-codexi report stats --from 2025-01-01 --to 2025-01-31
+# 3. Transfer between accounts
+codexi-cli transfer 2025-01-10 100.00 1500000 '<account_id_to>' ATM withdrawal
 
-# 4. Protect your data before risky operations
-codexi data snapshot create
-codexi data import json
+# 4. Consult and analyze
+codexi-cli view
+codexi-cli report balance
+codexi-cli report stats --from 2025-01-01 --to 2025-01-31
+codexi-cli report statement
 
-# 5. Close a period at year end
-codexi history close 2025-12-31 Closing Year 2025
-codexi admin backup
+# 5. Protect your data before risky operations
+codexi-cli data snapshot create
+codexi-cli data import json
+# → It is recommended to run: admin audit --rebuild
+
+# 6. Close a period at year end
+codexi-cli admin backup
+codexi-cli history close 2025-12-31 Closing Year 2025
+codexi-cli admin backup
 ```
-
 ---
 
 ## 🗂️ Command Reference
@@ -82,21 +107,21 @@ codexi admin backup
 | :--- | :--- |
 | `credit <date> <amount> [desc]` | Record an incoming flow |
 | `debit <date> <amount> [desc]` | Record an outgoing flow |
-| `transfer <date> <amount_from> <amount_to> <account_id_to> [desc]` | Record transfer from current account to other account |
-| `search(view) [--from] [--to] [--text] [--kind] [--flow] [--min-amount] [--max-amount] [--latest]` | Search and filter operations |
+| `transfer <date> <amount_from> <amount_to> <account_id_to> [desc]` | Transfer from current account to another |
+| `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--min-amount] [--max-amount] [--latest]` | Search and filter operations |
 
 ### Account
 | Command | Description |
 | :--- | :--- |
 | `account list` | List all accounts (`*` = active, `c` = closed) |
-| `account create <date> <name> [--type]` | Create a new account |
+| `account create <date> <name> [--type]` | Create a new account (default: Current) |
 | `account use <id>` | Switch active account |
 | `account close <id> <date>` | Close an account |
 | `account rename <id> <name>` | Rename an account |
-| `account context` | view the context of the current account |
-| `account set-bank <bank id>` | set bank to current account |
-| `account set-currency <currency id>` | set currency to current account |
-| `account set-context [--overdraft] [--balance-min] [--max-monthly-transactions] [--deposit-locked-until] [--interest] [--signers]` | set context to current account |
+| `account context` | View the context of the current account |
+| `account set-bank <bank_id>` | Set bank for current account |
+| `account set-currency <currency_id>` | Set currency for current account |
+| `account set-context [--overdraft] [--min-balance] [--max-monthly-transactions] [--deposit-locked-until] [--interest] [--signers]` | Configure compliance parameters for current account |
 
 ### Bank
 | Command | Description |
@@ -235,12 +260,12 @@ A companion **`www/`** directory contains the static website hosted at [codexi.e
 | :--- | :--- | :--- |
 | Application (CLI) | `0.1.0` | Semantic versioning — active development |
 | Core library | `0.1.0` | Semantic versioning — active development |
-| Storage format | `V3` | CBOR, magic header, checksum |
-| Export format (JSON/TOML/CSV) | `V2` | |
+| Storage format | `V3` | Ciborium binary, magic header, SHA-256 checksum |
+| Export format (JSON/TOML) | `V2` | Interchange only, no storage metadata |
 
-> **Note**: CLI versions `1.0.0` → `2.0.1` correspond to an earlier 
+> **Note**: CLI versions `1.0.0` → `2.0.1` correspond to an earlier
 > single-binary architecture, kept as git tags for reference.
-
+> `serde_cbor` (V3 legacy) files remain readable for backward compatibility.
 ---
 
 ## 🤝 Contributing
