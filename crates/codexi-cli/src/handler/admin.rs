@@ -96,7 +96,7 @@ pub fn handle_admin_command(
             );
         }
         AdminCommand::Trash(trash) => match trash.command {
-            TrashCommand::RestoreTrash { date } => {
+            TrashCommand::Restore { date } => {
                 if !skip_confirm
                     && !Prompt::critical_confirm("Restore all the current data ?", "RESTORE")?
                 {
@@ -106,7 +106,7 @@ pub fn handle_admin_command(
                 FileManagement::restore_trash(paths, date)?;
                 msg_warn!("Restore a codexi from the trash ");
             }
-            TrashCommand::PurgeTrash => {
+            TrashCommand::Purge => {
                 if !skip_confirm && !Prompt::critical_confirm("Purge the trash", "PURGE")? {
                     msg_info!("Operation cancelled.");
                     return Ok(());

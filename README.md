@@ -190,8 +190,8 @@ codexi-cli admin backup
 
 | Command | Description |
 | :--- | :--- |
-| `admin trash restore-trash <datetime>` | ⚠️ Restore from trash |
-| `admin trash purge-trash` | ⚠️ Empty the trash directory |
+| `admin trash restore <datetime>` | ⚠️ Restore from trash |
+| `admin trash purge` | ⚠️ Empty the trash directory |
 
 ---
 

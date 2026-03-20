@@ -78,12 +78,12 @@ pub struct TrashArgs {
 #[derive(Subcommand, Debug)]
 pub enum TrashCommand {
     ///⚠️  Restore a Codexi from the app trash directory tothe app active directory.
-    RestoreTrash {
+    Restore {
         /// date of the folder to restore.
-        #[arg(value_name = "DATE_TIME", help = "Date format YYYY-MM-DD_HH-MM-SS.")]
+        #[arg(value_name = "DATE_TIME", help = "Date format YYYYMMDD_HHMMSS.")]
         date: String,
     },
 
     ///⚠️  Emptying the trash in app directory.
-    PurgeTrash,
+    Purge,
 }
