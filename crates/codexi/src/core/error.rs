@@ -1,6 +1,5 @@
 // src/core/error.rs
 
-use std::fmt;
 use thiserror::Error;
 
 /// Error type for Core
@@ -36,33 +35,4 @@ pub enum CoreError {
     NoDataDirectory(String),
     #[error("VAL_DATA: {0}")]
     InvalidData(String),
-}
-
-#[derive(Debug)]
-pub struct CoreWarning {
-    pub kind: CoreWarningKind,
-    pub message: String,
-}
-
-#[derive(Debug)]
-pub enum CoreWarningKind {
-    VoidOfNotFound,
-    InvalidData,
-    ContextNotApplicable, // ← nouveau
-}
-
-impl CoreWarningKind {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            CoreWarningKind::VoidOfNotFound => "VoidOfNotFound",
-            CoreWarningKind::InvalidData => "InvalidData",
-            CoreWarningKind::ContextNotApplicable => "ContextNotApplicable",
-        }
-    }
-}
-
-impl fmt::Display for CoreWarning {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {}", self.kind.as_str(), self.message)
-    }
 }

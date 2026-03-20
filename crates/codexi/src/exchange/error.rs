@@ -2,19 +2,24 @@
 
 use thiserror::Error;
 
-/// Error type for exchange data
 #[derive(Debug, Error)]
 pub enum ExchangeError {
-    #[error("VAL_INVALID_VERSION: {0}")]
+    #[error("SYS_IO: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("DATA_JSON: {0}")]
+    InvalidJson(#[from] serde_json::Error),
+    #[error("EX_INVALID_VERSION: {0}")]
     InvalidVersion(String),
-    #[error("VAL_DUPLICATE_OPERATION: {0}")]
+    #[error("EX_DUPLICATE_OP: {0}")]
     DuplicateOperation(String),
-    #[error("VAL_MORE_THAN_ONCE_VOIDED: {0}")]
-    MoreThanOnceVoided(String),
-    #[error("VAL_VOID_TO_VOID: {0}")]
-    VoidToVoid(String),
-    #[error("VAL_INVALID_NEXT_OPID: {0}")]
-    InvalidNextOpId(String),
-    #[error("VAL_UNKNOW_VOID_OF: operation void with unknow void of")]
+    #[error("EX_VOID_UNKNOWN: {0}")]
     UnknowVoidOf(String),
+    #[error("EX_VOID_TWICE: {0}")]
+    MoreThanOnceVoided(String),
+    #[error("EX_VOID_TO_VOID: {0}")]
+    VoidToVoid(String),
+    #[error("EX_INVALID_AMOUNT: {0}")]
+    InvalidAmount(String),
+    #[error("EX_BROKEN_TRANSFER_LINK: {0}")]
+    BrokenTransferLink(String),
 }

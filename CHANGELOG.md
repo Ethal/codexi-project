@@ -43,6 +43,15 @@ All notable changes to this project will be documented in this file.
   following the same symmetric pattern as `void_of`/`void_by`.
 - **Short ID support in CLI commands** — entities can now be referenced using the last
   characters of their ID instead of the full 26-character Nulid.
+- **Import validation hardened** — `validate_import` now rejects negative or zero amounts
+  (`InvalidAmount`) and broken transfer links (`BrokenTransferLink`). Cross-account
+  transfer references produce a warning rather than an error, as the twin operation
+  lives in a separate account.
+- **Anchors always recalculated on import** — imported `AccountAnchors` are discarded
+  and rebuilt from scratch via `refresh_anchors()`. Prevents stale or corrupted anchor
+  data from silently propagating.
+- **`OperationFlow::apply`** — new helper method eliminating duplicated `match flow`
+  patterns across `rebuild_balances_from`, `balance_at`, and related balance calculations.
 - Command `account set-context` to update the configurable parameters of the current account.
 - Command `account context` to view the context of the current account.
 - Command `account create` now accepts an optional account type argument
@@ -54,7 +63,7 @@ All notable changes to this project will be documented in this file.
 - Command `account list` now shows the account type.
 - Refactored ID resolution logic — moved from account-specific implementation to a
   generic utility (`resolve_id`), improving consistency and reducing duplication.
-- Commands such as `account use` and `operation void` now support short ID input with
+- Commands such as `account use` and `history void` now support short ID input with
   validation (minimum length and ambiguity detection).
 - **`compliance_policy` now takes an explicit `date` parameter** — balance validation
   uses `balance_at(date)` instead of `current_balance`, ensuring operations inserted at
@@ -63,12 +72,16 @@ All notable changes to this project will be documented in this file.
 - **Adjust lock granularity** — void of an operation on the same day as an adjust is now
   resolved by Nulid ordering: operations inserted before the adjust are locked, operations
   inserted after are allowed. Previously all same-day operations were incorrectly allowed.
+- **`merge_from_import` now uses `commit_operation` directly** — new operations from
+  import are inserted without re-running temporal or compliance policy, as validation
+  is handled upstream by `validate_import`. Prevents incorrect rejection of valid
+  historical data during merge.
+- **Storage format** — write now uses `Ciborium` (official `serde_cbor` successor,
+  maintained by the serde team). Read supports both `Cbor` and `Ciborium` for backward
+  compatibility.
 
 ### Deprecated
-- **File storage format** migrated from `Cbor` (`serde_cbor`, abandoned upstream) to
-  `Ciborium` (official successor, maintained by the serde team). Read supports both
-  `Cbor` and `Ciborium` for backward compatibility. Write uses `Ciborium` only.
-  `serde_cbor` will be removed in a future version once no legacy files remain.
+- `serde_cbor` — will be removed in a future version once no legacy `Cbor` files remain.
 
 ### Removed
 
@@ -79,6 +92,8 @@ All notable changes to this project will be documented in this file.
   historical balance at the operation date.
 - **Same-day adjust lock bypass** — operations on the same day as an adjust could
   incorrectly bypass the void lock. Now resolved precisely using Nulid ordering.
+- **Audit TEST 8** — transfer link consistency check added: operations with `transfer_id`
+  must also carry `transfer_account_id`, and must use `Regular::Transfer` kind.
 - Option `--open` for commands `report stats` and `report statement` that did not open
   the default browser in some cases.
 ---
