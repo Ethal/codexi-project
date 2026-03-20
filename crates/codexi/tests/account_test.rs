@@ -641,3 +641,178 @@ fn cannot_void_same_operation_twice() {
 
     assert!(op_id_void2.is_err());
 }
+
+// ── balance_at ───────────────────────────────────────────────
+
+#[test]
+fn balance_at_returns_correct_historical_balance() {
+    let account = setup_account_with_data();
+
+    // At 2025-09-30 — only init (200)
+    assert_eq!(
+        account.balance_at(parse_date("2025-09-30").unwrap()),
+        dec!(200.00)
+    );
+
+    // At 2025-10-31 — init + oct ops (200 + 50 - 14.20 - 44.80 - 11 = 180)
+    assert_eq!(
+        account.balance_at(parse_date("2025-10-31").unwrap()),
+        dec!(180.00)
+    );
+
+    // At 2025-11-30 — + nov ops (180 + 100 - 15.70 - 23.60 = 240.70)
+    assert_eq!(
+        account.balance_at(parse_date("2025-11-30").unwrap()),
+        dec!(240.70)
+    );
+
+    // At 2025-12-31 — full balance (240.70 - 25.50 + 10 + 150 = 375.20)
+    assert_eq!(
+        account.balance_at(parse_date("2025-12-31").unwrap()),
+        dec!(375.20)
+    );
+}
+
+#[test]
+fn balance_at_empty_account_returns_zero() {
+    let account = setup_empty_account();
+    assert_eq!(
+        account.balance_at(parse_date("2025-12-31").unwrap()),
+        Decimal::ZERO
+    );
+}
+
+#[test]
+fn balance_at_before_first_op_returns_zero() {
+    let account = setup_account_with_data();
+    // Before init date 2025-09-01
+    assert_eq!(
+        account.balance_at(parse_date("2025-08-31").unwrap()),
+        Decimal::ZERO
+    );
+}
+
+// ── compliance with past date ─────────────────────────────────
+
+#[test]
+fn compliance_rejects_overdraft_on_past_date() {
+    // Reproduces the bug fixed by balance_at:
+    // an operation inserted at a past date must be validated
+    // against the balance at that date, not current_balance.
+
+    let mut account = Account::new(
+        parse_date("2026-01-01").unwrap(),
+        "Test".into(),
+        AccountType::Current,
+        None,
+        None,
+    )
+    .unwrap();
+
+    // Set overdraft limit to 10
+    account
+        .context
+        .update_context(Some(dec!(10)), None, None, None, None, None)
+        .unwrap();
+
+    // Init with 50 on 2026-01-01
+    account
+        .initialize(parse_date("2026-01-01").unwrap(), dec!(50))
+        .unwrap();
+
+    // Debit 55 on 2026-01-01 → balance -5 (within overdraft -10) → OK
+    account
+        .register_transaction(
+            parse_date("2026-01-01").unwrap(),
+            OperationKind::Regular(RegularKind::Transaction),
+            OperationFlow::Debit,
+            dec!(55),
+            "ok debit".into(),
+        )
+        .unwrap();
+
+    // Debit 10 on 2026-01-01 → balance -15 < -10 → must fail
+    let res = account.register_transaction(
+        parse_date("2026-01-01").unwrap(),
+        OperationKind::Regular(RegularKind::Transaction),
+        OperationFlow::Debit,
+        dec!(10),
+        "exceeds overdraft".into(),
+    );
+    assert!(res.is_err(), "overdraft at past date should be rejected");
+}
+
+// ── adjust lock same day ──────────────────────────────────────
+
+#[test]
+fn void_allowed_for_op_after_adjust_same_day() {
+    use chrono::Local;
+    let today = Local::now().date_naive();
+
+    let mut account = Account::new(today, "Test".into(), AccountType::Current, None, None).unwrap();
+
+    account.initialize(today, dec!(500)).unwrap();
+
+    // OP1 before adjust
+    account
+        .register_transaction(
+            today,
+            OperationKind::Regular(RegularKind::Transaction),
+            OperationFlow::Debit,
+            dec!(50),
+            "op1".into(),
+        )
+        .unwrap();
+
+    // Adjust — locks OP1
+    account.adjust_balance(today, dec!(400)).unwrap();
+
+    // OP3 after adjust — same day
+    let op3_id = account
+        .register_transaction(
+            today,
+            OperationKind::Regular(RegularKind::Transaction),
+            OperationFlow::Credit,
+            dec!(100),
+            "op3".into(),
+        )
+        .unwrap();
+
+    // Void OP3 must succeed
+    let res = account.void_operation(op3_id);
+    assert!(
+        res.is_ok(),
+        "void of op after adjust same day should be allowed"
+    );
+}
+
+#[test]
+fn void_blocked_for_op_before_adjust_same_day() {
+    use chrono::Local;
+    let today = Local::now().date_naive();
+
+    let mut account = Account::new(today, "Test".into(), AccountType::Current, None, None).unwrap();
+
+    account.initialize(today, dec!(500)).unwrap();
+
+    // OP1 before adjust
+    let op1_id = account
+        .register_transaction(
+            today,
+            OperationKind::Regular(RegularKind::Transaction),
+            OperationFlow::Debit,
+            dec!(50),
+            "op1".into(),
+        )
+        .unwrap();
+
+    // Adjust — locks OP1
+    account.adjust_balance(today, dec!(400)).unwrap();
+
+    // Void OP1 must fail — locked by adjust
+    let res = account.void_operation(op1_id);
+    assert!(
+        res.is_err(),
+        "void of op before adjust same day should be locked"
+    );
+}
