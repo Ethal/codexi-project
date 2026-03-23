@@ -16,16 +16,14 @@ use codexi::{
     types::DateRange,
 };
 
-use crate::handler::account::handle_account_command;
-use crate::handler::admin::handle_admin_command;
-use crate::handler::bank::handle_bank_command;
-use crate::handler::category::handle_category_command;
-use crate::handler::currency::handle_currency_command;
-use crate::handler::data::handle_data_command;
-use crate::handler::history::handle_history_command;
-use crate::handler::report::handle_report_command;
 use crate::{
     command::{Cli, RootCommand},
+    handler::{
+        account::handle_account_command, admin::handle_admin_command, bank::handle_bank_command,
+        category::handle_category_command, currency::handle_currency_command,
+        data::handle_data_command, history::handle_history_command,
+        operation::handle_operation_command, report::handle_report_command,
+    },
     msg_info, msg_warn,
 };
 
@@ -157,6 +155,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 view_search(&search_items);
             }
         }
+        RootCommand::Operation(args) => handle_operation_command(args.command, paths)?,
         RootCommand::Report(args) => handle_report_command(args.command, cwd, paths)?,
         RootCommand::Data(args) => handle_data_command(args.command, cwd, paths, skip_confirm)?,
         RootCommand::History(args) => handle_history_command(args.command, paths)?,

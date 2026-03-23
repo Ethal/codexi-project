@@ -4,7 +4,7 @@ use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
 use crate::core::format_id;
-use crate::logic::currency::{Currency, CurrencyEntry, CurrencyError, CurrencyItem};
+use crate::logic::currency::{Currency, CurrencyError};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CurrencyList {
@@ -66,6 +66,13 @@ impl CurrencyList {
             .map(|c| c.id)
     }
 
+    pub fn currency_code_by_id(&self, id: &Nulid) -> Option<String> {
+        self.currencies
+            .iter()
+            .find(|c| &c.id == id)
+            .map(|c| c.code.clone())
+    }
+
     pub fn count(&self) -> usize {
         self.currencies.len()
     }
@@ -76,15 +83,6 @@ impl CurrencyList {
 
     pub fn is_exist(&self, id: &Nulid) -> bool {
         self.currencies.iter().any(|c| &c.id == id)
-    }
-
-    pub fn currency_entry(&self) -> CurrencyEntry {
-        let items: Vec<CurrencyItem> = self.currencies.iter().map(CurrencyItem::from).collect();
-        CurrencyEntry { items }
-    }
-    pub fn currency_item(&self, id: &Nulid) -> Result<CurrencyItem, CurrencyError> {
-        let item = self.get_by_id(id).map(CurrencyItem::from)?;
-        Ok(item)
     }
 }
 

@@ -19,12 +19,12 @@ pub use account_type::AccountType;
 pub use anchors::AccountAnchors;
 pub use archive::{AccountArchive, CheckpointRef};
 pub use container::OperationContainer;
-pub use dto::{OperationEntry, OperationItem, StatementEntry, StatementItem};
-pub use error::AccountError;
+pub use dto::{AccountAnchorsItem, OperationEntry, OperationItem, SummaryEntry};
+pub use error::{AccountError, SearchError};
 pub use model::{Account, AccountMeta};
 pub use policy::{
     AccountContext, AccountContextItem, ComplianceAction, CompliancePolicy, ComplianceViolation,
     LifecycleViolation, TemporalAction, TemporalViolation,
 };
-pub use reports::{StatsEntry, SummaryEntry};
+pub use reports::StatsEntry;
 pub use search::{SearchEntry, SearchItem, SearchParams, SearchParamsBuilder, search};

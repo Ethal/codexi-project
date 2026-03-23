@@ -86,6 +86,13 @@ pub enum AccountCommand {
         /// Currency id
         #[arg(value_name = "ID", required = true, help = "Currency ID")]
         id: String,
+        /// Update all the operations with the account currency
+        #[arg(
+            short,
+            long,
+            help = "Update all the operations with the account currency"
+        )]
+        update_operation: bool,
     },
     /// Set context to current account
     SetContext {

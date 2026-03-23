@@ -4,9 +4,8 @@ use crate::logic::{
     account::SearchEntry,
     operation::{OperationKind, SystemKind},
 };
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone)]
 pub struct Counts {
     pub regular: usize,
     pub init: usize,

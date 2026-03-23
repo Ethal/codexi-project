@@ -4,7 +4,7 @@ use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
 use crate::core::format_id;
-use crate::logic::bank::{Bank, BankEntry, BankError, BankItem};
+use crate::logic::bank::{Bank, BankError};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BankList {
@@ -53,6 +53,10 @@ impl BankList {
             .ok_or_else(|| BankError::BankNotFound(format_id(*id)))
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &Bank> {
+        self.banks.iter()
+    }
+
     pub fn is_exist(&self, id: &Nulid) -> bool {
         self.banks.iter().any(|c| &c.id == id)
     }
@@ -63,16 +67,6 @@ impl BankList {
 
     pub fn is_empty(&self) -> bool {
         self.banks.is_empty()
-    }
-
-    pub fn bank_entry(&self) -> BankEntry {
-        let items: Vec<BankItem> = self.banks.iter().map(BankItem::from).collect();
-        BankEntry { items }
-    }
-
-    pub fn bank_item(&self, id: &Nulid) -> Result<BankItem, BankError> {
-        let item = self.get_by_id(id).map(BankItem::from)?;
-        Ok(item)
     }
 }
 

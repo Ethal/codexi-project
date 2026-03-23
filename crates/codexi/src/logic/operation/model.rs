@@ -70,12 +70,7 @@ impl Operation {
     /// Debit   -> -amount
     /// Void    -> reversed sign
     pub fn signed_amount(&self) -> Decimal {
-        let base = match self.flow {
-            OperationFlow::Credit => self.amount,
-            OperationFlow::Debit => -self.amount,
-            OperationFlow::None => Decimal::ZERO,
-        };
-
+        let base = self.amount * self.flow.to_sign();
         if self.kind.is_void() { -base } else { base }
     }
 }

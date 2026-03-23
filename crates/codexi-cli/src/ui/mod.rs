@@ -5,12 +5,14 @@ mod bank;
 mod category;
 mod currency;
 mod display;
+mod operation;
 
 pub use account::*;
 pub use bank::view_bank;
 pub use category::view_category;
 pub use currency::view_currency;
 pub use display::*;
+pub use operation::*;
 
 use console::Style;
 const TITLE_STYLE: Style = Style::new().cyan().bold();

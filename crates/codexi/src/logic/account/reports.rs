@@ -3,63 +3,17 @@
 use nulid::Nulid;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
 use crate::{
     core::{format_date, format_id},
     logic::{
-        account::{Account, AccountAnchors, SearchEntry, SearchItem},
-        balance::{Balance, BalanceItem},
-        counts::Counts,
+        account::{Account, SearchItem, SearchParams, search},
         operation::{OperationKind, SystemKind},
     },
 };
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct AccountAnchorsItem {
-    pub last_regular: Option<String>,
-    pub last_init: Option<String>,
-    pub last_adjust: Option<String>,
-    pub last_void: Option<String>,
-    pub last_checkpoint: Option<String>,
-}
-
-impl From<&AccountAnchors> for AccountAnchorsItem {
-    fn from(a: &AccountAnchors) -> Self {
-        Self {
-            last_regular: a.last_regular.clone().map(|la| format_date(la.date)),
-            last_init: a.last_init.clone().map(|la| format_date(la.date)),
-            last_adjust: a.last_adjust.clone().map(|la| format_date(la.date)),
-            last_void: a.last_void.clone().map(|la| format_date(la.date)),
-            last_checkpoint: a.last_checkpoint.clone().map(|la| format_date(la.date)),
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct SummaryEntry {
-    pub counts: Counts,
-    pub balance: BalanceItem,
-    pub anchors: AccountAnchorsItem,
-}
-
-impl SummaryEntry {
-    /// Build a SummaryEntry from items and account.
-    pub fn new(items: &SearchEntry, account: &Account) -> Option<Self> {
-        if items.is_empty() {
-            return None;
-        }
-
-        Some(Self {
-            counts: Counts::new(items),
-            balance: BalanceItem::from(Balance::new(items)),
-            anchors: AccountAnchorsItem::from(&account.anchors),
-        })
-    }
-}
-
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default)]
 pub struct TopExpenseItem {
     pub op_id: String,
     pub op_date: String,
@@ -68,7 +22,7 @@ pub struct TopExpenseItem {
     pub percentage: Decimal,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default)]
 pub struct StatsEntry {
     pub total_credit: Decimal,
     pub total_debit: Decimal,
@@ -84,9 +38,11 @@ pub struct StatsEntry {
     pub adjustment_percentage: Decimal,
 }
 
-impl StatsEntry {
+impl Account {
     /// Performed the stats calculations
-    pub fn new(items: &SearchEntry, net: bool) -> Option<Self> {
+    pub fn stats_entry(&self, params: &SearchParams, net: bool) -> Option<StatsEntry> {
+        let items = search(self, params).ok().unwrap_or_default();
+
         let active_items: Vec<&SearchItem> = items.active_items().collect();
 
         if active_items.is_empty() {
@@ -189,7 +145,7 @@ impl StatsEntry {
         let days_count = (end - start).num_days() + 1;
         let daily_average = total_debit / Decimal::from(days_count);
 
-        Some(Self {
+        Some(StatsEntry {
             total_credit,
             total_debit,
             balance,

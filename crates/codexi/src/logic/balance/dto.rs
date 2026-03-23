@@ -1,16 +1,22 @@
 // src/logic/balance/dto.rs
 
 use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+use crate::logic::balance::Balance;
+
+#[derive(Debug, Default, Clone)]
 pub struct BalanceItem {
     pub credit: Decimal,
     pub debit: Decimal,
+    pub total: Decimal,
 }
 
-impl BalanceItem {
-    pub fn total(&self) -> Decimal {
-        self.credit - self.debit
+impl From<Balance> for BalanceItem {
+    fn from(b: Balance) -> Self {
+        BalanceItem {
+            credit: b.credit,
+            debit: b.debit,
+            total: b.total(),
+        }
     }
 }

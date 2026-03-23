@@ -6,12 +6,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::format_id;
 use crate::exchange::ImportSummary;
-use crate::logic::account::{Account, AccountContextItem, AccountError};
+use crate::logic::account::{Account, AccountError};
 use crate::logic::bank::BankList;
 use crate::logic::category::CategoryList;
 use crate::logic::codexi::{
-    AccountEntry, AccountItem, CodexiError, CodexiSettings, default_banks, default_categories,
-    default_currencies,
+    CodexiError, CodexiSettings, default_banks, default_categories, default_currencies,
 };
 use crate::logic::currency::CurrencyList;
 
@@ -104,10 +103,19 @@ impl Codexi {
         Ok(())
     }
     /// Set a currency id to the current account
-    pub fn set_account_currency(&mut self, id: &Nulid) -> Result<(), CodexiError> {
+    pub fn set_account_currency(
+        &mut self,
+        id: &Nulid,
+        update_operation: bool,
+    ) -> Result<(), CodexiError> {
         self.currencies.get_by_id(id)?;
         let acc = self.get_current_account_mut()?;
         acc.currency_id = Some(*id);
+        if update_operation {
+            for op in acc.operations.iter_mut() {
+                op.context.currency_id = Some(*id);
+            }
+        }
         Ok(())
     }
     /// Close an account
@@ -167,34 +175,5 @@ impl Codexi {
 
     pub fn account_count(&self) -> usize {
         self.accounts.len()
-    }
-
-    pub fn account_entry(&self) -> AccountEntry {
-        let items = self
-            .accounts
-            .iter()
-            .map(|acc| self.account_item(acc))
-            .collect();
-
-        AccountEntry { items }
-    }
-    pub fn account_item(&self, acc: &Account) -> AccountItem {
-        let mut item = AccountItem::default();
-        item.id = format_id(acc.id);
-        item.name = acc.name.clone();
-        item.current = acc.id == self.current_account;
-        item.close = acc.terminated_date.is_some();
-        if let Some(id) = acc.bank_id
-            && let Ok(bank) = self.banks.get_by_id(&id)
-        {
-            item.bank = bank.name.clone();
-        }
-        if let Some(id) = acc.currency_id
-            && let Ok(currency) = self.currencies.get_by_id(&id)
-        {
-            item.currency = currency.code.clone();
-        }
-        item.context = AccountContextItem::from(&acc.context);
-        item
     }
 }

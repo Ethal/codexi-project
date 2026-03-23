@@ -4,7 +4,7 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
 use codexi::core::parse_date;
-use codexi::logic::account::{Account, AccountType, SearchParamsBuilder, StatsEntry, search};
+use codexi::logic::account::{Account, AccountType, SearchParamsBuilder, search};
 use codexi::logic::balance::Balance;
 use codexi::logic::operation::RegularKind;
 use codexi::logic::operation::{OperationFlow, OperationKind};
@@ -438,12 +438,9 @@ fn test_stats_void_outside_period_has_no_effect() {
         .build()
         .unwrap();
 
-    // operation void outside the criteria
-    let items = search(&account, &params).unwrap();
-
     // Stat does not take into account init and close amount
-    let stats_no_net = StatsEntry::new(&items, false).unwrap();
-    let stats_net = StatsEntry::new(&items, true).unwrap();
+    let stats_no_net = account.stats_entry(&params, false).unwrap();
+    let stats_net = account.stats_entry(&params, true).unwrap();
 
     assert_eq!(stats_no_net.balance, dec!(-30.00));
     assert_eq!(stats_net.balance, dec!(-30.00));
@@ -505,15 +502,12 @@ fn test_stats_void_in_period_produces_expected_net_result() {
         .build()
         .unwrap();
 
-    // operation void and voided in criteria
-    let items = search(&account, &params).unwrap();
-
     // balance: 510.00 - 134.80 = 375.20  = 375.20 - init(+200) = 175.20
     // credit: 200 + 50.00 + 100.00 + 160 (+10 Void)= 510.00 - init(+200) = 310.00
     // debit: 0 + 70.00 + 39.30 + 25.50 (-10 Voided)= 134.80
 
-    let stats_no_net = StatsEntry::new(&items, false).unwrap();
-    let stats_net = StatsEntry::new(&items, true).unwrap();
+    let stats_no_net = account.stats_entry(&params, false).unwrap();
+    let stats_net = account.stats_entry(&params, false).unwrap();
 
     assert_eq!(
         stats_no_net.total_credit,

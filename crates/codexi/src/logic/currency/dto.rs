@@ -1,8 +1,8 @@
 // src/logic/currency/dto.rts
 
-use serde::{Deserialize, Serialize};
+use crate::{core::format_id, logic::currency::Currency};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct CurrencyItem {
     pub id: String,           // Nulid
     pub code: String,         // ex: "EUR", "USD"
@@ -11,7 +11,19 @@ pub struct CurrencyItem {
     pub note: Option<String>, // free field
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct CurrencyEntry {
     pub items: Vec<CurrencyItem>,
+}
+
+impl From<&Currency> for CurrencyItem {
+    fn from(currency: &Currency) -> Self {
+        Self {
+            id: format_id(currency.id),
+            code: currency.code.clone(),
+            symbol: currency.symbol.clone(),
+            decimal_places: currency.decimal_places,
+            note: currency.note.clone(),
+        }
+    }
 }

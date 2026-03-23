@@ -10,10 +10,10 @@ use codexi::{
     logic::utils::resolve_id,
 };
 
-use crate::ui::{view_archive, view_search};
 use crate::{
     command::{ArchiveCommand, HistoryCommand},
     msg_info,
+    ui::{view_archive, view_search},
 };
 
 pub fn handle_history_command(command: HistoryCommand, paths: &DataPaths) -> Result<()> {

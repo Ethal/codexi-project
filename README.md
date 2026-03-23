@@ -110,6 +110,11 @@ codexi-cli admin backup
 | `transfer <date> <amount_from> <amount_to> <account_id_to> [desc]` | Transfer from current account to another |
 | `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--min-amount] [--max-amount] [--latest]` | Search and filter operations |
 
+### Operation
+| Command | Description |
+| :--- | :--- |
+| `operation view <id> [--raw]` | view an operation  |
+
 ### Account
 | Command | Description |
 | :--- | :--- |
@@ -120,7 +125,7 @@ codexi-cli admin backup
 | `account rename <id> <name>` | Rename an account |
 | `account context` | View the context of the current account |
 | `account set-bank <bank_id>` | Set bank for current account |
-| `account set-currency <currency_id>` | Set currency for current account |
+| `account set-currency <currency_id> [--update-operation]` | Set currency for current account |
 | `account set-context [--overdraft] [--min-balance] [--max-monthly-transactions] [--deposit-locked-until] [--interest] [--signers]` | Configure compliance parameters for current account |
 
 ### Bank
@@ -190,8 +195,8 @@ codexi-cli admin backup
 
 | Command | Description |
 | :--- | :--- |
-| `admin trash restore-trash <datetime>` | ⚠️ Restore from trash |
-| `admin trash purge-trash` | ⚠️ Empty the trash directory |
+| `admin trash restore <datetime>` | ⚠️ Restore from trash |
+| `admin trash purge` | ⚠️ Empty the trash directory |
 
 ---
 

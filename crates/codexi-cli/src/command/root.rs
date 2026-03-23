@@ -9,6 +9,7 @@ use crate::command::category::CategoryArgs;
 use crate::command::currency::CurrencyArgs;
 use crate::command::data::DataArgs;
 use crate::command::history::HistoryArgs;
+use crate::command::operation::OperationArgs;
 use crate::command::report::ReportArgs;
 
 #[derive(Parser, Debug)]
@@ -94,49 +95,49 @@ pub enum RootCommand {
         )]
         description: Vec<String>,
     },
-    /// Add a transfer operation beetween account
-    /// transfer <DATE> <AMOUNT_FROM> <AMOUNT_TO> <TO_ID> [DESCRIPTION]
+    /// Add a transfer operation between account
     Transfer {
+        /// date of the transfer
         #[arg(
             index = 1,
             value_name = "DATE",
             required = true,
-            help = "Date of the debit operation (YYYY-MM-DD)"
+            help = "Date of the operation (YYYY-MM-DD)"
         )]
         date: String,
-
+        /// Amount from the current account to be sent
         #[arg(
             index = 2,
             value_name = "AMOUNT_FROM",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount of the current account to be tranfer"
+            help = "Amount from the current account to be sent"
         )]
         amount_from: String,
-
+        /// Amount of the destination account to be received
         #[arg(
             index = 3,
             value_name = "AMOUNT_TO",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount of the destination account to be tranfer"
+            help = "Amount of the destination account to be received"
         )]
         amount_to: String,
-
+        /// Account id of the destination
         #[arg(
             index = 4,
             value_name = "ACCOUNT_ID_TO",
             required = true,
             allow_negative_numbers = false,
-            help = "Account id of the destination account "
+            help = "Account id of the destination"
         )]
         account_id_to: String,
-
+        /// Description of the operation
         #[arg(
             index = 5,
             value_name = "DESCRIPTION...",
             num_args = 1..,
-            help = "Description of the debit operation",
+            help = "Description of the operation",
             default_value = "no description"
         )]
         description: Vec<String>,
@@ -219,6 +220,9 @@ pub enum RootCommand {
         #[arg(long, help = "The operation  of today")]
         today: bool,
     },
+
+    /// Manage Operations
+    Operation(OperationArgs),
 
     /// Manage codexi accounts
     Account(AccountArgs),

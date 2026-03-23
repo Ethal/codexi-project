@@ -53,6 +53,12 @@ pub enum SearchError {
     Common(#[from] CoreError),
     #[error("SRCH_BUILD: search parameters build: {0}")]
     SearchParametersBuilder(String),
+    #[error("SRCH_VAL: Operation #{0} not found in search item")]
+    OperationNotFound(String),
+    #[error("SRCH_VAL: Multiple operations in search item match '{0}', use more characters")]
+    AmbiguousShortId(String),
+    #[error("SRCH_VAL: Invalid short id {0}, expected {1} characters minimum")]
+    InvalidShortId(String, usize),
 }
 
 /// Error type for AccountType
@@ -71,5 +77,17 @@ impl ResolveError for AccountError {
     }
     fn invalid(input: String, min: usize) -> Self {
         AccountError::InvalidShortId(input, min)
+    }
+}
+
+impl ResolveError for SearchError {
+    fn not_found(input: String) -> Self {
+        SearchError::OperationNotFound(input)
+    }
+    fn ambiguous(input: String) -> Self {
+        SearchError::AmbiguousShortId(input)
+    }
+    fn invalid(input: String, min: usize) -> Self {
+        SearchError::InvalidShortId(input, min)
     }
 }

@@ -3,8 +3,8 @@
 use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{format_id, validate_text_rules};
-use crate::logic::category::{CategoryError, CategoryItem};
+use crate::core::validate_text_rules;
+use crate::logic::category::CategoryError;
 use crate::logic::utils::HasNulid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -34,15 +34,5 @@ impl Category {
 impl HasNulid for Category {
     fn id(&self) -> Nulid {
         self.id
-    }
-}
-
-impl From<&Category> for CategoryItem {
-    fn from(category: &Category) -> Self {
-        Self {
-            id: format_id(category.id),
-            name: category.name.clone(),
-            note: category.note.clone(),
-        }
     }
 }

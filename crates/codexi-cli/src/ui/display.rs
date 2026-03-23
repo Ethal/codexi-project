@@ -115,7 +115,7 @@ pub fn view_balance(balance: &BalanceItem) {
         CREDIT_STYLE.apply_to(format!("{:.2}", balance.credit).separate_with_commas());
     let debit_value = DEBIT_STYLE.apply_to(format!("{:.2}", balance.debit).separate_with_commas());
     let balance_value =
-        VALUE_STYLE.apply_to(format!("{:.2}", balance.total()).separate_with_commas());
+        VALUE_STYLE.apply_to(format!("{:.2}", balance.total).separate_with_commas());
 
     println!();
     println!("{}", title_text);
@@ -272,7 +272,7 @@ pub fn view_summary(summary: &SummaryEntry) {
         "│{:<24}│{:>18}│                                         │",
         LABEL_STYLE.apply_to("Balance"),
         VALUE_STYLE
-            .apply_to(format!("{:.2}", summary.balance.total()).separate_with_commas())
+            .apply_to(format!("{:.2}", summary.balance.total).separate_with_commas())
             .bold()
     );
 
