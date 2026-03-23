@@ -3,7 +3,7 @@
 use console::Style;
 
 const INFO_STYLE: Style = Style::new().green();
-const WARN_STYLE: Style = Style::new().true_color(255, 165, 0); //orange
+const WARN_STYLE: Style = Style::new().yellow();
 
 pub fn info(msg: &str) {
     println!("{}", INFO_STYLE.apply_to(msg));

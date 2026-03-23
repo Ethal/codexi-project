@@ -17,8 +17,11 @@ use codexi::{
     },
 };
 
-use crate::ui::{view_account, view_account_context, view_warning};
-use crate::{command::AccountCommand, msg_info, msg_warn};
+use crate::{
+    command::AccountCommand,
+    msg_info, msg_warn,
+    ui::{view_account, view_account_context, view_warning},
+};
 
 pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Result<()> {
     let mut codexi = FileManagement::load_current_state(paths)?;
@@ -79,9 +82,13 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Bank set.");
         }
-        AccountCommand::SetCurrency { id } => {
+        AccountCommand::SetCurrency {
+            id,
+            update_operation,
+        } => {
             let id_n = resolve_id::<Currency, CurrencyError>(&id, &codexi.currencies.currencies)?;
-            codexi.set_account_currency(&id_n)?;
+            codexi.set_account_currency(&id_n, update_operation)?;
+
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Currency set.");
         }

@@ -5,11 +5,11 @@ use std::path::Path;
 
 use codexi::{core::DataPaths, file_management::FileManagement};
 
-use crate::prompts::Prompt;
-use crate::ui::{view_snapshot, view_warning};
 use crate::{
     command::{DataCommand, ExchangeFormat, SnapshotCommand},
     msg_info, msg_warn,
+    prompts::Prompt,
+    ui::{view_snapshot, view_warning},
 };
 
 pub fn handle_data_command(
@@ -40,7 +40,7 @@ pub fn handle_data_command(
             }
             ExchangeFormat::Toml => {
                 if !skip_confirm && !Prompt::confirm("Import the data?", false)? {
-                    msg_info!("Operation cancelled.");
+                    msg_info!("Command cancelled.");
                     return Ok(());
                 }
                 let (new_account, warnings) = FileManagement::import_toml(cwd)?;
@@ -64,7 +64,7 @@ pub fn handle_data_command(
             }
             ExchangeFormat::Json => {
                 if !skip_confirm && !Prompt::confirm("Import the data?", false)? {
-                    msg_info!("Operation cancelled.");
+                    msg_info!("Command cancelled.");
                     return Ok(());
                 }
                 let (new_account, warnings) = FileManagement::import_json(cwd)?;
@@ -83,7 +83,7 @@ pub fn handle_data_command(
                     msg_info!("Import JSON completed");
                 }
                 msg_warn!(
-                    "It is recommended to run `admin audit --rebuild` to verify data integrity."
+                    "It is recommended to run 'admin audit --rebuild' to verify data integrity."
                 );
             }
         },
@@ -98,7 +98,7 @@ pub fn handle_data_command(
             }
             SnapshotCommand::Restore { snapshot_file } => {
                 if !skip_confirm && !Prompt::confirm("Restore the snapshot ?", false)? {
-                    msg_info!("Operation cancelled.");
+                    msg_info!("Command cancelled.");
                     return Ok(());
                 }
                 let codexi = FileManagement::restore_snapshot(paths, &snapshot_file)?;

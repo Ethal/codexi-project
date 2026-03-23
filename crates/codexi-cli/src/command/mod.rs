@@ -7,6 +7,7 @@ mod category;
 mod currency;
 mod data;
 mod history;
+mod operation;
 mod report;
 mod root;
 
@@ -17,5 +18,6 @@ pub use category::CategoryCommand;
 pub use currency::CurrencyCommand;
 pub use data::{DataCommand, ExchangeFormat, SnapshotCommand};
 pub use history::{ArchiveCommand, HistoryCommand};
+pub use operation::OperationCommand;
 pub use report::ReportCommand;
 pub use root::{Cli, RootCommand};

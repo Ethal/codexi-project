@@ -77,7 +77,7 @@ pub struct TrashArgs {
 /// Manage the application trash (Recover or purge deleted files).
 #[derive(Subcommand, Debug)]
 pub enum TrashCommand {
-    ///⚠️  Restore a Codexi from the app trash directory tothe app active directory.
+    ///⚠️  Restore a Codexi from the app trash directory to the app active directory.
     Restore {
         /// date of the folder to restore.
         #[arg(value_name = "DATE_TIME", help = "Date format YYYYMMDD_HHMMSS.")]

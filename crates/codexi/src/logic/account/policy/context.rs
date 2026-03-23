@@ -5,9 +5,9 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{CoreWarning, CoreWarningKind, format_date};
+use crate::core::{CoreWarning, CoreWarningKind};
+use crate::logic::account::AccountType;
 use crate::logic::account::policy::ComplianceViolation;
-use crate::logic::account::{AccountContextItem, AccountType};
 
 /// Configurable business settings for a given account.
 /// Each account starts with the default values for its type,
@@ -211,26 +211,6 @@ impl AccountContext {
 impl Default for AccountContext {
     fn default() -> Self {
         Self::from_type(AccountType::Current)
-    }
-}
-
-impl From<&AccountContext> for AccountContextItem {
-    fn from(c: &AccountContext) -> Self {
-        fn yes_no(b: bool) -> String {
-            if b { "YES".into() } else { "NO".into() }
-        }
-        Self {
-            account_type: c.account_type.as_str().to_string(),
-            overdraft_limit: c.overdraft_limit,
-            min_balance: c.min_balance,
-            max_monthly_transactions: c.max_monthly_transactions.unwrap_or(u32::MAX),
-            deposit_locked_until: c
-                .deposit_locked_until
-                .map(format_date)
-                .unwrap_or("none".to_string()),
-            allows_interest: yes_no(c.allows_interest),
-            allows_joint_signers: yes_no(c.allows_joint_signers),
-        }
     }
 }
 

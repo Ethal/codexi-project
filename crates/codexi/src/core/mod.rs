@@ -14,7 +14,8 @@ pub const ID_MIN_SHORT_LEN: usize = 5;
 pub use error::CoreError;
 pub use format::{
     format_date, format_date_time_long, format_date_time_short, format_id, format_id_short,
-    format_time,
+    format_max_monthly_transactions, format_optional_date, format_optional_id_short,
+    format_optional_text, format_text, format_time, yes_no,
 };
 pub use fs::{get_config_dir, get_data_dir};
 pub use parse::{

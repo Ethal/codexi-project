@@ -5,7 +5,7 @@ use rust_decimal::Decimal;
 use tera::{Context, Tera};
 use thousands::Separable;
 
-use codexi::logic::account::StatementEntry;
+use codexi::logic::codexi::StatementEntry;
 
 const STATEMENT_TEMPLATE: &str = include_str!("../assets/templates/statement.html");
 
@@ -37,10 +37,7 @@ pub fn export_statement_html(entry: StatementEntry) -> Result<String> {
         "balance_credit",
         &entry.balance.credit.separate_with_commas(),
     );
-    ctx.insert(
-        "balance_total",
-        &entry.balance.total().separate_with_commas(),
-    );
+    ctx.insert("balance_total", &entry.balance.total.separate_with_commas());
 
     let html = tera.render("statement.html", &ctx)?;
 

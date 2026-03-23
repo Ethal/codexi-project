@@ -1,6 +1,7 @@
 // src/logic/category/mod.rs
 
 mod dto;
+mod entry;
 mod error;
 mod list;
 mod model;

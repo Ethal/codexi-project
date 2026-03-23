@@ -14,11 +14,11 @@ use codexi::{
     },
 };
 
-use crate::prompts::Prompt;
-use crate::ui::{view_codexi_infos, view_warning};
 use crate::{
     command::{AdminCommand, TrashCommand},
     msg_info, msg_warn,
+    prompts::Prompt,
+    ui::{view_codexi_infos, view_warning},
 };
 
 pub fn handle_admin_command(
@@ -34,7 +34,7 @@ pub fn handle_admin_command(
         }
         AdminCommand::Restore { filename } => {
             if !skip_confirm && !Prompt::confirm("Restore the backup file ?", false)? {
-                msg_info!("Operation cancelled.");
+                msg_info!("Command cancelled.");
                 return Ok(());
             }
             let full_path = PathBuf::from(filename);
@@ -87,7 +87,7 @@ pub fn handle_admin_command(
         AdminCommand::ClearData => {
             if !skip_confirm && !Prompt::critical_confirm("Clear all the current data ?", "CLEAR")?
             {
-                msg_info!("Operation cancelled.");
+                msg_info!("Command cancelled.");
                 return Ok(());
             }
             FileManagement::clear_data(paths)?;
@@ -100,7 +100,7 @@ pub fn handle_admin_command(
                 if !skip_confirm
                     && !Prompt::critical_confirm("Restore all the current data ?", "RESTORE")?
                 {
-                    msg_info!("Operation cancelled.");
+                    msg_info!("Command cancelled.");
                     return Ok(());
                 }
                 FileManagement::restore_trash(paths, date)?;
@@ -108,7 +108,7 @@ pub fn handle_admin_command(
             }
             TrashCommand::Purge => {
                 if !skip_confirm && !Prompt::critical_confirm("Purge the trash", "PURGE")? {
-                    msg_info!("Operation cancelled.");
+                    msg_info!("command cancelled.");
                     return Ok(());
                 }
                 FileManagement::clean_trash(paths)?;
@@ -127,7 +127,7 @@ pub fn handle_admin_command(
         }
         AdminCommand::ImportSpecial => {
             if !skip_confirm && !Prompt::confirm("Import (no validation)?", false)? {
-                msg_info!("Operation cancelled.");
+                msg_info!("Command cancelled.");
                 return Ok(());
             }
             let codexi = FileManagement::import_special_json(cwd)?;

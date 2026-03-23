@@ -1,6 +1,7 @@
 // src/logic/bank/mod.rs
 
 mod dto;
+mod entry;
 mod error;
 mod list;
 mod model;

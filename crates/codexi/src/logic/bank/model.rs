@@ -3,8 +3,8 @@
 use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{format_id, validate_text_rules};
-use crate::logic::bank::{BankError, BankItem};
+use crate::core::validate_text_rules;
+use crate::logic::bank::BankError;
 use crate::logic::utils::HasNulid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -37,16 +37,5 @@ impl Bank {
 impl HasNulid for Bank {
     fn id(&self) -> Nulid {
         self.id
-    }
-}
-
-impl From<&Bank> for BankItem {
-    fn from(bank: &Bank) -> Self {
-        Self {
-            id: format_id(bank.id),
-            name: bank.name.clone(),
-            branch: bank.branch.clone(),
-            note: bank.note.clone(),
-        }
     }
 }

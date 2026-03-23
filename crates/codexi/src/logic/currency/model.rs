@@ -3,8 +3,8 @@
 use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{format_id, validate_text_rules};
-use crate::logic::currency::{CurrencyError, CurrencyItem};
+use crate::core::validate_text_rules;
+use crate::logic::currency::CurrencyError;
 use crate::logic::utils::HasNulid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -38,17 +38,5 @@ impl Currency {
 impl HasNulid for Currency {
     fn id(&self) -> Nulid {
         self.id
-    }
-}
-
-impl From<&Currency> for CurrencyItem {
-    fn from(currency: &Currency) -> Self {
-        Self {
-            id: format_id(currency.id),
-            code: currency.code.clone(),
-            symbol: currency.symbol.clone(),
-            decimal_places: currency.decimal_places,
-            note: currency.note.clone(),
-        }
     }
 }

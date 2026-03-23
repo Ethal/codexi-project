@@ -1,6 +1,8 @@
 name: Rust CI
 
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
 
 env:
@@ -15,19 +17,15 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             ext: ""
-
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             ext: ""
-
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             ext: ".exe"
-
           - os: macos-latest
             target: aarch64-apple-darwin
             ext: ""
-
           - os: macos-latest
             target: x86_64-apple-darwin
             ext: ""
@@ -57,7 +55,9 @@ jobs:
       - name: Build
         run: cargo build --locked --target ${{ matrix.target }}
 
+      # Tests run on Linux only — unit tests are platform-agnostic
       - name: Test
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
         run: cargo test --locked
 
       - name: Build release
@@ -69,15 +69,16 @@ jobs:
           cp target/${{ matrix.target }}/release/${{ env.BIN_NAME }}${{ matrix.ext }} dist/
         shell: bash
 
-      - name: Package
-        run: |
-          cd dist
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            7z a ../${{ env.BIN_NAME }}-${{ matrix.target }}.zip *
-          else
-            tar czf ../${{ env.BIN_NAME }}-${{ matrix.target }}.tar.gz *
-          fi
-        shell: bash
+      # Package — Unix
+      - name: Package (Unix)
+        if: matrix.os != 'windows-latest'
+        run: cd dist && tar czf ../${{ env.BIN_NAME }}-${{ matrix.target }}.tar.gz *
+
+      # Package — Windows
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
+        run: cd dist && Compress-Archive -Path * -DestinationPath ../${{ env.BIN_NAME }}-${{ matrix.target }}.zip
+        shell: pwsh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -87,3 +88,24 @@ jobs:
             ${{ env.BIN_NAME }}-${{ matrix.target }}.tar.gz
             ${{ env.BIN_NAME }}-${{ matrix.target }}.zip
           if-no-files-found: ignore
+
+  # Release job — triggered only on version tags (v*)
+  release:
+    name: Publish Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

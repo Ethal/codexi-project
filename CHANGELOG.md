@@ -2,8 +2,8 @@
 All notable changes to this project will be documented in this file.
 ---
 
-## [Unreleased]
-> ⚠️ No automatic migration — use `admin export-script` to rebuild your data.
+## [0.2.0] — 2026-03-23
+> ⚠️ No automatic migration — use `admin export-script` from previous release before update to this release to rebuild your data.
 
 ### Added
 - **AccountContext** — configurable parameters per account instance (overdraft limit,
@@ -46,21 +46,35 @@ All notable changes to this project will be documented in this file.
 - **Import validation hardened** — `validate_import` now rejects negative or zero amounts
   (`InvalidAmount`) and broken transfer links (`BrokenTransferLink`). Cross-account
   transfer references produce a warning rather than an error, as the twin operation
-  lives in a separate account.
+  belongs to another account.
 - **Anchors always recalculated on import** — imported `AccountAnchors` are discarded
   and rebuilt from scratch via `refresh_anchors()`. Prevents stale or corrupted anchor
   data from silently propagating.
 - **`OperationFlow::apply`** — new helper method eliminating duplicated `match flow`
   patterns across `rebuild_balances_from`, `balance_at`, and related balance calculations.
+- **`OperationDetailItem`** — new rich DTO for single operation detail view. All
+  referenced fields resolved (currency name, category name, transfer links). Built by
+  `Codexi::operation_detail()`.
+- **DTO / Entry layer refactored** — clean separation across all domains:
+  `dto.rs` holds structures and `From` conversions only; `entry.rs` holds construction
+  logic on `impl Account` or `impl Codexi`. `StatementEntry` moved to `codexi/` layer
+  as it requires bank and currency resolution from `Codexi`.
+- **`AccountAnchorsItem` and `SummaryEntry`** moved to `account/dto.rs` — consistent
+  with the DTO pattern, away from `reports.rs`.
+- **`StatsEntry` analytics** moved to `impl Account::stats_entry()` in `reports.rs` —
+  clearly separated as analytical computation, not a simple DTO conversion.
 - Command `account set-context` to update the configurable parameters of the current account.
 - Command `account context` to view the context of the current account.
 - Command `account create` now accepts an optional account type argument
   (Current, Joint, Saving, Deposit, Business, Student). Defaults to Current.
 - Command `transfer <DATE> <AMOUNT_FROM> <AMOUNT_TO> <ACCOUNT_ID_TO> [DESCRIPTION]`
 - Command `void` now handles both regular operations and transfer operations transparently.
+- Command `operation view <ID> [--raw]` — detailed single operation view with resolved
+  fields, color-coded flow, `[can void]` indicator, and optional raw debug output.
 
 ### Changed
 - Command `account list` now shows the account type.
+- Command `account -set-currency [--update-operation]`, option --update-operation to update the existing operation to the account currency.
 - Refactored ID resolution logic — moved from account-specific implementation to a
   generic utility (`resolve_id`), improving consistency and reducing duplication.
 - Commands such as `account use` and `history void` now support short ID input with
@@ -79,11 +93,15 @@ All notable changes to this project will be documented in this file.
 - **Storage format** — write now uses `Ciborium` (official `serde_cbor` successor,
   maintained by the serde team). Read supports both `Cbor` and `Ciborium` for backward
   compatibility.
+- **`Account::summary_entry`** now returns `SummaryEntry` directly (not `Option`) —
+  a summary is always meaningful even for an empty period, as anchors are account-level.
 
 ### Deprecated
 - `serde_cbor` — will be removed in a future version once no legacy `Cbor` files remain.
 
 ### Removed
+- `OperationEntry::new` and `StatementEntry::new` as standalone constructors — replaced
+  by `Account::operation_entry()` and `Codexi::statement_entry()` respectively.
 
 ### Fixed
 - **Compliance validation on past-dated operations** — `compliance_policy` previously
@@ -96,6 +114,7 @@ All notable changes to this project will be documented in this file.
   must also carry `transfer_account_id`, and must use `Regular::Transfer` kind.
 - Option `--open` for commands `report stats` and `report statement` that did not open
   the default browser in some cases.
+
 ---
 
 ## [0.1.0] — 2026-03-16

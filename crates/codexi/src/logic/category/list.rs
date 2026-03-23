@@ -4,7 +4,7 @@ use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
 use crate::core::format_id;
-use crate::logic::category::{Category, CategoryEntry, CategoryError, CategoryItem};
+use crate::logic::category::{Category, CategoryError};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CategoryList {
@@ -56,6 +56,13 @@ impl CategoryList {
             .ok_or_else(|| CategoryError::CategoryNotFound(format_id(*id)))
     }
 
+    pub fn category_name_by_id(&self, id: &Nulid) -> Option<String> {
+        self.categories
+            .iter()
+            .find(|c| &c.id == id)
+            .map(|c| c.name.clone())
+    }
+
     pub fn count(&self) -> usize {
         self.categories.len()
     }
@@ -66,16 +73,6 @@ impl CategoryList {
 
     pub fn is_exist(&self, id: &Nulid) -> bool {
         self.categories.iter().any(|c| &c.id == id)
-    }
-
-    pub fn category_entry(&self) -> CategoryEntry {
-        let items: Vec<CategoryItem> = self.categories.iter().map(CategoryItem::from).collect();
-
-        CategoryEntry { items }
-    }
-    pub fn category_item(&self, id: &Nulid) -> Result<CategoryItem, CategoryError> {
-        let item = self.get_by_id(id).map(CategoryItem::from)?;
-        Ok(item)
     }
 }
 

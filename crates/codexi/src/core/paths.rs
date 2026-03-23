@@ -6,19 +6,21 @@ use std::path::{Path, PathBuf};
 
 use crate::core::{format_date, format_date_time_short, format_id};
 
+// Disk structure of Codexi
 /*
-├── archives
+├── <DIR_ARCHIVES>
 │   └── <ACCOUNT_ID>
-│       ├── <ACCOUNT_ID>_codexi_<YYYY>-<MM>-<DD>.cld
+│       ├── <ACCOUNT_ID>_<APP_NAME>_<YYYY>-<MM>-<DD>.<EXT_ARCHIVE>
 │       ├── ...
 │       └── ...
-├── codexi.dat
-├── snapshots
-│   └── codexi_<YYYYMMDD>_<HHMMSS>.snp
+├── <APP_NAME>.<EXT_MAIN>
+├── <APP_NAME>.<EXT_CFG>
+├── <DIR_SNAPSHOTS>
+│   └── <APP_NAME>_<YYYYMMDD>_<HHMMSS>.<EXT_SNAPSHOT>
 │   └── ....
-├── tmp
+├── <DIR_TMP>
 │   └── ......
-└── trash
+└── <DIR_TRASH>
     └── <YYYYMMDD>_<HHMMSS>
         ├── archives/...
         ├── codexi.dat
@@ -34,6 +36,7 @@ pub struct ResolvedPath {
 pub struct DataPaths {
     pub root: PathBuf,          // data_dir
     pub main_file: PathBuf,     // data_dir/codexi.dat
+    pub config_file: PathBuf,   // data_dir/codexi.cfg
     pub archives_dir: PathBuf,  // data_dir/archives/
     pub snapshots_dir: PathBuf, // data_dir/snapshots/
     pub tmp_dir: PathBuf,       // data_dir/tmp/
@@ -43,6 +46,7 @@ pub struct DataPaths {
 impl DataPaths {
     pub(crate) const APP_NAME: &'static str = "codexi";
     pub(crate) const EXT_MAIN: &'static str = "dat";
+    pub(crate) const EXT_CFG: &'static str = "cfg";
     pub(crate) const EXT_ARCHIVE: &'static str = "cld";
     pub(crate) const EXT_SNAPSHOT: &'static str = "snp";
     pub(crate) const DIR_ARCHIVES: &'static str = "archives";
@@ -54,6 +58,7 @@ impl DataPaths {
         let root = data_dir.to_path_buf();
 
         Self {
+            config_file: root.join(format!("{}.{}", Self::APP_NAME, Self::EXT_CFG)),
             main_file: root.join(format!("{}.{}", Self::APP_NAME, Self::EXT_MAIN)),
             archives_dir: root.join(Self::DIR_ARCHIVES),
             snapshots_dir: root.join(Self::DIR_SNAPSHOTS),

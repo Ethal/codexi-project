@@ -38,7 +38,7 @@ pub fn view_account(items: &AccountEntry) {
     println!();
 }
 
-/// view to context t of account
+/// view to context of the current account
 pub fn view_account_context(item: &AccountItem) {
     let title_text_1 = TITLE_STYLE.apply_to("Account");
     let title_text_2 = TITLE_STYLE.apply_to("context");

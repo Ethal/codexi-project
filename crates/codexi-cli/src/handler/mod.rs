@@ -7,6 +7,7 @@ mod category;
 mod currency;
 mod data;
 mod history;
+mod operation;
 mod report;
 mod root;
 

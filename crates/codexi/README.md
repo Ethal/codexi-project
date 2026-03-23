@@ -19,7 +19,8 @@ Core library for the Codexi personal finance ledger.
 │   │   ├── codexi     — Top-level Codexi struct, multi-account management
 │   │   ├── counts     — Counts struct shared across views
 │   │   ├── currency   — CurrencyList, Currency
-│   │   └── operation  — Operation, OperationKind, OperationFlow
+│   │   ├── operation  — Operation, OperationKind, OperationFlow
+│   │   └── utils      — Utilities
 │   ├── seeds          — Default data (currencies, banks, categories)
 │   └── types          — Shared types (DateRange, ...)
 └── tests

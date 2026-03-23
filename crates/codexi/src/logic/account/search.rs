@@ -2,22 +2,23 @@
 
 use chrono::NaiveDate;
 use derive_builder::Builder;
+use nulid::Nulid;
 use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
 
 use crate::logic::{
-    account::{OperationContainer, error::SearchError},
+    account::{OperationContainer, SearchError},
     operation::{Operation, OperationFlow, OperationKind},
+    utils::HasNulid,
 };
 
 /// Struct for search entry
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct SearchEntry {
     pub items: Vec<SearchItem>,
 }
 
 /// Struct for search item
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct SearchItem {
     pub operation: Operation,
     pub balance: Decimal,
@@ -33,6 +34,11 @@ impl SearchEntry {
 
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
+    }
+
+    ///Return a SearchItem or None
+    pub fn get_searchitem_by_id(&self, si_id: Nulid) -> Option<&SearchItem> {
+        self.items.iter().find(|si| si.operation.id == si_id)
     }
 
     pub fn active_items(&self) -> impl Iterator<Item = &SearchItem> {
@@ -61,6 +67,12 @@ impl SearchEntry {
 impl Default for SearchEntry {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl HasNulid for SearchItem {
+    fn id(&self) -> Nulid {
+        self.operation.id
     }
 }
 

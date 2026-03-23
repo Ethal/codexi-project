@@ -56,7 +56,7 @@ pub enum ReportCommand {
     /// View a summary of the current account.
     Summary {},
 
-    /// export (html file) a statement of the current account   .
+    /// export (html file) a statement of the current account. Available criteria, --from --to.  .
     Statement {
         /// Arbitrary date range
         #[arg(

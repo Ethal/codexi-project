@@ -8,7 +8,7 @@ use codexi::{
     core::DataPaths,
     file_management::FileManagement,
     logic::{
-        account::{SearchParamsBuilder, StatementEntry, StatsEntry, SummaryEntry, search},
+        account::{SearchParamsBuilder, search},
         balance::{Balance, BalanceItem},
     },
     types::DateRange,
@@ -34,7 +34,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
 
             let balance_items = search(account, &params)?;
             let balance = BalanceItem::from(Balance::new(&balance_items));
-            if balance.total() == Decimal::ZERO
+            if balance.total == Decimal::ZERO
                 && balance.credit == Decimal::ZERO
                 && balance.debit == Decimal::ZERO
             {
@@ -55,8 +55,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 .to(range.to)
                 .build()?;
 
-            let search_results = search(account, &params)?;
-            if let Some(stats) = StatsEntry::new(&search_results, net) {
+            if let Some(stats) = account.stats_entry(&params, net) {
                 if open {
                     let html = export_stats_html(stats)?;
                     let file_path = FileManagement::export_html(&html, cwd)?;
@@ -71,12 +70,8 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
         }
         ReportCommand::Summary {} => {
             let params = SearchParamsBuilder::default().build()?;
-            let summary_items = search(account, &params)?;
-            if let Some(summary) = SummaryEntry::new(&summary_items, account) {
-                view_summary(&summary);
-            } else {
-                msg_warn!("No data available");
-            }
+            let summary = account.summary_entry(&params);
+            view_summary(&summary);
         }
         ReportCommand::Statement { from, to, open } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
@@ -85,7 +80,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 .to(range.to)
                 .build()?;
             let account_id = codexi.get_current_account()?.id;
-            if let Some(statement_results) = StatementEntry::new(&codexi, &account_id, &params) {
+            if let Some(statement_results) = codexi.statement_entry(&account_id, &params) {
                 if statement_results.items.is_empty() {
                     msg_warn!("No data available");
                 } else {
