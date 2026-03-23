@@ -507,7 +507,7 @@ fn test_stats_void_in_period_produces_expected_net_result() {
     // debit: 0 + 70.00 + 39.30 + 25.50 (-10 Voided)= 134.80
 
     let stats_no_net = account.stats_entry(&params, false).unwrap();
-    let stats_net = account.stats_entry(&params, false).unwrap();
+    let stats_net = account.stats_entry(&params, true).unwrap();
 
     assert_eq!(
         stats_no_net.total_credit,
