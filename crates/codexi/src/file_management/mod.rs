@@ -4,6 +4,7 @@ mod archive;
 mod backup;
 mod envelope;
 mod error;
+mod format;
 mod html;
 mod json;
 mod maintenance;
@@ -20,4 +21,5 @@ pub use error::{
 };
 
 pub use envelope::{FileEnvelope, StorageFormat, StoreEntity, checksum};
+pub use format::ExchangeSerdeFormat;
 pub use maintenance::CodexiInfos;

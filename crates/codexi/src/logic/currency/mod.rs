@@ -4,6 +4,7 @@ mod dto;
 mod entry;
 mod error;
 mod list;
+mod merge;
 mod model;
 
 pub use dto::{CurrencyEntry, CurrencyItem};

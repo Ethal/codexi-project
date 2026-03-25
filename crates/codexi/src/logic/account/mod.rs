@@ -16,7 +16,7 @@ mod reports;
 mod search;
 
 pub use account_type::AccountType;
-pub use anchors::AccountAnchors;
+pub use anchors::{AccountAnchors, LastAnchor};
 pub use archive::{AccountArchive, CheckpointRef};
 pub use container::OperationContainer;
 pub use dto::{AccountAnchorsItem, OperationEntry, OperationItem, SummaryEntry};

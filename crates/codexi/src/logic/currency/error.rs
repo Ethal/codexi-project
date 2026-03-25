@@ -13,10 +13,12 @@ pub enum CurrencyError {
     CurrencyNotFound(String),
     #[error("VAL_CURRENCY_CODE: Code: {0} invalid")]
     InvalidCode(String),
-    #[error("DATA_BANK: Multiple operations match '{0}', use more characters")]
+    #[error("DATA_CURRENCY: Multiple operations match '{0}', use more characters")]
     AmbiguousShortId(String),
-    #[error("DATA_BANK: Invalid short id {0}, expected {1} characters minimum")]
+    #[error("DATA_CURRENCY: Invalid short id {0}, expected {1} characters minimum")]
     InvalidShortId(String, usize),
+    #[error("VAL_CURRENCY: Duplicate currency code {0}")]
+    DuplicateCode(String),
 }
 
 impl ResolveError for CurrencyError {

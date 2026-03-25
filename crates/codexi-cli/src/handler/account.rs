@@ -5,7 +5,7 @@ use anyhow::Result;
 use codexi::{
     core::{
         DataPaths, parse_date, parse_id, parse_optional_date, parse_optional_decimal,
-        parse_optional_id, parse_optional_u32, parse_text,
+        parse_optional_u32, parse_text,
     },
     file_management::FileManagement,
     logic::{
@@ -42,8 +42,8 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
         } => {
             let date = parse_date(&date)?;
             let name = parse_text(name);
-            let bank_id = parse_optional_id(Some(""))?;
-            let currency_id = parse_optional_id(Some(""))?;
+            let bank_id = None;
+            let currency_id = None;
             let account_type: AccountType = account_type
                 .as_deref()
                 .map(|s| s.parse().unwrap_or_default())
@@ -62,7 +62,7 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
         }
 
         AccountCommand::Close { id, date } => {
-            let id_n = parse_id(&id)?;
+            let id_n = resolve_id::<Account, CodexiError>(&id, &codexi.accounts)?;
             let date = parse_date(&date)?;
             codexi.close_account(id_n, date)?;
             FileManagement::save_current_state(&codexi, paths)?;

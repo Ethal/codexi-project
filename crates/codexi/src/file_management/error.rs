@@ -125,4 +125,6 @@ pub enum FileExchangeError {
     Exchange(#[from] ExchangeError),
     #[error("Import Error: {0}")]
     Generic(String),
+    #[error("Unsupported format")]
+    UnsupportedFormat,
 }

@@ -101,12 +101,12 @@ pub struct OperationDetailItem {
     // ── Context — resolved ────────────────────────────────────
     pub currency: String, // resolved from currency_id e.g. "IDR"
     pub exchange_rate: Decimal,
-    pub category: String,   // resolved from category_id or "—"
-    pub payee: String,      // payee name or "—"
-    pub reconciled: String, // formatted date or "—"
+    pub category: String,           // resolved from category_id or "—"
+    pub payee: Option<String>,      // payee name or "—"
+    pub reconciled: Option<String>, // formatted date or "—"
 
     // ── Meta ──────────────────────────────────────────────────
-    pub tags: String,       // comma-separated or "—"
-    pub note: String,       // note or "—"
-    pub attachment: String, // path or "—"
+    pub tags: String,         // comma-separated or "—"
+    pub note: Option<String>, // note or "—"
+    pub attachment: String,   // path or "—"
 }

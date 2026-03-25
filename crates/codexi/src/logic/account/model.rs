@@ -86,6 +86,29 @@ impl Account {
         })
     }
 
+    pub fn update(
+        &mut self,
+        name: &str,
+        currency_id: Option<Nulid>,
+        bank_id: Option<Nulid>,
+        context: AccountContext,
+        meta: AccountMeta,
+    ) {
+        self.name = name.into();
+        self.currency_id = currency_id;
+        self.bank_id = bank_id;
+
+        self.context = context;
+        self.meta = meta;
+    }
+
+    pub fn update_context(&mut self, ctx: AccountContext) {
+        self.context = ctx;
+    }
+    pub fn update_meta(&mut self, meta: AccountMeta) {
+        self.meta = meta;
+    }
+
     ///Return the Operation or None
     pub fn get_operation_by_id(&self, op_id: Nulid) -> Option<&Operation> {
         self.operations.iter().find(|op| op.id == op_id)

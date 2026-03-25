@@ -13,7 +13,8 @@ pub enum CoreWarningKind {
     VoidOfNotFound,
     InvalidData,
     ContextNotApplicable,
-    TransferAccountNotFound, // ← nouveau
+    TransferAccountNotFound,
+    DuplicateCurrencyCode,
 }
 
 impl CoreWarningKind {
@@ -23,6 +24,7 @@ impl CoreWarningKind {
             CoreWarningKind::InvalidData => "InvalidData",
             CoreWarningKind::ContextNotApplicable => "ContextNotApplicable",
             CoreWarningKind::TransferAccountNotFound => "TransferAccountNotFound",
+            CoreWarningKind::DuplicateCurrencyCode => "DuplicateCurrencyCode",
         }
     }
 }

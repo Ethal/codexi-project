@@ -130,11 +130,15 @@ pub fn view_operation(item: &OperationDetailItem) {
         LABEL_STYLE.apply_to("Category"),
         &item.category
     );
-    println!("  {:<14} {}", LABEL_STYLE.apply_to("Payee"), &item.payee);
+    println!(
+        "  {:<14} {}",
+        LABEL_STYLE.apply_to("Payee"),
+        &item.payee.clone().unwrap_or("-".into())
+    );
     println!(
         "  {:<14} {}",
         LABEL_STYLE.apply_to("Reconciled"),
-        &item.reconciled
+        &item.reconciled.clone().unwrap_or("-".into())
     );
 
     // ── Meta ──────────────────────────────────────────────────
@@ -146,7 +150,7 @@ pub fn view_operation(item: &OperationDetailItem) {
     println!(
         "  {:<14} {}",
         LABEL_STYLE.apply_to("Note"),
-        NOTE_STYLE.apply_to(&item.note)
+        NOTE_STYLE.apply_to(&item.note.clone().unwrap_or("-".into()))
     );
     println!(
         "  {:<14} {}",

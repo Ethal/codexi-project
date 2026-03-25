@@ -21,7 +21,7 @@ pub enum CodexiError {
     Account(#[from] AccountError),
     #[error("SYS_BANK: {0}")]
     Bank(#[from] BankError),
-    #[error("SYS_BANK: {0}")]
+    #[error("SYS_CURRENCY: {0}")]
     Currency(#[from] CurrencyError),
     #[error("DATA_ACCOUNT: No account with id: {0}")]
     AccountNotFound(String),

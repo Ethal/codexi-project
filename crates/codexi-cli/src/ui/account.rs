@@ -52,7 +52,10 @@ pub fn view_account_context(item: &AccountItem) {
     println!(" Minimun balance: {}", item.context.min_balance);
     println!(
         " Deposit locked until: {}",
-        item.context.deposit_locked_until
+        item.context
+            .deposit_locked_until
+            .clone()
+            .unwrap_or("-".into())
     );
     println!(
         " Max monthly transactions: {}",
