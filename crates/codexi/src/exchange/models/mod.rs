@@ -9,4 +9,7 @@ pub use account::{
     ExchangeCheckpointRef,
 };
 pub use currency::{ExchangeCurrency, ExchangeCurrencyList};
-pub use operation::ExchangeOperation;
+pub use operation::{
+    ExchangeAccountOperations, ExchangeOperation, ExchangeOperationContext, ExchangeOperationLinks,
+    ExchangeOperationMeta,
+};

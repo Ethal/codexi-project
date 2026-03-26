@@ -3,7 +3,7 @@
 use chrono::{Datelike, NaiveDate};
 use nulid::Nulid;
 use rust_decimal::Decimal;
-use std::str::FromStr;
+use std::{path::PathBuf, str::FromStr};
 
 use crate::core::error::CoreError;
 
@@ -47,6 +47,14 @@ pub fn parse_optional_id(id: Option<&str>) -> Result<Option<Nulid>, CoreError> {
     id.map(parse_id).transpose()
 }
 
+pub fn parse_path(path: &str) -> PathBuf {
+    PathBuf::from(path)
+}
+
+pub fn parse_optional_path(path: Option<&str>) -> Option<PathBuf> {
+    path.map(parse_path)
+}
+
 pub fn parse_u32(s: &str, field: &str) -> Result<u32, CoreError> {
     s.parse::<u32>().map_err(|e| CoreError::Number {
         source: e,
@@ -65,8 +73,8 @@ pub fn parse_date(s: &str) -> Result<NaiveDate, CoreError> {
         ))
     })
 }
-pub fn parse_optional_date(opt_s: &Option<String>) -> Result<Option<NaiveDate>, CoreError> {
-    opt_s.as_deref().map(parse_date).transpose()
+pub fn parse_optional_date(opt_s: Option<&str>) -> Result<Option<NaiveDate>, CoreError> {
+    opt_s.map(parse_date).transpose()
 }
 
 pub fn parse_decimal(s: &str, field: &str) -> Result<Decimal, CoreError> {

@@ -7,7 +7,7 @@ use codexi::{
     core::DataPaths,
     exchange::Exchangeable,
     file_management::{ExchangeSerdeFormat, FileExchangeError, FileManagement},
-    logic::{account::Account, currency::CurrencyList},
+    logic::{account::Account, currency::CurrencyList, operation::AccountOperations},
 };
 
 use crate::{
@@ -31,6 +31,11 @@ pub fn handle_data_command(
                 export_with_format(account, format, cwd)?;
                 msg_info!("Export completed");
             }
+            ExchangeTypeCommand::Operation { format } => {
+                let account = codexi.get_current_account()?;
+                export_with_format(&account.to_account_operations(), format, cwd)?;
+                msg_info!("Export completed");
+            }
             ExchangeTypeCommand::Currency { format } => {
                 export_with_format(&codexi.currencies, format, cwd)?;
                 msg_info!("Export completed");
@@ -44,6 +49,32 @@ pub fn handle_data_command(
                 }
                 let (account, warnings) = import_with_format::<Account>(format, cwd)?;
                 let summary = codexi.import_account(account)?;
+                FileManagement::save_current_state(&codexi, paths)?;
+                msg_info!(
+                    "Import in {}: {} created, {} updated.",
+                    summary.name,
+                    summary.created,
+                    summary.updated
+                );
+                if !warnings.is_empty() {
+                    view_warning(&warnings);
+                    msg_warn!("Import completed, {} warnings", warnings.len());
+                } else {
+                    msg_info!("Import completed");
+                }
+                msg_warn!(
+                    "It is recommended to run `admin audit --rebuild` to verify data integrity."
+                );
+            }
+            ExchangeTypeCommand::Operation { format } => {
+                if !skip_confirm && !Prompt::confirm("Import the data?", false)? {
+                    msg_info!("Command cancelled.");
+                    return Ok(());
+                }
+                let (account_operations, mut warnings) =
+                    import_with_format::<AccountOperations>(format, cwd)?;
+                let (summary, merge_warnings) = codexi.import_operations(account_operations)?;
+                warnings.extend(merge_warnings);
                 FileManagement::save_current_state(&codexi, paths)?;
                 msg_info!(
                     "Import in {}: {} created, {} updated.",

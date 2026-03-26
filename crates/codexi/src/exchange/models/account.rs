@@ -168,7 +168,7 @@ impl TryFrom<&ExchangeAccountContext> for AccountContext {
             overdraft_limit: parse_decimal(&ctx.overdraft_limit, "overdraft_limit")?,
             min_balance: parse_decimal(&ctx.min_balance, "min_balance")?,
             max_monthly_transactions: ctx.max_monthly_transactions,
-            deposit_locked_until: parse_optional_date(&ctx.deposit_locked_until)?,
+            deposit_locked_until: parse_optional_date(ctx.deposit_locked_until.as_deref())?,
             allows_interest: ctx.allows_interest,
             allows_joint_signers: ctx.allows_joint_signers,
         })

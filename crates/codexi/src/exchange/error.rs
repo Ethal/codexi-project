@@ -2,7 +2,10 @@
 
 use thiserror::Error;
 
-use crate::{core::CoreError, logic::account::AccountError};
+use crate::{
+    core::CoreError,
+    logic::{account::AccountError, operation::OperationError},
+};
 
 #[derive(Debug, Error)]
 pub enum ExchangeError {
@@ -10,8 +13,12 @@ pub enum ExchangeError {
     Io(#[from] std::io::Error),
     #[error("DATA_JSON: {0}")]
     InvalidJson(#[from] serde_json::Error),
+    #[error("SYS_CORE: {0}")]
+    Core(#[from] CoreError),
     #[error("SYS_ACCOUNT: {0}")]
     Account(#[from] AccountError),
+    #[error("SYS_OP: {0}")]
+    Operation(#[from] OperationError),
     #[error("EX_INVALID_VERSION: {0}")]
     InvalidVersion(String),
     #[error("EX_DUPLICATE_OP: {0}")]
@@ -30,6 +37,4 @@ pub enum ExchangeError {
     DuplicateCurrency(String),
     #[error("EX_VAL: {0}")]
     InvalidData(String),
-    #[error("SYS_CORE: {0}")]
-    Core(#[from] CoreError),
 }

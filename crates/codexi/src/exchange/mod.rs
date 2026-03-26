@@ -11,8 +11,9 @@ mod validator;
 pub use error::ExchangeError;
 pub use exchangeable::Exchangeable;
 pub use models::{
-    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeCheckpointRef,
-    ExchangeCurrency, ExchangeCurrencyList, ExchangeOperation,
+    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
+    ExchangeAccountOperations, ExchangeCheckpointRef, ExchangeCurrency, ExchangeCurrencyList,
+    ExchangeOperation, ExchangeOperationContext, ExchangeOperationLinks, ExchangeOperationMeta,
 };
 pub use summary::ImportSummary;
 pub use validator::{validate_import_account_header, validate_import_currency};

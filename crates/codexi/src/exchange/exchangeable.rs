@@ -7,20 +7,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::CoreWarning,
-    exchange::{ExchangeAccountHeader, ExchangeCurrencyList, ExchangeError},
-    logic::{account::Account, currency::CurrencyList},
+    exchange::{
+        ExchangeAccountHeader, ExchangeAccountOperations, ExchangeCurrencyList, ExchangeError,
+    },
+    logic::{account::Account, currency::CurrencyList, operation::AccountOperations},
 };
 
 pub trait ExchangeBase {
     type Warning;
-}
-
-impl ExchangeBase for Account {
-    type Warning = CoreWarning;
-}
-
-impl ExchangeBase for CurrencyList {
-    type Warning = CoreWarning;
 }
 
 pub trait Exchangeable: Sized + ExchangeBase {
@@ -38,6 +32,10 @@ pub trait Exchangeable: Sized + ExchangeBase {
     fn exchange_filename() -> &'static str;
 }
 
+impl ExchangeBase for Account {
+    type Warning = CoreWarning;
+}
+
 impl Exchangeable for Account {
     type Exchange = ExchangeAccountHeader;
 
@@ -52,6 +50,30 @@ impl Exchangeable for Account {
     fn exchange_filename() -> &'static str {
         "account_header"
     }
+}
+
+impl ExchangeBase for AccountOperations {
+    type Warning = CoreWarning;
+}
+
+impl Exchangeable for AccountOperations {
+    type Exchange = ExchangeAccountOperations;
+
+    fn to_exchange(&self) -> Self::Exchange {
+        ExchangeAccountOperations::export_data(self)
+    }
+
+    fn from_exchange(data: Self::Exchange) -> Result<(Self, Vec<Self::Warning>), ExchangeError> {
+        ExchangeAccountOperations::import_data(&data)
+    }
+
+    fn exchange_filename() -> &'static str {
+        "operations"
+    }
+}
+
+impl ExchangeBase for CurrencyList {
+    type Warning = CoreWarning;
 }
 
 impl Exchangeable for CurrencyList {

@@ -106,7 +106,7 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
             let min = parse_optional_decimal(&balance_min, "balance min")?;
             let max_monthly_transactions =
                 parse_optional_u32(&max_monthly_transactions, "max_monthly transaction")?;
-            let deposit_locked_until = parse_optional_date(&deposit_locked_until)?;
+            let deposit_locked_until = parse_optional_date(deposit_locked_until.as_deref())?;
 
             let warnings = current_account.context.update_context(
                 limit,

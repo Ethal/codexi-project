@@ -4,11 +4,12 @@ use crate::CODEXI_EXCHANGE_FORMAT_VERSION;
 use crate::core::{
     format_date, format_decimal, format_id, format_optional_date, format_optional_id,
 };
-use crate::exchange::models::ExchangeAccountMeta;
 use crate::exchange::{
-    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeCheckpointRef,
-    ExchangeCurrency, ExchangeCurrencyList,
+    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
+    ExchangeAccountOperations, ExchangeCheckpointRef, ExchangeCurrency, ExchangeCurrencyList,
+    ExchangeOperation,
 };
+use crate::logic::operation::AccountOperations;
 use crate::logic::{account::Account, currency::CurrencyList};
 
 impl ExchangeAccountHeader {
@@ -32,6 +33,21 @@ impl ExchangeAccountHeader {
                 .collect(),
             anchors: ExchangeAccountAnchors::from(&export.anchors),
             meta: ExchangeAccountMeta::from(&export.meta),
+        }
+    }
+}
+
+impl ExchangeAccountOperations {
+    /// Single entry point for exporting the operation list from an account(JSON / TOML / CSV)
+    pub fn export_data(export: &AccountOperations) -> ExchangeAccountOperations {
+        ExchangeAccountOperations {
+            version: CODEXI_EXCHANGE_FORMAT_VERSION,
+            account_id: format_id(export.account_id),
+            operations: export
+                .operations
+                .iter()
+                .map(ExchangeOperation::from)
+                .collect(),
         }
     }
 }

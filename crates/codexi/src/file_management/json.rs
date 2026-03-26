@@ -3,9 +3,11 @@
 use std::fs;
 use std::path::Path;
 
-use crate::exchange::Exchangeable;
-use crate::file_management::{ExchangeSerdeFormat, FileExchangeError, FileManagement};
-use crate::logic::codexi::Codexi;
+use crate::{
+    exchange::Exchangeable,
+    file_management::{ExchangeSerdeFormat, FileExchangeError, FileManagement},
+    logic::codexi::Codexi,
+};
 
 impl FileManagement {
     /// Export to Json
@@ -19,6 +21,7 @@ impl FileManagement {
         ExchangeSerdeFormat::Json.import(dir)
     }
 
+    /// Export special from json
     pub fn export_special_json(data: &Codexi, dir: &Path) -> Result<(), FileExchangeError> {
         let file_path = dir.join("codexi_all.json");
 

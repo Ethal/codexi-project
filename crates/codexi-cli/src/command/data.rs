@@ -66,16 +66,22 @@ pub struct ExchangeTypeArgs {
     pub command: ExchangeTypeCommand,
 }
 
-///Manage local snapshots (Quick-save points before major changes)
+///Manage exchange type
 #[derive(Subcommand, Debug)]
 pub enum ExchangeTypeCommand {
-    /// Export account
+    /// Exchange account header
     AccountHeader {
         #[arg(value_enum)]
         format: ExchangeFormat,
     },
 
-    /// Export currency
+    /// Exchange operation
+    Operation {
+        #[arg(value_enum)]
+        format: ExchangeFormat,
+    },
+
+    /// Exchange currency
     Currency {
         #[arg(value_enum)]
         format: ExchangeFormat,

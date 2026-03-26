@@ -2,13 +2,21 @@
 
 use thiserror::Error;
 
+use crate::core::CoreError;
+
 /// Error type for Operation
 #[derive(Debug, Error)]
 pub enum OperationError {
     #[error("SYS_OP_ID: {0}")]
     InvalidId(#[from] nulid::Error),
-    #[error("OP_INVALID_DATE: Invalid Operation Date format: {0}")]
+    #[error("SYS_OP_DATE: {0}")]
     InvalidDate(#[from] chrono::ParseError),
+    #[error("SYS_CORE: {0}")]
+    Core(#[from] CoreError),
+    #[error("SYS_KIND: {0}")]
+    Kind(#[from] OperationKindError),
+    #[error("SYS_FLOW: {0}")]
+    Flow(#[from] OperationFlowError),
     #[error("OP_INVALID_DESC: Operation description: {0}")]
     InvalidDescription(String),
     #[error("OP_BUILD: Operation Build: {0}")]

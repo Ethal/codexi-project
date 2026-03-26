@@ -4,15 +4,20 @@ use chrono::NaiveDate;
 use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
-use crate::core::format_id;
-use crate::exchange::ImportSummary;
-use crate::logic::account::{Account, AccountError};
-use crate::logic::bank::BankList;
-use crate::logic::category::CategoryList;
-use crate::logic::codexi::{
-    CodexiError, CodexiSettings, default_banks, default_categories, default_currencies,
+use crate::{
+    core::{CoreWarning, format_id},
+    exchange::ImportSummary,
+    logic::{
+        account::{Account, AccountError},
+        bank::BankList,
+        category::CategoryList,
+        codexi::{
+            CodexiError, CodexiSettings, default_banks, default_categories, default_currencies,
+        },
+        currency::CurrencyList,
+        operation::AccountOperations,
+    },
 };
-use crate::logic::currency::CurrencyList;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Codexi {
@@ -159,7 +164,7 @@ impl Codexi {
 
         if let Ok(existing) = self.get_account_by_id_mut(&id) {
             // Existing account — merge then refresh anchors
-            summary = existing.merge_from_import(imported_account)?;
+            summary = existing.merge_account_header_from_import(imported_account)?;
             existing.refresh_anchors(); // ← always recalculate after merge
 
             Ok(summary)
@@ -174,6 +179,7 @@ impl Codexi {
             )?;
 
             // update context, meta, recalculate anchors, audit
+            summary.name = new_account.name.clone();
             new_account.update_meta(imported_account.meta);
             new_account.update_context(imported_account.context);
             new_account.refresh_anchors(); //
@@ -193,6 +199,19 @@ impl Codexi {
     ) -> Result<ImportSummary, CodexiError> {
         let summary = self.currencies.merge_from_import(imported_currencies)?;
         Ok(summary)
+    }
+
+    /// Import operations to an acccount from json, toml, csv
+    /// Return a import summary
+    pub fn import_operations(
+        &mut self,
+        imported_operations: AccountOperations,
+    ) -> Result<(ImportSummary, Vec<CoreWarning>), CodexiError> {
+        let account = self.get_account_by_id_mut(&imported_operations.account_id)?;
+        let (summary, warnings) = account.merge_operation_from_import(&imported_operations)?;
+        // Recalculate anchors and balances after merge
+        account.refresh_anchors();
+        Ok((summary, warnings))
     }
 
     pub fn account_count(&self) -> usize {

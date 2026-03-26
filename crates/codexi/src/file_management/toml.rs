@@ -1,8 +1,11 @@
 // src/file_management/toml.rs
 
-use crate::exchange::Exchangeable;
-use crate::file_management::{FileExchangeError, FileManagement, format::ExchangeSerdeFormat};
 use std::path::Path;
+
+use crate::{
+    exchange::Exchangeable,
+    file_management::{ExchangeSerdeFormat, FileExchangeError, FileManagement},
+};
 
 impl FileManagement {
     pub fn export_toml<T: Exchangeable>(data: &T, dir: &Path) -> Result<(), FileExchangeError> {

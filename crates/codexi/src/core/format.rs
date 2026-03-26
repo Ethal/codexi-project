@@ -12,7 +12,7 @@ pub fn format_optional<T, U>(opt: Option<T>, f: fn(T) -> U) -> Option<U> {
 }
 
 pub fn default_zero() -> String {
-    "0".to_owned()
+    "0.00".to_owned()
 }
 
 pub fn yes_no(b: bool) -> String {
@@ -22,9 +22,15 @@ pub fn yes_no(b: bool) -> String {
 pub fn format_decimal(val: Decimal) -> String {
     format!("{:.2}", val)
 }
+
 pub fn format_path(path: &Path) -> String {
     path.to_string_lossy().to_string()
 }
+
+pub fn format_optional_path(path: Option<&Path>) -> Option<String> {
+    path.map(format_path)
+}
+
 pub fn format_text(txt: &str) -> String {
     txt.to_string()
 }

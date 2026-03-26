@@ -11,7 +11,7 @@ use crate::logic::{
         AccountAnchors, AccountError, AccountType, CheckpointRef, OperationContainer,
         TemporalAction, policy::AccountContext,
     },
-    operation::Operation,
+    operation::{AccountOperations, Operation},
     utils::HasNulid,
 };
 
@@ -116,6 +116,14 @@ impl Account {
     /// Return the mutable Operation or None
     pub fn get_operation_by_id_mut(&mut self, id: Nulid) -> Option<&mut Operation> {
         self.operations.iter_mut().find(|op| op.id == id)
+    }
+
+    /// Returns an AccountOperations snapshot for export.
+    pub fn to_account_operations(&self) -> AccountOperations {
+        AccountOperations {
+            account_id: self.id,
+            operations: self.operations.clone(),
+        }
     }
 
     /// Recalculates all anchors based on the current operation vector.
