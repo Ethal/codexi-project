@@ -1,5 +1,7 @@
 // src/ui/account.rs
 
+use thousands::Separable;
+
 use codexi::core::format_id_short;
 use codexi::logic::codexi::{AccountEntry, AccountItem};
 
@@ -12,12 +14,11 @@ pub fn view_account(items: &AccountEntry) {
     println!();
     println!("{}", title_text);
     for item in items.items.iter() {
-        let marker = if item.current {
-            "(*)"
-        } else if item.close {
-            "(c)"
-        } else {
-            "   "
+        let marker = match (item.current, item.close) {
+            (false, false) => "      ".to_string(),
+            (true, false) => "   (*)".to_string(),
+            (false, true) => "(c)   ".to_string(),
+            (true, true) => "(c)(*)".to_string(),
         };
         println!(
             " {} {} {} - {} {} {} {}",
@@ -40,16 +41,19 @@ pub fn view_account(items: &AccountEntry) {
 
 /// view to context of the current account
 pub fn view_account_context(item: &AccountItem) {
-    let title_text_1 = TITLE_STYLE.apply_to("Account");
-    let title_text_2 = TITLE_STYLE.apply_to("context");
+    let title_text =
+        TITLE_STYLE.apply_to(format!("Account context ({} {})", item.name, item.currency));
     println!();
-    println!(
-        "{}({} {}) {}",
-        title_text_1, item.name, item.currency, title_text_2
-    );
+    println!("{}) ", title_text);
     println!(" Account Type: {}", item.context.account_type);
-    println!(" Overdraft limit: {}", item.context.overdraft_limit);
-    println!(" Minimun balance: {}", item.context.min_balance);
+    println!(
+        " Overdraft limit: {}",
+        format!("{:.2}", item.context.overdraft_limit).separate_with_commas()
+    );
+    println!(
+        " Minimun balance: {}",
+        format!("{:.2}", item.context.min_balance).separate_with_commas()
+    );
     println!(
         " Deposit locked until: {}",
         item.context
