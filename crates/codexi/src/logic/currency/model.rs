@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::validate_text_rules;
 use crate::logic::currency::CurrencyError;
-use crate::logic::utils::HasNulid;
+use crate::logic::utils::{HasName, HasNulid};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Currency {
@@ -38,5 +38,11 @@ impl Currency {
 impl HasNulid for Currency {
     fn id(&self) -> Nulid {
         self.id
+    }
+}
+
+impl HasName for Currency {
+    fn name(&self) -> &str {
+        &self.code
     }
 }

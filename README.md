@@ -70,8 +70,8 @@ cargo build --release
 ```bash
 # 1. Initialize a new account
 codexi-cli account create 2025-01-01 My Bank Account --type Current
-codexi-cli account set-bank '<bank_id>'        # see: codexi-cli bank list
-codexi-cli account set-currency '<currency_id>' # see: codexi-cli currency list
+codexi-cli account set-bank '<bank_id>' or `<bank_name>` # see: codexi-cli bank list
+codexi-cli account set-currency '<currency_id>' or `<currency_code>` # see: codexi-cli currency list
 codexi-cli account set-context --overdraft 500 --min-balance 0
 codexi-cli history init 2025-01-01 1500.00
 
@@ -80,7 +80,7 @@ codexi-cli credit 2025-01-05 2400.00 Monthly salary
 codexi-cli debit  2025-01-06 45.00  Groceries
 
 # 3. Transfer between accounts
-codexi-cli transfer 2025-01-10 100.00 1500000 '<account_id_to>' ATM withdrawal
+codexi-cli transfer 2025-01-10 100.00 1500000 '<account_id_to>' or `<account_name_to>` ATM withdrawal
 
 # 4. Consult and analyze
 codexi-cli view

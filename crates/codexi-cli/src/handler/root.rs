@@ -11,7 +11,7 @@ use codexi::{
         account::{Account, SearchParamsBuilder, search},
         codexi::CodexiError,
         operation::{OperationFlow, OperationKind, RegularKind},
-        utils::resolve_id,
+        utils::resolve_by_id_or_name,
     },
     types::DateRange,
 };
@@ -98,7 +98,8 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             let date = parse_date(&date)?;
             let amount_from_d = parse_decimal(&amount_from, "amount fom")?;
             let amount_to_d = parse_decimal(&amount_to, "amount to")?;
-            let acc_id_to = resolve_id::<Account, CodexiError>(&account_id_to, &codexi.accounts)?;
+            let acc_id_to =
+                resolve_by_id_or_name::<Account, CodexiError>(&account_id_to, &codexi.accounts)?;
             let desc = parse_text(description.clone());
 
             codexi.transfer(date, amount_from_d, acc_id_to, amount_to_d, desc.clone())?;

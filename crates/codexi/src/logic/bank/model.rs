@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::validate_text_rules;
 use crate::logic::bank::BankError;
-use crate::logic::utils::HasNulid;
+use crate::logic::utils::{HasName, HasNulid};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Bank {
@@ -37,5 +37,11 @@ impl Bank {
 impl HasNulid for Bank {
     fn id(&self) -> Nulid {
         self.id
+    }
+}
+
+impl HasName for Bank {
+    fn name(&self) -> &str {
+        &self.name
     }
 }

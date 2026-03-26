@@ -13,7 +13,7 @@ use codexi::{
         bank::{Bank, BankError},
         codexi::CodexiError,
         currency::{Currency, CurrencyError},
-        utils::resolve_id,
+        utils::resolve_by_id_or_name,
     },
 };
 
@@ -55,14 +55,14 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
         }
 
         AccountCommand::Use { id } => {
-            let id_n = resolve_id::<Account, CodexiError>(&id, &codexi.accounts)?;
+            let id_n = resolve_by_id_or_name::<Account, CodexiError>(&id, &codexi.accounts)?;
             codexi.set_current_account(&id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Switched to account {}", id_n);
         }
 
         AccountCommand::Close { id, date } => {
-            let id_n = resolve_id::<Account, CodexiError>(&id, &codexi.accounts)?;
+            let id_n = resolve_by_id_or_name::<Account, CodexiError>(&id, &codexi.accounts)?;
             let date = parse_date(&date)?;
             codexi.close_account(id_n, date)?;
             FileManagement::save_current_state(&codexi, paths)?;
@@ -77,7 +77,7 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
             msg_info!("Account renamed.");
         }
         AccountCommand::SetBank { id } => {
-            let id_n = resolve_id::<Bank, BankError>(&id, &codexi.banks.banks)?;
+            let id_n = resolve_by_id_or_name::<Bank, BankError>(&id, &codexi.banks.banks)?;
             codexi.set_account_bank(&id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Bank set.");
@@ -86,7 +86,10 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
             id,
             update_operation,
         } => {
-            let id_n = resolve_id::<Currency, CurrencyError>(&id, &codexi.currencies.currencies)?;
+            let id_n = resolve_by_id_or_name::<Currency, CurrencyError>(
+                &id,
+                &codexi.currencies.currencies,
+            )?;
             codexi.set_account_currency(&id_n, update_operation)?;
 
             FileManagement::save_current_state(&codexi, paths)?;

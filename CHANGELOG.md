@@ -20,10 +20,18 @@ All notable changes to this project will be documented in this file.
 - **Merge** — **account header** — `merge_account_header_from_import` updates `name`, `currency_id`, `bank_id`, `context`, `meta`. Terminated accounts rejected. `carry_forward_balance`, `open_date`, `anchors`, `checkpoints` never updated via import.
 - **Merge** — **operations** — `merge_operation_from_import` updates `description`, `context` (category, payee, reconciled), `meta` on existing operations. New `Transaction` and `Init` operations added. Unsupported kinds (`Void`, `Transfer`, `Adjust`) skipped with `CoreWarning`. `refresh_anchors() always called after merge.
 - **CLI commands** — `codexi-cli data export account-header`, `codexi-cli data export operation`, `codexi-cli data export currency` and their `import` counterparts. Format argument: `json or toml`. CSV reserved, returns `UnsupportedFormat`.
-- **FileExchangeError::UnsupportedFormat** — returned when CSV format requested for import/export.
-- **resolve_or_generate_id** helper in `core/parse.rs` — resolves `Option<&str>` to `Nulid`: parses if present (expects prior validation), generates fresh Nulid if absent.
-- **default_zero serde helper** — used for optional decimal string fields (`carry_forward_balance`, `current_balance`, `overdraft_limit`, `min_balance`) defaulting to `"0"` when absent.
-- **Accountype** — New account type for loan, context,policy updated 
+- **`FileExchangeError::UnsupportedFormat`** — returned when CSV format requested for import/export.
+- **`resolve_or_generate_id`** helper in `core/parse.rs` — resolves `Option<&str>` to `Nulid`: parses if present (expects prior validation), generates fresh Nulid if absent.
+- **`default_zero`** serde helper — used for optional decimal string fields (`carry_forward_balance`, `current_balance`, `overdraft_limit`, `min_balance`) defaulting to `"0"` when absent.
+- **Accountype** — New account type for loan, context and policy updated accordingly
+- **`HasName` trait** — optional trait in `logic/utils` decoupled from `HasNulid`. Implemented on types that carry a human-readable name field (currently `Account`). Types without a name (`Operation`, `Transfer`, …) are unaffected and continue to use `resolve_id`.
+- **`resolve_by_id_or_name`** — new generic resolver in `logic/utils` combining ID-based and name-based lookup in a single call. Resolution priority: full Nulid (26 chars) → ID suffix → name exact → name prefix → name contains. Ambiguity is evaluated independently at each level — a unique exact match wins regardless of prefix/contains candidates. Available only for types implementing both `HasNulid` and `HasName`.
+- **`resolve_by_name`** (internal) — three-tier name search (exact / prefix / contains, case-insensitive) extracted as a private helper. Keeps `resolve_by_id_or_name` readable and allows independent testing of the name tier.
+- **`match_unique`** (internal) — shared finalizer converting a candidate `Vec<&T>` into `Ok(Nulid)`, `Err::not_found`, or `Err::ambiguous`. Eliminates duplicated match-count logic across resolution tiers.
+- **CLI command `account use`** — now accepts account name (or prefix/substring) in addition to full or short ID. `account use perso`, `account use wall`, `account use alc` all resolve correctly. Ambiguous input (e.g. `al` matching multiple accounts) returns a clear error prompting for more characters.
+- **CLI command `account set-bank`** — now accepts <bank_name> in addition to <bank_id>.
+- **CLI command `account set-currency`** — now accepts <currency_code> in addition to <currency_id>.
+- **CLI command `transfer`** — <account_id_to> argument now accepts an account name (or prefix/substring) in addition to full or short ID.
 
 ### Changed
 - **ExchangeData removed** — replaced by `ExchangeAccountHeader` + `ExchangeAccountOperations`. Split clarifies responsibilities and produces smaller, more readable export files.
