@@ -49,6 +49,15 @@ impl AccountContext {
                 allows_interest: false,
                 allows_joint_signers: false,
             },
+            AccountType::Loan => Self {
+                account_type,
+                overdraft_limit: dec!(0),
+                min_balance: dec!(0),
+                max_monthly_transactions: None,
+                deposit_locked_until: None,
+                allows_interest: false,
+                allows_joint_signers: false,
+            },
             AccountType::Saving => Self {
                 account_type,
                 overdraft_limit: dec!(0),
@@ -112,7 +121,7 @@ impl AccountContext {
     ) -> Result<Vec<CoreWarning>, ComplianceViolation> {
         let mut warnings = Vec::new();
 
-        // overdraft_limit — must be >= 0, not applicable for Saving and Deposit
+        // overdraft_limit — must be >= 0, not applicable for Saving, Deposit, Loan
         if let Some(limit) = overdraft_limit {
             if limit < Decimal::ZERO {
                 return Err(ComplianceViolation::InvalidContextValue {
@@ -120,7 +129,7 @@ impl AccountContext {
                 });
             }
             match self.account_type {
-                AccountType::Saving | AccountType::Deposit => {
+                AccountType::Saving | AccountType::Deposit | AccountType::Loan => {
                     warnings.push(CoreWarning {
                         kind: CoreWarningKind::ContextNotApplicable,
                         message: format!(
@@ -172,10 +181,12 @@ impl AccountContext {
             }
         }
 
-        // allows_interest — only applicable to Saving and Deposit accounts
+        // allows_interest — only applicable to Saving, Deposit, Loan accounts
         if let Some(value) = allows_interest {
             match self.account_type {
-                AccountType::Saving | AccountType::Deposit => self.allows_interest = value,
+                AccountType::Saving | AccountType::Deposit | AccountType::Loan => {
+                    self.allows_interest = value
+                }
                 _ => {
                     warnings.push(CoreWarning {
                         kind: CoreWarningKind::ContextNotApplicable,
