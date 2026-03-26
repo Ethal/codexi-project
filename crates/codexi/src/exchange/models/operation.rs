@@ -67,9 +67,9 @@ impl TryFrom<&ExchangeOperation> for Operation {
             date: parse_date(&op.date)?,
             kind: OperationKind::try_from(op.kind.as_str())?,
             flow: OperationFlow::try_from_str(&op.flow)?,
-            amount: parse_decimal(&op.amount, "amount".into())?,
+            amount: parse_decimal(&op.amount, "amount")?,
             description: op.description.clone(),
-            balance: parse_decimal(&op.balance, "balance.into".into())?,
+            balance: parse_decimal(&op.balance, "balance.into")?,
             links: OperationLinks::try_from(&op.links)?,
             context: OperationContext::try_from(&op.context)?,
             meta: OperationMeta::try_from(&op.meta)?,
@@ -135,7 +135,7 @@ impl TryFrom<&ExchangeOperationContext> for OperationContext {
         Ok(Self {
             category_id: parse_optional_id(oc.category_id.as_deref())?,
             currency_id: parse_optional_id(oc.currency_id.as_deref())?,
-            exchange_rate: parse_decimal(&oc.exchange_rate, "exchaneg rate".into())?,
+            exchange_rate: parse_decimal(&oc.exchange_rate, "exchaneg rate")?,
             payee: oc.payee.clone(),
             reconciled: parse_optional_date(oc.reconciled.as_deref())?,
         })

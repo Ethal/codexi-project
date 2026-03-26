@@ -42,7 +42,7 @@ pub fn validate_import_operations(
                 ));
             }
             // Amount still validated for new operations
-            let amount = parse_decimal(&op.amount, "amount".into())?;
+            let amount = parse_decimal(&op.amount, "amount")?;
             if amount <= Decimal::ZERO {
                 return Err(ExchangeError::InvalidAmount(
                     "New operation has invalid amount — must be strictly positive".into(),
@@ -65,7 +65,7 @@ pub fn validate_import_operations(
         ops_by_id.insert(id, op);
 
         // Amount must be strictly positive
-        let amount = parse_decimal(&op.amount, "amount".into())?;
+        let amount = parse_decimal(&op.amount, "amount")?;
         if amount <= Decimal::ZERO {
             return Err(ExchangeError::InvalidAmount(format!(
                 "Operation {} has invalid amount {} — must be strictly positive",

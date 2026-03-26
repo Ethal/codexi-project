@@ -54,7 +54,7 @@ impl ExchangeAccountOperations {
     pub fn import_data(
         data: &ExchangeAccountOperations,
     ) -> Result<(AccountOperations, Vec<CoreWarning>), ExchangeError> {
-        let warnings = validate_import_operations(&data)?;
+        let warnings = validate_import_operations(data)?;
         let account_operations = AccountOperations {
             account_id: parse_id(&data.account_id)?,
             operations: data
