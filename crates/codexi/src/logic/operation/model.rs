@@ -16,6 +16,12 @@ use crate::logic::operation::OperationKind;
 use crate::logic::utils::HasNulid;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct AccountOperations {
+    pub account_id: Nulid,
+    pub operations: Vec<Operation>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct OperationLinks {
     pub void_of: Option<Nulid>,
     pub void_by: Option<Nulid>,
@@ -72,6 +78,14 @@ impl Operation {
     pub fn signed_amount(&self) -> Decimal {
         let base = self.amount * self.flow.to_sign();
         if self.kind.is_void() { -base } else { base }
+    }
+
+    pub fn update(&mut self, description: &str, context: &OperationContext, meta: &OperationMeta) {
+        self.description = description.into();
+        self.context.category_id = context.category_id;
+        self.context.payee = context.payee.clone();
+        self.context.reconciled = context.reconciled;
+        self.meta = meta.clone();
     }
 }
 

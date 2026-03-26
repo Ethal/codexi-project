@@ -2,14 +2,6 @@
 
 use clap::{Args, Subcommand, ValueEnum};
 
-/// Available exchange format
-#[derive(Debug, Clone, ValueEnum)]
-pub enum ExchangeFormat {
-    Csv,
-    Toml,
-    Json,
-}
-
 #[derive(Args, Debug)]
 #[command(arg_required_else_help = true)]
 pub struct DataArgs {
@@ -21,16 +13,10 @@ pub struct DataArgs {
 #[derive(Subcommand, Debug)]
 pub enum DataCommand {
     /// Export the data to an external format (CSV, TOML, JSON)
-    Export {
-        #[arg(value_enum)]
-        format: ExchangeFormat,
-    },
+    Export(ExchangeTypeArgs),
 
     /// Import data from an external format (CSV, TOML, JSON)
-    Import {
-        #[arg(value_enum)]
-        format: ExchangeFormat,
-    },
+    Import(ExchangeTypeArgs),
 
     ///Manage local snapshots (Quick-save points before major changes)
     Snapshot(SnapshotArgs),
@@ -71,4 +57,41 @@ pub enum SnapshotCommand {
         )]
         keep: Option<usize>,
     },
+}
+
+#[derive(Args, Debug)]
+#[command(arg_required_else_help = true)]
+pub struct ExchangeTypeArgs {
+    #[command(subcommand)]
+    pub command: ExchangeTypeCommand,
+}
+
+///Manage exchange type
+#[derive(Subcommand, Debug)]
+pub enum ExchangeTypeCommand {
+    /// Exchange account header
+    AccountHeader {
+        #[arg(value_enum)]
+        format: ExchangeFormat,
+    },
+
+    /// Exchange operation
+    Operation {
+        #[arg(value_enum)]
+        format: ExchangeFormat,
+    },
+
+    /// Exchange currency
+    Currency {
+        #[arg(value_enum)]
+        format: ExchangeFormat,
+    },
+}
+
+/// Available exchange format
+#[derive(Debug, Clone, ValueEnum)]
+pub enum ExchangeFormat {
+    Csv,
+    Toml,
+    Json,
 }

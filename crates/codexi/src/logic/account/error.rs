@@ -18,6 +18,8 @@ pub enum AccountError {
     Operation(#[from] OperationError),
     #[error("SYS_ACCOUNT: {0}")]
     AccountType(#[from] AccountTypeError),
+    #[error("SYS_CORE: {0}")]
+    Core(#[from] CoreError),
     #[error("VAL_DATA: {0}")]
     InvalidData(String),
     #[error("OP_CLOSING: No operation to close and archived")]

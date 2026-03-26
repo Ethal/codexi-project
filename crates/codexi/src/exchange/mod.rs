@@ -1,13 +1,19 @@
 // src/exchange/mod.rs
 
 mod error;
+mod exchangeable;
 mod export;
 mod import;
 mod models;
 mod summary;
-mod validation;
+mod validator;
 
 pub use error::ExchangeError;
-pub use models::{ExchangeCheckpointRef, ExchangeData, ExchangeOperation};
+pub use exchangeable::Exchangeable;
+pub use models::{
+    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
+    ExchangeAccountOperations, ExchangeCheckpointRef, ExchangeCurrency, ExchangeCurrencyList,
+    ExchangeOperation, ExchangeOperationContext, ExchangeOperationLinks, ExchangeOperationMeta,
+};
 pub use summary::ImportSummary;
-pub use validation::validate_import;
+pub use validator::{validate_import_account_header, validate_import_currency};

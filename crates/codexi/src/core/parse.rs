@@ -3,9 +3,13 @@
 use chrono::{Datelike, NaiveDate};
 use nulid::Nulid;
 use rust_decimal::Decimal;
-use std::str::FromStr;
+use std::{path::PathBuf, str::FromStr};
 
 use crate::core::error::CoreError;
+
+pub fn parse_optional<T, U, E>(opt: Option<T>, f: fn(T) -> Result<U, E>) -> Result<Option<U>, E> {
+    opt.map(f).transpose()
+}
 
 pub fn parse_text(parts: Vec<String>) -> String {
     let mut out = String::new();
@@ -25,16 +29,30 @@ pub fn parse_text(parts: Vec<String>) -> String {
     out
 }
 
-pub fn parse_id(id: &str) -> Result<Nulid, CoreError> {
-    if id.is_empty() || id.len() != 26 {
-        Ok(Nulid::nil())
-    } else {
-        Ok(String::from(id).parse()?)
+/// Resolves an optional raw id string to a Nulid.
+/// - Some(str) → parse validated id (panics if malformed — must be called after validation)
+/// - None → generate a fresh Nulid
+pub fn resolve_or_generate_id(raw_id: Option<&str>) -> Nulid {
+    match raw_id {
+        Some(s) => parse_id(s).expect("id already validated"),
+        None => Nulid::new().expect("Nulid generation failed"),
     }
+}
+
+pub fn parse_id(id: &str) -> Result<Nulid, CoreError> {
+    Ok(String::from(id).parse()?)
 }
 
 pub fn parse_optional_id(id: Option<&str>) -> Result<Option<Nulid>, CoreError> {
     id.map(parse_id).transpose()
+}
+
+pub fn parse_path(path: &str) -> PathBuf {
+    PathBuf::from(path)
+}
+
+pub fn parse_optional_path(path: Option<&str>) -> Option<PathBuf> {
+    path.map(parse_path)
 }
 
 pub fn parse_u32(s: &str, field: &str) -> Result<u32, CoreError> {
@@ -55,8 +73,8 @@ pub fn parse_date(s: &str) -> Result<NaiveDate, CoreError> {
         ))
     })
 }
-pub fn parse_optional_date(opt_s: &Option<String>) -> Result<Option<NaiveDate>, CoreError> {
-    opt_s.as_deref().map(parse_date).transpose()
+pub fn parse_optional_date(opt_s: Option<&str>) -> Result<Option<NaiveDate>, CoreError> {
+    opt_s.map(parse_date).transpose()
 }
 
 pub fn parse_decimal(s: &str, field: &str) -> Result<Decimal, CoreError> {

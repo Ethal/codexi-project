@@ -1,9 +1,15 @@
 // src/exchange/models/mod.rs
 
-mod checkpoint;
-mod data;
+mod account;
+mod currency;
 mod operation;
 
-pub use checkpoint::ExchangeCheckpointRef;
-pub use data::ExchangeData;
-pub use operation::ExchangeOperation;
+pub use account::{
+    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
+    ExchangeCheckpointRef,
+};
+pub use currency::{ExchangeCurrency, ExchangeCurrencyList};
+pub use operation::{
+    ExchangeAccountOperations, ExchangeOperation, ExchangeOperationContext, ExchangeOperationLinks,
+    ExchangeOperationMeta,
+};

@@ -2,6 +2,42 @@
 All notable changes to this project will be documented in this file.
 ---
 
+## [Unreleased] — 
+
+### Added
+- **ExchangeAccountHeader** — dedicated exchange DTO for account metadata (name, context, bank, currency, dates, meta). Replaces the monolithic `ExchangeData`. Export produces `account-header.json/toml`, import creates or updates account metadata only — operations untouched.
+- **ExchangeAccountOperations** — dedicated exchange DTO for operations tied to an account (`account_id` + `Vec<ExchangeOperation>`). Export produces `operations.json/toml`. Import merges operations into the target account identified by `account_id` — account must exist, terminated accounts rejected.
+- **ExchangeCurrencyList** — dedicated exchange DTO for the currency list. Export produces `currencies.json/toml`. Import merges currencies — new currencies created, existing updated by id. Duplicate code against existing list rejected as error.
+- **AccountOperations** — new domain struct in `logic/operation` grouping `account_id` and `Vec<Operation>`. Used as the unit of exchange for operation import/export. `Account::to_account_operations()` builds a snapshot for export.
+- **Exchangeable** trait — single generic trait replacing the former `JsonExchange` + `TomlExchange` duplication. Each exchangeable type declares its `Exchange` DTO, `exchange_filename`, `to_exchange` and `from_exchange`. Implemented for `Account`, `CurrencyList`, `AccountOperations`. 
+- **ExchangeSerdeFormat** — central dispatch for serde I/O. Single place in the codebase that knows about `serde_json` and `toml. Bridges `ExchangeError` (domain)` → `FileExchangeError` (I/O) via `From`.
+- **ExchangeBase trait** — associates a `Warning` type to each exchangeable domain type. Currently `CoreWarning` for all implementations.
+- **Import validation — operations** — `validate_import_operations` covers: version, account id format, duplicate operation ids, strictly positive amounts, transfer link consistency (both fields or neither), transfer kind coherence, void consistency (void must reference, no double-void, no void-of-void). Operations without id (new) only allowed without void/transfer links.
+- **Import validation — currencies** — `validate_import_currency` covers: version, id format if present, non-empty code, ISO 4217 length (exactly 3 chars), duplicate codes within the file.
+- **Import validation — account header** — `validate_import_account_header` covers: version, non-empty name, known `account_type`.
+- **Identity resolution on currency import** — `CurrencyList::resolve_id` resolves incoming currency identity: known id → reuse, unknown id but matching code → reuse existing id, no match → generate fresh Nulid. Prevents duplicate currencies across repeated imports.
+- **Merge** — **currencies** — `merge_from_import` updates `symbol` and `note` on existing currencies (by id). New currencies added via `add()`. Duplicate code against existing list returns `CurrencyError::DuplicateCode` — full import rejected.
+- **Merge** — **account header** — `merge_account_header_from_import` updates `name`, `currency_id`, `bank_id`, `context`, `meta`. Terminated accounts rejected. `carry_forward_balance`, `open_date`, `anchors`, `checkpoints` never updated via import.
+- **Merge** — **operations** — `merge_operation_from_import` updates `description`, `context` (category, payee, reconciled), `meta` on existing operations. New `Transaction` and `Init` operations added. Unsupported kinds (`Void`, `Transfer`, `Adjust`) skipped with `CoreWarning`. `refresh_anchors() always called after merge.
+- **CLI commands** — `codexi-cli data export account-header`, `codexi-cli data export operation`, `codexi-cli data export currency` and their `import` counterparts. Format argument: `json or toml`. CSV reserved, returns `UnsupportedFormat`.
+- **FileExchangeError::UnsupportedFormat** — returned when CSV format requested for import/export.
+- **resolve_or_generate_id** helper in `core/parse.rs` — resolves `Option<&str>` to `Nulid`: parses if present (expects prior validation), generates fresh Nulid if absent.
+- **default_zero serde helper** — used for optional decimal string fields (`carry_forward_balance`, `current_balance`, `overdraft_limit`, `min_balance`) defaulting to `"0"` when absent.
+- **Accountype** — New account type for loan, context,policy updated 
+
+### Changed
+- **ExchangeData removed** — replaced by `ExchangeAccountHeader` + `ExchangeAccountOperations`. Split clarifies responsibilities and produces smaller, more readable export files.
+- **ImportSummary.account_name** renamed to **name** — field is now used for any imported entity (account, currencies), not accounts only.
+- **export_toml** / **export_json** / **import_toml** / **import_json** — now generic over `T: Exchangeable`. Format dispatch centralized in `ExchangeSerdeFormat`, `json.rs` and `toml.rs` are thin wrappers.
+- **import_operations** in **Codexi** — returns `Result<(ImportSummary, Vec<CoreWarning>), CodexiError>` — merge warnings (skipped kinds) propagated to CLI.
+- **Validation module** — `validation.rs` renamed to `validator/` with per-entity files (`account.rs, currency.rs, operation.rs)`. `validate_import` split into `validate_import_account_header`, `validate_import_currency`, `validate_import_operations`.
+- **CLI commands** — `account list` and `account context` output view updated to be more friendly.
+
+### Fixed
+- **export_json** wrote **json.as_bytes()** — now writes `String` directly via `fs::write`, removing the unnecessary `.as_bytes()` conversion.
+
+---
+
 ## [0.2.0] — 2026-03-23
 > ⚠️ No automatic migration — use `admin export-script` from previous release before update to this release to rebuild your data.
 

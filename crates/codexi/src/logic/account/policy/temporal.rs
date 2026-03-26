@@ -54,7 +54,7 @@ impl Account {
 
     /// Returns an error if the account is terminated (closed).
     /// No operation is allowed on a closed account.
-    fn is_terminated(&self) -> Result<(), TemporalViolation> {
+    pub fn is_terminated(&self) -> Result<(), TemporalViolation> {
         if self.terminated_date.is_some() {
             return Err(TemporalViolation::AccountClose);
         }

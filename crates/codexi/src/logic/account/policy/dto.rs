@@ -13,7 +13,7 @@ pub struct AccountContextItem {
     pub overdraft_limit: Decimal,
     pub min_balance: Decimal,
     pub max_monthly_transactions: String,
-    pub deposit_locked_until: String,
+    pub deposit_locked_until: Option<String>,
     pub allows_interest: String,
     pub allows_joint_signers: String,
 }

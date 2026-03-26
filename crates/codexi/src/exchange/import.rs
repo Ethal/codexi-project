@@ -1,76 +1,98 @@
 // src/exchange/import.rs
 
-use crate::core::CoreWarning;
-use crate::exchange::{
-    ExchangeCheckpointRef, ExchangeData, ExchangeError, ExchangeOperation, validate_import,
-};
-use crate::logic::account::{Account, AccountAnchors, AccountMeta, CheckpointRef};
-use crate::logic::operation::Operation;
+use rust_decimal::Decimal;
 
-impl ExchangeData {
+use crate::core::{
+    CoreWarning, parse_date, parse_id, parse_optional_date, parse_optional_id,
+    resolve_or_generate_id,
+};
+use crate::exchange::models::ExchangeAccountOperations;
+use crate::exchange::validator::validate_import_operations;
+use crate::exchange::{
+    ExchangeAccountHeader, ExchangeCurrency, ExchangeCurrencyList, ExchangeError,
+    validate_import_account_header, validate_import_currency,
+};
+use crate::logic::operation::{AccountOperations, Operation};
+use crate::logic::{
+    account::{Account, AccountAnchors, AccountContext, AccountMeta},
+    currency::{Currency, CurrencyList},
+};
+
+impl ExchangeAccountHeader {
     /// Single entry point for importing a account (JSON / TOML / CSV)
-    pub fn import_data(data: &ExchangeData) -> Result<(Account, Vec<CoreWarning>), ExchangeError> {
-        let warnings = validate_import(data)?;
-        let account = Self::build_from_export(data);
+    pub fn import_data(
+        data: &ExchangeAccountHeader,
+    ) -> Result<(Account, Vec<CoreWarning>), ExchangeError> {
+        let warnings = validate_import_account_header(data)?;
+        let account = Self::build_from_export(data)?;
         Ok((account, warnings))
     }
 
     /// internal build after validation
-    fn build_from_export(import: &ExchangeData) -> Account {
-        let operations: Vec<Operation> = import
-            .operations
-            .iter()
-            .cloned()
-            .map(Self::map_operation)
-            .collect();
-
-        let checkpoints: Vec<CheckpointRef> = import
-            .checkpoints
-            .iter()
-            .cloned()
-            .map(Self::map_checkpoint)
-            .collect();
-
-        Account {
-            id: import.id,
+    fn build_from_export(import: &ExchangeAccountHeader) -> Result<Account, ExchangeError> {
+        // carry_forward_balance, terminated_date, current_balance, checkpoints, anchors,
+        // ignored on import — recalculated by refresh_anchors() after merge
+        Ok(Account {
+            id: resolve_or_generate_id(import.id.as_deref()),
             name: import.name.clone(),
-            context: import.context.clone(),
-            bank_id: import.bank_id,                             // Bank Id
-            currency_id: import.currency_id,                     // Currency id for the account
-            carry_forward_balance: import.carry_forward_balance, // for internal calculation
-            open_date: import.open_date, // Open date of the account,typivcaly the date of the init.
-            terminated_date: import.terminated_date, // Close date of the account.
-            operations,
-            current_balance: import.current_balance,
-            checkpoints,
+            context: AccountContext::try_from(&import.context)?,
+            bank_id: parse_optional_id(import.bank_id.as_deref())?, // Bank Id
+            currency_id: parse_optional_id(import.currency_id.as_deref())?, // Currency id for the account
+            carry_forward_balance: Decimal::ZERO, // for internal calculation
+            open_date: parse_date(&import.open_date)?, // Open date of the account,typivcaly the date of the init.
+            terminated_date: parse_optional_date(import.terminated_date.as_deref())?, // Close date of the account.
+            operations: Vec::new(),
+            current_balance: Decimal::ZERO,
+            checkpoints: Vec::new(),
             anchors: AccountAnchors::default(),
-            meta: AccountMeta::default(),
-        }
+            meta: AccountMeta::try_from(&import.meta)?,
+        })
+    }
+}
+
+impl ExchangeAccountOperations {
+    pub fn import_data(
+        data: &ExchangeAccountOperations,
+    ) -> Result<(AccountOperations, Vec<CoreWarning>), ExchangeError> {
+        let warnings = validate_import_operations(&data)?;
+        let account_operations = AccountOperations {
+            account_id: parse_id(&data.account_id)?,
+            operations: data
+                .operations
+                .iter()
+                .map(Operation::try_from)
+                .collect::<Result<Vec<_>, _>>()?,
+        };
+
+        Ok((account_operations, warnings))
+    }
+}
+
+impl ExchangeCurrencyList {
+    pub fn import_data(
+        data: &ExchangeCurrencyList,
+    ) -> Result<(CurrencyList, Vec<CoreWarning>), ExchangeError> {
+        let warnings = validate_import_currency(data)?;
+
+        let currencies: Vec<Currency> = data
+            .currencies
+            .iter()
+            .cloned()
+            .map(Self::map_currency)
+            .collect();
+
+        let currency_list = CurrencyList { currencies };
+        Ok((currency_list, warnings))
     }
 
-    /// Mapping strict Export → Doamin (without alteration)
-    fn map_operation(op: ExchangeOperation) -> Operation {
-        Operation {
-            id: op.id,
-            date: op.date,
-            kind: op.kind,
-            flow: op.flow,
-            amount: op.amount,
-            description: op.description.clone(),
-
-            balance: op.balance,
-
-            links: op.links,
-            context: op.context,
-            meta: op.meta,
-        }
-    }
-    /// Mapping strict Export → Doamin (without alteration)
-    fn map_checkpoint(ck: ExchangeCheckpointRef) -> CheckpointRef {
-        CheckpointRef {
-            checkpoint_date: ck.checkpoint_date,
-            checkpoint_balance: ck.checkpoint_balance,
-            archive_file: ck.archive_file,
+    /// Mapping strict Export → Domain (without alteration)
+    fn map_currency(c: ExchangeCurrency) -> Currency {
+        Currency {
+            id: resolve_or_generate_id(c.id.as_deref()),
+            code: c.code.clone(),
+            symbol: c.symbol.clone(),
+            decimal_places: c.decimal_places,
+            note: c.note.clone(),
         }
     }
 }

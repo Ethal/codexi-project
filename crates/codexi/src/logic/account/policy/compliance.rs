@@ -156,6 +156,42 @@ impl CompliancePolicy for BusinessPolicy {}
 pub struct StudentPolicy;
 impl CompliancePolicy for StudentPolicy {}
 
+pub struct LoanPolicy;
+impl CompliancePolicy for LoanPolicy {
+    fn validate_full(
+        &self,
+        ctx: &AccountContext,
+        current_balance: Decimal,
+        signed: Decimal,
+        monthly_count: u32,
+    ) -> Result<(), ComplianceViolation> {
+        // A loan account can never go negative — no overdraft allowed
+        if current_balance + signed < Decimal::ZERO {
+            return Err(ComplianceViolation::NotAllowed {
+                reason: "saving account cannot go negative",
+            });
+        }
+
+        // Delegate remaining checks to shared logic
+        // Note: overdraft check is skipped here since savings accounts
+        // are already blocked from going negative above
+        let resulting = current_balance + signed;
+
+        if ctx.overdraft_limit == Decimal::ZERO && resulting < ctx.min_balance {
+            return Err(ComplianceViolation::MinBalanceViolated {
+                minimum: ctx.min_balance,
+                resulting,
+            });
+        }
+        if let Some(max) = ctx.max_monthly_transactions
+            && monthly_count >= max
+        {
+            return Err(ComplianceViolation::MonthlyLimitExceeded { max });
+        }
+        Ok(())
+    }
+}
+
 pub struct SavingPolicy;
 impl CompliancePolicy for SavingPolicy {
     fn validate_full(
@@ -242,6 +278,7 @@ impl CompliancePolicy for DepositPolicy {
 pub fn policy_for(account_type: AccountType) -> Box<dyn CompliancePolicy> {
     match account_type {
         AccountType::Current => Box::new(CurrentPolicy),
+        AccountType::Loan => Box::new(LoanPolicy),
         AccountType::Saving => Box::new(SavingPolicy),
         AccountType::Joint => Box::new(JointPolicy),
         AccountType::Deposit => Box::new(DepositPolicy),

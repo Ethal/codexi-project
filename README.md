@@ -3,7 +3,7 @@
 **A high-integrity, anchor-based personal financial ledger built in Rust.**
 > 🌐 [codexi.ethal.fr](https://codexi.ethal.fr)
 
-![Rust](https://img.shields.io/badge/Rust-1.93.1-c5a059?logo=rust&style=flat-square) ![Rust Edition](https://img.shields.io/badge/edition-2024-orange?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square) ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-black?logo=windows&style=flat-square) ![CI](https://img.shields.io/github/actions/workflow/status/ethal/codexi-project/rust.yml?branch=main&style=flat-square&logo=githubactions&label=CI) [![Binaries](https://img.shields.io/badge/Binaries-available-blue?style=flat-square&logo=github)](https://github.com/ethal/codexi-project/releases)
+![Rust](https://img.shields.io/badge/Rust-1.94.0-c5a059?logo=rust&style=flat-square) ![Rust Edition](https://img.shields.io/badge/edition-2024-orange?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square) ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-black?logo=windows&style=flat-square) ![CI](https://img.shields.io/github/actions/workflow/status/ethal/codexi-project/rust.yml?branch=main&style=flat-square&logo=githubactions&label=CI) [![Binaries](https://img.shields.io/badge/Binaries-available-blue?style=flat-square&logo=github)](https://github.com/ethal/codexi-project/releases)
 
 ![Codexi Financial Analytics Dashboard](docs/screenshots/stats_dashboard.png)
 
@@ -90,7 +90,10 @@ codexi-cli report statement
 
 # 5. Protect your data before risky operations
 codexi-cli data snapshot create
-codexi-cli data import json
+codexi-cli data import currency json
+codexi-cli data import account-header json
+codexi-cli data import operation json
+
 # → It is recommended to run: admin audit --rebuild
 
 # 6. Close a period at year end
@@ -168,8 +171,8 @@ codexi-cli admin backup
 ### Data
 | Command | Description |
 | :--- | :--- |
-| `data export <json\|toml\|csv>` | Export active ledger |
-| `data import <json\|toml\|csv>` | Import into active ledger |
+| `data export <currency\|account-header\|operation> <json\|toml\|csv>` | Export data |
+| `data import <currency\|account-header\|operation> <json\|toml\|csv>` | Import data |
 | `data snapshot` | Manage the snapshot of the active ledger |
 
 | Command | Description |

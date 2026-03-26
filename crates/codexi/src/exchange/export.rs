@@ -1,34 +1,66 @@
 // src/exchange/export.rs
 
 use crate::CODEXI_EXCHANGE_FORMAT_VERSION;
-use crate::exchange::{ExchangeCheckpointRef, ExchangeData, ExchangeOperation};
-use crate::logic::account::Account;
+use crate::core::{
+    format_date, format_decimal, format_id, format_optional_date, format_optional_id,
+};
+use crate::exchange::{
+    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
+    ExchangeAccountOperations, ExchangeCheckpointRef, ExchangeCurrency, ExchangeCurrencyList,
+    ExchangeOperation,
+};
+use crate::logic::operation::AccountOperations;
+use crate::logic::{account::Account, currency::CurrencyList};
 
-impl ExchangeData {
-    /// Single entry point for exporting a codexi (JSON / TOML / CSV)
-    pub fn export_data(export: &Account) -> ExchangeData {
-        ExchangeData {
+impl ExchangeAccountHeader {
+    /// Single entry point for exporting the account heder(JSON / TOML / CSV)
+    pub fn export_data(export: &Account) -> ExchangeAccountHeader {
+        ExchangeAccountHeader {
             version: CODEXI_EXCHANGE_FORMAT_VERSION,
-            id: export.id,
+            id: Some(format_id(export.id)),
             name: export.name.clone(),
-            context: export.context.clone(),
-            bank_id: export.bank_id,                             // Bank Id
-            currency_id: export.currency_id,                     // Currency id for the account
-            carry_forward_balance: export.carry_forward_balance, // for internal calculation
-            open_date: export.open_date, // Open date of the account,typivcaly the date of the init.
-            terminated_date: export.terminated_date, // Close date of the account.
-            current_balance: export.current_balance,
+            context: ExchangeAccountContext::from(&export.context),
+            bank_id: format_optional_id(export.bank_id),
+            currency_id: format_optional_id(export.currency_id),
+            carry_forward_balance: format_decimal(export.carry_forward_balance),
+            open_date: format_date(export.open_date),
+            terminated_date: format_optional_date(export.terminated_date),
+            current_balance: format_decimal(export.current_balance),
             checkpoints: export
                 .checkpoints
                 .iter()
                 .map(ExchangeCheckpointRef::from)
                 .collect(),
-            anchors: export.anchors.clone(),
-            meta: export.meta.clone(),
+            anchors: ExchangeAccountAnchors::from(&export.anchors),
+            meta: ExchangeAccountMeta::from(&export.meta),
+        }
+    }
+}
+
+impl ExchangeAccountOperations {
+    /// Single entry point for exporting the operation list from an account(JSON / TOML / CSV)
+    pub fn export_data(export: &AccountOperations) -> ExchangeAccountOperations {
+        ExchangeAccountOperations {
+            version: CODEXI_EXCHANGE_FORMAT_VERSION,
+            account_id: format_id(export.account_id),
             operations: export
                 .operations
                 .iter()
                 .map(ExchangeOperation::from)
+                .collect(),
+        }
+    }
+}
+
+impl ExchangeCurrencyList {
+    /// Single entry point for exporting the currency list (JSON / TOML / CSV)
+    pub fn export_data(export: &CurrencyList) -> ExchangeCurrencyList {
+        ExchangeCurrencyList {
+            version: CODEXI_EXCHANGE_FORMAT_VERSION,
+            currencies: export
+                .currencies
+                .iter()
+                .map(ExchangeCurrency::from)
                 .collect(),
         }
     }
