@@ -12,7 +12,7 @@ use crate::logic::{
         TemporalAction, policy::AccountContext,
     },
     operation::{AccountOperations, Operation},
-    utils::HasNulid,
+    utils::{HasName, HasNulid},
 };
 
 // meta data relaed to the account
@@ -193,6 +193,11 @@ impl Account {
 impl HasNulid for Account {
     fn id(&self) -> Nulid {
         self.id
+    }
+}
+impl HasName for Account {
+    fn name(&self) -> &str {
+        &self.name
     }
 }
 
