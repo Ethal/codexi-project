@@ -43,6 +43,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - **export_json** wrote **json.as_bytes()** — now writes `String` directly via `fs::write`, removing the unnecessary `.as_bytes()` conversion.
+- **Account::new()** — `account.context` was not properly set as per the account type. It now calls `AccountContext::from_type(account_type)` so the context is initialized correctly for the given account type
 
 ---
 

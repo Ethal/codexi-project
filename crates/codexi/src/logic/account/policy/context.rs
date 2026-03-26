@@ -80,7 +80,7 @@ impl AccountContext {
                 account_type,
                 overdraft_limit: dec!(0),
                 min_balance: dec!(0),
-                max_monthly_transactions: Some(1),
+                max_monthly_transactions: None,
                 deposit_locked_until: None,
                 allows_interest: true,
                 allows_joint_signers: false,

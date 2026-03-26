@@ -66,8 +66,7 @@ impl Account {
         let operations: Vec<Operation> = Vec::new();
         let checkpoints: Vec<CheckpointRef> = Vec::new();
 
-        let mut context = AccountContext::default();
-        context.account_type = account_type;
+        let context = AccountContext::from_type(account_type);
 
         Ok(Self {
             id,
