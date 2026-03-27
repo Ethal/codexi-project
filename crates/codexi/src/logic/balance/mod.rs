@@ -3,5 +3,5 @@
 mod dto;
 mod model;
 
-pub use dto::BalanceItem;
-pub use model::Balance;
+pub use dto::{AccountBalanceItem, BalanceItem, CodexiBalanceEntry};
+pub use model::{AccountBalance, Balance, CodexiBalance};

@@ -1,6 +1,7 @@
 // src/ui/mod.rs
 
 mod account;
+mod balance;
 mod bank;
 mod category;
 mod currency;
@@ -8,6 +9,7 @@ mod display;
 mod operation;
 
 pub use account::*;
+pub use balance::*;
 pub use bank::view_bank;
 pub use category::view_category;
 pub use currency::view_currency;

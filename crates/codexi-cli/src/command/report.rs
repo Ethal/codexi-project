@@ -12,6 +12,9 @@ pub struct ReportArgs {
 /// Generate financial reports, statistics, and statements
 #[derive(Subcommand, Debug)]
 pub enum ReportCommand {
+    /// View balance and debit/credit the accounts.
+    BalanceAcc {},
+
     /// View balance and debit/credit. Available criteria, --from --to.
     Balance {
         // Filtres granulaire (Plage de dates arbitraire)
