@@ -32,6 +32,8 @@ All notable changes to this project will be documented in this file.
 - **CLI command `account set-bank`** — now accepts <bank_name> in addition to <bank_id>.
 - **CLI command `account set-currency`** — now accepts <currency_code> in addition to <currency_id>.
 - **CLI command `transfer`** — <account_id_to> argument now accepts an account name (or prefix/substring) in addition to full or short ID.
+- **`CodexiBalanceEntry`** — in `logic/balance/model.rs` to compute balance, debit, credit of the accounts. 
+- **CLI command `report balance-acc`** — display the balance, debit, credit from `CodexiBalanceEntry`.
 
 ### Changed
 - **ExchangeData removed** — replaced by `ExchangeAccountHeader` + `ExchangeAccountOperations`. Split clarifies responsibilities and produces smaller, more readable export files.
