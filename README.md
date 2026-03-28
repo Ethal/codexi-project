@@ -13,6 +13,14 @@
 
 Codexi is a command-line personal finance ledger focused on auditability, traceability, and long-term data integrity. It supports multiple accounts, anchor-based integrity checks, period closing with archival, and a rich analytics dashboard — all stored in a versioned, checksummed binary format.
 
+## 📚 Documentation
+
+- [Loan & microloan management](docs/loan.md)
+- [Compliance matrix](docs/compliance_matrix.md)
+- [Context matrix](docs/context_matrix.md)
+
+---
+
 ## 🧠 Design Philosophy
 
 Codexi does not prevent financial states — it documents them.
@@ -30,8 +38,8 @@ dated today. This preserves a complete, tamper-evident audit trail.
 ## ✨ Features
 
 - **Multi-Account** — manage several accounts, switch active account at any time
-- **Per-Account Policy** — compliance rules (overdraft, minimum balance, monthly quota,
-  deposit lock) configurable per account instance via `account set-context`
+- **Account Types** — Current, Joint, Business, Student, Saving, Deposit, Loan, Income — each with its own compliance rules
+- **Per-Account Policy** — compliance rules (overdraft, minimum balance, monthly quota, deposit lock) configurable per account instance via `account set-context`
 - **Anchor-Based Integrity** — operation dates validated against history anchors
   (`INIT`, `CLOSE`, `ADJUST`) with same-day precision using Nulid ordering
 - **Period Closing & Archival** — formally close periods into `.cld` archive files
@@ -69,18 +77,18 @@ cargo build --release
 
 ```bash
 # 1. Initialize a new account
-codexi-cli account create 2025-01-01 My Bank Account --type Current
-codexi-cli account set-bank '<bank_id>' or `<bank_name>` # see: codexi-cli bank list
-codexi-cli account set-currency '<currency_id>' or `<currency_code>` # see: codexi-cli currency list
+codexi-cli account create 2025-01-01 "My Bank Account" --type Current
+codexi-cli account set-bank <bank_id|bank_name>         # see: codexi-cli bank list
+codexi-cli account set-currency <currency_id|code>      # see: codexi-cli currency list
 codexi-cli account set-context --overdraft 500 --min-balance 0
 codexi-cli history init 2025-01-01 1500.00
 
 # 2. Record daily operations
-codexi-cli credit 2025-01-05 2400.00 Monthly salary
-codexi-cli debit  2025-01-06 45.00  Groceries
+codexi-cli credit 2025-01-05 2400.00 "Monthly salary"
+codexi-cli debit  2025-01-06 45.00  "Groceries"
 
 # 3. Transfer between accounts
-codexi-cli transfer 2025-01-10 100.00 1500000 '<account_id_to>' or `<account_name_to>` ATM withdrawal
+codexi-cli transfer 2025-01-10 100.00 1500000 <account_id|name> "ATM withdrawal"
 
 # 4. Consult and analyze
 codexi-cli view
@@ -98,7 +106,7 @@ codexi-cli data import operation json
 
 # 6. Close a period at year end
 codexi-cli admin backup
-codexi-cli history close 2025-12-31 Closing Year 2025
+codexi-cli history close 2025-12-31 "Closing Year 2025"
 codexi-cli admin backup
 ```
 ---
@@ -110,7 +118,8 @@ codexi-cli admin backup
 | :--- | :--- |
 | `credit <date> <amount> [desc]` | Record an incoming flow |
 | `debit <date> <amount> [desc]` | Record an outgoing flow |
-| `transfer <date> <amount_from> <amount_to> <account_id_to> [desc]` | Transfer from current account to another |
+| `interest <date> <amount> [desc]` | Record an interest accrual (Loan/Saving/Deposit/Income accounts) |
+| `transfer <date> <amount_from> <amount_to> <account_id\|name> [desc]` | Transfer from current account to another |
 | `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--min-amount] [--max-amount] [--latest]` | Search and filter operations |
 
 ### Operation
@@ -266,8 +275,8 @@ A companion **`www/`** directory contains the static website hosted at [codexi.e
 
 | Layer | Version | Notes |
 | :--- | :--- | :--- |
-| Application (CLI) | `0.1.0` | Semantic versioning — active development |
-| Core library | `0.1.0` | Semantic versioning — active development |
+| Application (CLI) | `0.3.0` | Semantic versioning — active development |
+| Core library | `0.3.0` | Semantic versioning — active development |
 | Storage format | `V3` | Ciborium binary, magic header, SHA-256 checksum |
 | Export format (JSON/TOML) | `V2` | Interchange only, no storage metadata |
 

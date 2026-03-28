@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 ---
 
-## [Unreleased] — 
+## [0.3.0] — 2026-03-28
 
 ### Added
 - **ExchangeAccountHeader** — dedicated exchange DTO for account metadata (name, context, bank, currency, dates, meta). Replaces the monolithic `ExchangeData`. Export produces `account-header.json/toml`, import creates or updates account metadata only — operations untouched.
@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file.
 - **`FileExchangeError::UnsupportedFormat`** — returned when CSV format requested for import/export.
 - **`resolve_or_generate_id`** helper in `core/parse.rs` — resolves `Option<&str>` to `Nulid`: parses if present (expects prior validation), generates fresh Nulid if absent.
 - **`default_zero`** serde helper — used for optional decimal string fields (`carry_forward_balance`, `current_balance`, `overdraft_limit`, `min_balance`) defaulting to `"0"` when absent.
-- **Accountype** — New account type for loan, context and policy updated accordingly
+- **Accountype** — New account type for loan, Income context and policy updated accordingly
 - **`HasName` trait** — optional trait in `logic/utils` decoupled from `HasNulid`. Implemented on types that carry a human-readable name field (currently `Account`). Types without a name (`Operation`, `Transfer`, …) are unaffected and continue to use `resolve_id`.
 - **`resolve_by_id_or_name`** — new generic resolver in `logic/utils` combining ID-based and name-based lookup in a single call. Resolution priority: full Nulid (26 chars) → ID suffix → name exact → name prefix → name contains. Ambiguity is evaluated independently at each level — a unique exact match wins regardless of prefix/contains candidates. Available only for types implementing both `HasNulid` and `HasName`.
 - **`resolve_by_name`** (internal) — three-tier name search (exact / prefix / contains, case-insensitive) extracted as a private helper. Keeps `resolve_by_id_or_name` readable and allows independent testing of the name tier.
@@ -32,8 +32,25 @@ All notable changes to this project will be documented in this file.
 - **CLI command `account set-bank`** — now accepts <bank_name> in addition to <bank_id>.
 - **CLI command `account set-currency`** — now accepts <currency_code> in addition to <currency_id>.
 - **CLI command `transfer`** — <account_id_to> argument now accepts an account name (or prefix/substring) in addition to full or short ID.
-- **`CodexiBalanceEntry`** — in `logic/balance/model.rs` to compute balance, debit, credit of the accounts. 
-- **CLI command `report balance-acc`** — display the balance, debit, credit from `CodexiBalanceEntry`.
+- **`CodexiBalanceEntry`** — in `logic/balance/model.rs` to compute balance, debit, credit of the accounts.
+- **CLI command `report balance-all`** — display the balance, debit and credit per accounts from `CodexiBalanceEntry`.
+- **`RegularKind::Interest`** — new operation kind for interest accrual and cash receipt. Semantically distinct from `Transaction` — enables filtering, reporting, and enforcement of `allows_interest` per account. Used with `Credit` flow to record interest due (option B: accrual as additional debt), voided via `SystemKind::Void` for interest forgiveness.
+- **`ComplianceViolation::KindNotAllowed(AccountType)`** — new typed error replacing the former `NotAllowed { reason }` catch-all. Carries the account type for clear error messages.
+- **`ComplianceViolation::InitNonZeroOnLoan`** — new typed error for `Init` operations with a non-zero amount on `Loan` accounts.
+- **`AccountType::allows_interest()`** — new method returning `true` for `Saving`, `Deposit`, `Income` and `Loan`. Used as default initializer for `AccountContext::allows_interest` in `from_type()`.
+- **`AccountType::allows_joint_signers()`** — new method returning `true` for `Joint` and `Business`. Used as default initializer for `AccountContext::allows_joint_signers` in `from_type()`.
+- **`AccountContext::from_type()`** — now uses `allows_interest()` and `allows_joint_signers()` methods for initialization. `Loan` and `Income` defaults to `allows_interest: true`. No more hardcoded booleans.
+- **`validate_full` signature** — now receives `_kind: &RegularKind` and `_flow: OperationFlow` to allow per-type kind/flow guards in overrides without duplicating the dispatch logic from `validate()`.
+- **`LoanPolicy`** — full `validate()` override. Blocks `Init` with non-zero amount (`InitNonZeroOnLoan`). Restricts Regular ops to `Transfer` (both flows), `Interest Credit` (if `allows_interest`), and `Fee` (both flows). All others return `KindNotAllowed`.
+- **`SavingPolicy`** — `validate_full` override blocks `Transfer Debit` explicitly (`KindNotAllowed`) regardless of balance. All other debits blocked by `validate_no_overdraft`.
+- **`DepositPolicy`** — all debits blocked before `deposit_locked_until` via `NoWithdrawalAllowed`. Credits always allowed. No overdraft after maturity.
+- **`validate_no_overdraft`** — shared private helper now used by `SavingPolicy`, `DepositPolicy`, `LoanPolicy` and `IncomePolicy`. Returns `NegativeBalanceNotAllowed(AccountType)`.
+- **Compliance matrix** — full kind × flow × account-type decision table established as reference. Covers all `RegularKind` (Transaction, Transfer, Interest, Fee, Refund) and `SystemKind` (Init, Adjust, Checkpoint, Void) combinations across all eight account types.
+- **`AccountType::Income`** — new account type for pure accumulation (interest income, revenue pools). Transfer only in both directions, no overdraft, no negative balance. Replaces `Deposit` as the recommended type for interest income accounts.
+- **`IncomePolicy`** — compliance policy for `Income` accounts. Only `Transfer` (Credit/Debit) allowed. All other Regular kinds (`Transaction`, `Fee`, `Refund`, `Interest`) return `KindNotAllowed`.
+- **`docs/loan.md`** — user guide for microloan management: account setup, operation cycle, interest accrual pattern, full worked example with balance states at each step.
+- **`docs/compliance_matrix.md`** — reference table of all allowed/refused/conditional operations by kind, flow, and account type.
+- **`docs/context_matrix.md`** — reference table of all configurable context fields by account type with default values.
 
 ### Changed
 - **ExchangeData removed** — replaced by `ExchangeAccountHeader` + `ExchangeAccountOperations`. Split clarifies responsibilities and produces smaller, more readable export files.
@@ -42,6 +59,11 @@ All notable changes to this project will be documented in this file.
 - **import_operations** in **Codexi** — returns `Result<(ImportSummary, Vec<CoreWarning>), CodexiError>` — merge warnings (skipped kinds) propagated to CLI.
 - **Validation module** — `validation.rs` renamed to `validator/` with per-entity files (`account.rs, currency.rs, operation.rs)`. `validate_import` split into `validate_import_account_header`, `validate_import_currency`, `validate_import_operations`.
 - **CLI commands** — `account list` and `account context` output view updated to be more friendly.
+- **`ComplianceAction`** — `Create` variant now owns `OperationKind` and `OperationFlow` by value (was `&'a OperationKind`). Lifetime removed — `OperationKind` is `Copy`.
+- **`ComplianceViolation::NotAllowed`** — removed. Replaced by typed variants `KindNotAllowed(AccountType)` and `InitNonZeroOnLoan`. Error messages are now generated by `thiserror` from the type, not from a `&'static str` field.
+- **`AccountType::Display`** — padding (`{:<7}`) removed from `Display` implementation. Alignment is now the responsibility of the CLI display layer, not the domain type.
+- **`validate_no_overdraft`** — extracted as a shared private function for all no-overdraft policies. Previously duplicated between `LoanPolicy` and `SavingPolicy`.
+- **CLI commands** — `admin export-script` take into account the command `transfer` and `interest` in the script generation.
 
 ### Fixed
 - **export_json** wrote **json.as_bytes()** — now writes `String` directly via `fs::write`, removing the unnecessary `.as_bytes()` conversion.
