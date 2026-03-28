@@ -13,7 +13,9 @@ use codexi::{
     },
 };
 
-use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, LABEL_STYLE, NOTE_STYLE, TITLE_STYLE, VALUE_STYLE};
+use crate::ui::{
+    CREDIT_STYLE, DEBIT_STYLE, LABEL_STYLE, NOTE_STYLE, TITLE_STYLE, VALUE_STYLE, truncate_text,
+};
 
 pub fn view_warning(warnings: &[CoreWarning]) {
     let title_text = TITLE_STYLE.apply_to("Warning(s)");
@@ -145,7 +147,7 @@ pub fn view_search(items: &SearchEntry) {
             item.operation.flow,
             amount_text,
             VALUE_STYLE.apply_to(format!("{:.2}", item.balance).separate_with_commas()),
-            truncate_desc(&item.operation.description, 40),
+            truncate_text(&item.operation.description, 40),
         );
     }
 
@@ -380,7 +382,7 @@ pub fn view_stats(stats: &StatsEntry) {
             LABEL_STYLE.apply_to(&exp.op_date),
             DEBIT_STYLE.apply_to(format!("{:.2}", exp.amount).separate_with_commas()),
             VALUE_STYLE.apply_to(pct_str),
-            LABEL_STYLE.apply_to(truncate_desc(&exp.description, 31))
+            LABEL_STYLE.apply_to(truncate_text(&exp.description, 31))
         );
     }
     println!("└────────┴──────────┴──────────────────┴───────┴───────────────────────────────┘");
@@ -400,21 +402,6 @@ fn draw_savings_bar(rate: Decimal, width: usize) -> StyledObject<String> {
             style("░".repeat(empty)).dim()
         ))
     }
-}
-
-/// Truncate description for display
-fn truncate_desc(desc: &str, max_width: usize) -> String {
-    // If the visible length is already OK → simple formatting
-    if desc.chars().count() <= max_width {
-        return format!("{:<width$}", desc, width = max_width);
-    }
-
-    // Otherwise → truncate without ever breaking a UTF-8 character
-    let visible = max_width.saturating_sub(3);
-
-    let truncated: String = desc.chars().take(visible).collect();
-
-    format!("{:<width$}", format!("{}...", truncated), width = max_width)
 }
 
 fn format_bytes(bytes: u64) -> String {

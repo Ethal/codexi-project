@@ -23,3 +23,18 @@ const LABEL_STYLE: Style = Style::new().dim();
 const DEBIT_STYLE: Style = Style::new().red();
 const CREDIT_STYLE: Style = Style::new().green();
 const VALUE_STYLE: Style = Style::new().yellow().bold();
+
+/// Truncate text for ui
+pub fn truncate_text(desc: &str, max_width: usize) -> String {
+    // If the visible length is already OK → simple formatting
+    if desc.chars().count() <= max_width {
+        return format!("{:<width$}", desc, width = max_width);
+    }
+
+    // Otherwise → truncate without ever breaking a UTF-8 character
+    let visible = max_width.saturating_sub(3);
+
+    let truncated: String = desc.chars().take(visible).collect();
+
+    format!("{:<width$}", format!("{}...", truncated), width = max_width)
+}
