@@ -6,11 +6,11 @@ use rust_decimal::Decimal;
 use std::path::{Path, PathBuf};
 
 use codexi::{
-    core::DataPaths,
+    core::{DataPaths, format_max_monthly_transactions, format_optional_date, format_optional_id},
     file_management::FileManagement,
     logic::{
         codexi::{Codexi, migrate_v1, migrate_v2},
-        operation::{OperationFlow, OperationKind, SystemKind},
+        operation::{OperationFlow, OperationKind, RegularKind, SystemKind},
     },
 };
 
@@ -143,9 +143,47 @@ pub fn handle_admin_command(
 }
 
 fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
-    for account in &codexi.accounts {
-        let mut lines = Vec::new();
+    let mut lines_codexi = Vec::new();
+    lines_codexi.push("#!/bin/bash".to_string());
+    lines_codexi.push("set -e".to_string());
+    lines_codexi.push(String::new());
+    lines_codexi.push(format!("# Script generated for codexi: {}", codexi.name));
+    lines_codexi.push(format!("# Codexi ID: {}", codexi.id));
+    lines_codexi.push(format!("# Generated at: {}", Local::now().date_naive()));
+    lines_codexi.push(String::new());
+    lines_codexi.push("codexi-cli report balance-all".to_string());
+    lines_codexi.push("codexi-cli admin backup".to_string());
+    lines_codexi.push("codexi-cli admin clear-data".to_string());
 
+    for account in &codexi.accounts {
+        lines_codexi.push(format!(
+            "codexi-cli account create {} {} --type {}",
+            account.open_date,
+            account.name,
+            account.context.account_type.as_str().to_lowercase(),
+        ));
+        lines_codexi.push(format!(
+            "# codexi-cli account set-context -o {} -b {} -m {} -d {} -i {} -s {}",
+            account.context.overdraft_limit,
+            account.context.min_balance,
+            format_max_monthly_transactions(account.context.max_monthly_transactions),
+            format_optional_date(account.context.deposit_locked_until).unwrap_or("".into()),
+            account.context.allows_interest,
+            account.context.allows_joint_signers
+        ));
+        let code = account
+            .currency_id
+            .and_then(|cur_id| codexi.currencies.currency_code_by_id(&cur_id)) // retourne Option<String>
+            .unwrap_or_else(|| codexi.settings.default_currency.clone()); // fallback si None
+        lines_codexi.push(format!("# codexi-cli account set-currency {}", code));
+
+        let bk_name = account
+            .bank_id
+            .and_then(|bk_id| codexi.banks.bank_name_by_id(&bk_id)) // retourne Option<String>
+            .unwrap_or("".to_string()); // fallback si None
+        lines_codexi.push(format!("# codexi-cli account set-bank {}", bk_name));
+
+        let mut lines = Vec::new();
         lines.push("#!/bin/bash".to_string());
         lines.push("set -e".to_string());
         lines.push(String::new());
@@ -154,16 +192,7 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
         lines.push(format!("# Generated at: {}", Local::now().date_naive()));
         lines.push(String::new());
 
-        lines.push(format!(
-            "codexi-cli account create {} {} --type {}",
-            account.open_date,
-            account.name,
-            account.context.account_type.as_str()
-        ));
-        lines.push(format!(
-            "codexi-cli account set-context -o {} -b {}",
-            account.context.overdraft_limit, account.context.min_balance,
-        ));
+        lines.push(format!("codexi-cli account use \"{}\"", account.name));
         for op in &account.operations {
             let line = match op.kind {
                 OperationKind::System(SystemKind::Init) => {
@@ -172,7 +201,15 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
                         OperationFlow::Debit => -op.amount,
                         OperationFlow::None => Decimal::ZERO,
                     };
-                    format!("codexi-cli history init {} {}", op.date, amount)
+
+                    lines_codexi.push(format!("codexi-cli account use \"{}\"", account.name));
+                    lines_codexi.push(format!("codexi-cli history init {} {}", op.date, amount));
+                    lines_codexi.push(String::new());
+
+                    format!(
+                        "#FYI - INIT in main codexi script: codexi-cli history init {} {}",
+                        op.date, amount
+                    )
                 }
                 OperationKind::System(SystemKind::Adjust) => {
                     format!(
@@ -189,10 +226,10 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
                 OperationKind::System(SystemKind::Void) => {
                     "# VOID op — skip (handled by void_of link on target)".to_string()
                 }
-                OperationKind::Regular(_) => {
+                OperationKind::Regular(RegularKind::Transaction) => {
                     if op.links.void_by.is_some() {
                         format!(
-                            "# VOIDED: codexi-cli {} {} {} \"{}\"",
+                            "#VOIDED: codexi-cli {} {} {} \"{}\"",
                             op.flow.as_str().to_lowercase(),
                             op.date,
                             op.amount,
@@ -208,11 +245,56 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
                         )
                     }
                 }
+                OperationKind::Regular(RegularKind::Fee) => {
+                    format!(
+                        "#FEE: codexi-cli fee {} {} \"{}\"",
+                        op.date, op.amount, op.description
+                    )
+                }
+                OperationKind::Regular(RegularKind::Refund) => {
+                    format!(
+                        "#REFUND: codexi-cli refund {} {} \"{}\"",
+                        op.date, op.amount, op.description
+                    )
+                }
+                OperationKind::Regular(RegularKind::Interest) => {
+                    format!(
+                        "codexi-cli interest {} {} \"{}\"",
+                        op.date, op.amount, op.description
+                    )
+                }
+                OperationKind::Regular(RegularKind::Transfer) => match op.flow {
+                    OperationFlow::Debit => {
+                        format!(
+                            "#TRANSFER codexi-cli transfer {} {} {:?} {:?} \"{}\"",
+                            op.date,
+                            op.amount,
+                            op.amount * op.context.exchange_rate,
+                            format_optional_id(op.links.transfer_account_id),
+                            op.description
+                        )
+                    }
+                    OperationFlow::Credit => {
+                        format!(
+                            "#FYI - TRANSFER: check other account {} {} \"{}\"",
+                            op.date, op.amount, op.description
+                        )
+                    }
+                    OperationFlow::None => {
+                        format!(
+                            "#NONE: Kind {} {} {} \"{}\"",
+                            op.kind.as_str(),
+                            op.date,
+                            op.amount,
+                            op.description
+                        )
+                    }
+                },
             };
             lines.push(line);
         }
 
-        // un fichier par account
+        // one file per account
         let filename = format!(
             "script_{}_{}.sh",
             account.name.to_lowercase().replace(' ', "_"),
@@ -223,6 +305,27 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
 
         msg_info!("Script exported: {}", file_path.display());
     }
+
+    lines_codexi.push("codexi-cli account list".to_string());
+    // one file for codexi
+    let filename = format!(
+        "script_{}_{}.sh",
+        codexi.name.to_lowercase().replace(' ', "_"),
+        codexi.id
+    );
+    let file_path = cwd.join(&filename);
+    std::fs::write(&file_path, lines_codexi.join("\n"))?;
+    msg_info!("Script exported: {}", file_path.display());
+    msg_warn!("-----------------------------------------------------------------");
+    msg_warn!("Review all the script before launch");
+    msg_warn!("Paid attention of the overldraft, recommenand to increase,");
+    msg_warn!("due to the fact that the rebuild is done account per account,");
+    msg_warn!("order to execute the scripts:");
+    msg_warn!(" -1 the main script_codexi");
+    msg_warn!(" -2 script related to current account type");
+    msg_warn!(" -3 script related to others account type");
+    msg_warn!("-----------------------------------------------------------------");
+    msg_info!("Job Export completed");
 
     Ok(())
 }
