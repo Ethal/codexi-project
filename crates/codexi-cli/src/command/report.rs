@@ -13,7 +13,7 @@ pub struct ReportArgs {
 #[derive(Subcommand, Debug)]
 pub enum ReportCommand {
     /// View balance and debit/credit the accounts.
-    BalanceAcc {},
+    BalanceAll {},
 
     /// View balance and debit/credit. Available criteria, --from --to.
     Balance {

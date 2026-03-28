@@ -25,7 +25,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
     let mut codexi = FileManagement::load_current_state(paths)?;
     let account = codexi.get_current_account_mut()?;
     match command {
-        ReportCommand::BalanceAcc {} => {
+        ReportCommand::BalanceAll {} => {
             let balance = Balance::codexi_balance_entry(&codexi);
             view_balance_account(&balance);
         }
