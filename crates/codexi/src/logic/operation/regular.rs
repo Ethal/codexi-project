@@ -12,6 +12,7 @@ pub enum RegularKind {
     Fee,
     Transfer,
     Refund,
+    Interest,
 }
 /// Methods for RegularKind
 impl RegularKind {
@@ -22,6 +23,7 @@ impl RegularKind {
             RegularKind::Fee => "Fee",
             RegularKind::Transfer => "Transfer",
             RegularKind::Refund => "Refund",
+            RegularKind::Interest => "Interest",
         }
     }
     /// Try to create a RegularKind from a string
@@ -32,6 +34,7 @@ impl RegularKind {
             "fee" => Ok(RegularKind::Fee),
             "transfer" => Ok(RegularKind::Transfer),
             "refund" => Ok(RegularKind::Refund),
+            "interest" => Ok(RegularKind::Interest),
             _ => Err(RegularKindError::Unknown(s.to_string())),
         }
     }
