@@ -5,7 +5,7 @@ use thousands::Separable;
 use codexi::core::format_id_short;
 use codexi::logic::codexi::{AccountEntry, AccountItem};
 
-use crate::ui::{NOTE_STYLE, TITLE_STYLE};
+use crate::ui::{NOTE_STYLE, TITLE_STYLE, truncate_text};
 
 /// view to list of account
 pub fn view_account(items: &AccountEntry) {
@@ -21,11 +21,11 @@ pub fn view_account(items: &AccountEntry) {
             (true, true) => "(c)(*)".to_string(),
         };
         println!(
-            " {} {} {} - {} {} {} {}",
+            " {} {} {} - {:<10} {:<7} {} {}",
             marker,
             item.id,
             format_id_short(&item.id),
-            item.name,
+            truncate_text(&item.name, 10),
             item.context.account_type,
             item.currency,
             item.bank
@@ -41,8 +41,10 @@ pub fn view_account(items: &AccountEntry) {
 
 /// view to context of the current account
 pub fn view_account_context(item: &AccountItem) {
-    let title_text =
-        TITLE_STYLE.apply_to(format!("Account context ({} {})", item.name, item.currency));
+    let title_text = TITLE_STYLE.apply_to(format!(
+        "name:{} currency:{} - Account context ",
+        item.name, item.currency
+    ));
     println!();
     println!("{}) ", title_text);
     println!(" Account Type: {}", item.context.account_type);

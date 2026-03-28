@@ -34,8 +34,8 @@ impl Account {
         amount: Decimal,
         description: String,
     ) -> Result<Nulid, AccountError> {
-        self.temporal_policy(TemporalAction::Create(&kind), date)?;
-        self.compliance_policy(ComplianceAction::Create(&kind, flow, amount), date)?;
+        self.temporal_policy(TemporalAction::Create(kind), date)?;
+        self.compliance_policy(ComplianceAction::Create(kind, flow, amount), date)?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;
@@ -83,7 +83,7 @@ impl Account {
             target_op.amount
         );
 
-        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount), today)?;
+        self.compliance_policy(ComplianceAction::Create(kind, op_flow, op_amount), today)?;
 
         let mut links = OperationLinks::default();
         links.void_of = Some(void_id);
@@ -122,14 +122,14 @@ impl Account {
     pub fn initialize(&mut self, date: NaiveDate, amount: Decimal) -> Result<Nulid, AccountError> {
         // Check temporal policy
         let kind = OperationKind::System(SystemKind::Init);
-        self.temporal_policy(TemporalAction::Create(&kind), date)?;
+        self.temporal_policy(TemporalAction::Create(kind), date)?;
 
         // logic
         let op_flow = OperationFlow::from_sign(amount);
         let op_amount = amount.abs();
         let description = format!("INITIAL AMOUNT {}", op_amount);
 
-        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount), date)?;
+        self.compliance_policy(ComplianceAction::Create(kind, op_flow, op_amount), date)?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;
@@ -161,7 +161,7 @@ impl Account {
     ) -> Result<Nulid, AccountError> {
         // Check temporal policy
         let kind = OperationKind::System(SystemKind::Adjust);
-        self.temporal_policy(TemporalAction::Create(&kind), date)?;
+        self.temporal_policy(TemporalAction::Create(kind), date)?;
 
         // logic
         let params = SearchParamsBuilder::default().to(Some(date)).build()?;
@@ -180,7 +180,7 @@ impl Account {
             op_amount, physical_amount,
         );
 
-        self.compliance_policy(ComplianceAction::Create(&kind, op_flow, op_amount), date)?;
+        self.compliance_policy(ComplianceAction::Create(kind, op_flow, op_amount), date)?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;
@@ -216,7 +216,7 @@ impl Account {
     ) -> Result<Nulid, AccountError> {
         // Check finaancial policy
         let kind = OperationKind::System(SystemKind::Checkpoint);
-        self.temporal_policy(TemporalAction::Create(&kind), checkpoint_date)?;
+        self.temporal_policy(TemporalAction::Create(kind), checkpoint_date)?;
 
         let mut checkpoint_balance = Decimal::ZERO;
         let mut archived_operations = Vec::new();
@@ -242,7 +242,8 @@ impl Account {
                     | OperationKind::Regular(RegularKind::Transaction)
                     | OperationKind::Regular(RegularKind::Fee)
                     | OperationKind::Regular(RegularKind::Transfer)
-                    | OperationKind::Regular(RegularKind::Refund) => {
+                    | OperationKind::Regular(RegularKind::Refund)
+                    | OperationKind::Regular(RegularKind::Interest) => {
                         match op.flow {
                             OperationFlow::Credit => checkpoint_balance += op.amount,
                             OperationFlow::Debit => checkpoint_balance -= op.amount,
@@ -290,7 +291,7 @@ impl Account {
         let description = format!("BALANCE DEFERRED: {}: {:.2} {}", op_flow, op_amount, desc);
 
         self.compliance_policy(
-            ComplianceAction::Create(&kind, op_flow, op_amount),
+            ComplianceAction::Create(kind, op_flow, op_amount),
             checkpoint_date,
         )?;
 

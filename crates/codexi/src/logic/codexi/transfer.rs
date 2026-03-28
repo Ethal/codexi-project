@@ -52,11 +52,11 @@ impl Codexi {
         {
             let acc_from = self.get_account_by_id(&from_id)?;
             acc_from
-                .temporal_policy(TemporalAction::Create(&kind), date)
+                .temporal_policy(TemporalAction::Create(kind), date)
                 .map_err(AccountError::TemporalViolation)?;
             acc_from
                 .compliance_policy(
-                    ComplianceAction::Create(&kind, OperationFlow::Debit, amount_from),
+                    ComplianceAction::Create(kind, OperationFlow::Debit, amount_from),
                     date,
                 )
                 .map_err(AccountError::ComplianceViolation)?;
@@ -66,11 +66,11 @@ impl Codexi {
         {
             let acc_to = self.get_account_by_id(&to_id)?;
             acc_to
-                .temporal_policy(TemporalAction::Create(&kind), date)
+                .temporal_policy(TemporalAction::Create(kind), date)
                 .map_err(AccountError::TemporalViolation)?;
             acc_to
                 .compliance_policy(
-                    ComplianceAction::Create(&kind, OperationFlow::Credit, amount_to),
+                    ComplianceAction::Create(kind, OperationFlow::Credit, amount_to),
                     date,
                 )
                 .map_err(AccountError::ComplianceViolation)?;
@@ -81,7 +81,7 @@ impl Codexi {
         let op_to_id = Nulid::new().map_err(AccountError::Id)?;
 
         let desc_from = format!(
-            "TRANSFER TO #{}: {}",
+            "TO #{}: {}",
             format_id_short(&format_id(to_id)),
             description
         );
@@ -110,7 +110,7 @@ impl Codexi {
 
         // --- Build destination operation (Credit) ---
         let desc_to = format!(
-            "TRANSFER FROM #{}: {}",
+            "FROM #{}: {}",
             format_id_short(&format_id(from_id)),
             description
         );
@@ -372,7 +372,7 @@ mod tests {
         assert!(matches!(
             res,
             Err(CodexiError::Account(AccountError::ComplianceViolation(
-                ComplianceViolation::InvalidAmount { amount: _ }
+                ComplianceViolation::InvalidAmount(_)
             )))
         ));
     }
@@ -384,7 +384,7 @@ mod tests {
         assert!(matches!(
             res,
             Err(CodexiError::Account(AccountError::ComplianceViolation(
-                ComplianceViolation::InvalidAmount { amount: _ }
+                ComplianceViolation::InvalidAmount(_)
             )))
         ));
     }

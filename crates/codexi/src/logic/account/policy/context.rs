@@ -46,8 +46,17 @@ impl AccountContext {
                 min_balance: dec!(0),
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
-                allows_interest: false,
-                allows_joint_signers: false,
+                allows_interest: account_type.allows_interest(),
+                allows_joint_signers: account_type.allows_joint_signers(),
+            },
+            AccountType::Income => Self {
+                account_type,
+                overdraft_limit: dec!(0),
+                min_balance: dec!(0),
+                max_monthly_transactions: None,
+                deposit_locked_until: None,
+                allows_interest: account_type.allows_interest(),
+                allows_joint_signers: account_type.allows_joint_signers(),
             },
             AccountType::Loan => Self {
                 account_type,
@@ -55,8 +64,8 @@ impl AccountContext {
                 min_balance: dec!(0),
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
-                allows_interest: false,
-                allows_joint_signers: false,
+                allows_interest: account_type.allows_interest(),
+                allows_joint_signers: account_type.allows_joint_signers(),
             },
             AccountType::Saving => Self {
                 account_type,
@@ -64,8 +73,8 @@ impl AccountContext {
                 min_balance: dec!(10),
                 max_monthly_transactions: Some(6),
                 deposit_locked_until: None,
-                allows_interest: true,
-                allows_joint_signers: false,
+                allows_interest: account_type.allows_interest(),
+                allows_joint_signers: account_type.allows_joint_signers(),
             },
             AccountType::Joint => Self {
                 account_type,
@@ -73,8 +82,8 @@ impl AccountContext {
                 min_balance: dec!(0),
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
-                allows_interest: false,
-                allows_joint_signers: true,
+                allows_interest: account_type.allows_interest(),
+                allows_joint_signers: account_type.allows_joint_signers(),
             },
             AccountType::Deposit => Self {
                 account_type,
@@ -82,8 +91,8 @@ impl AccountContext {
                 min_balance: dec!(0),
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
-                allows_interest: true,
-                allows_joint_signers: false,
+                allows_interest: account_type.allows_interest(),
+                allows_joint_signers: account_type.allows_joint_signers(),
             },
             AccountType::Business => Self {
                 account_type,
@@ -91,8 +100,8 @@ impl AccountContext {
                 min_balance: dec!(0),
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
-                allows_interest: false,
-                allows_joint_signers: true,
+                allows_interest: account_type.allows_interest(),
+                allows_joint_signers: account_type.allows_joint_signers(),
             },
             AccountType::Student => Self {
                 account_type,
@@ -100,8 +109,8 @@ impl AccountContext {
                 min_balance: dec!(0),
                 max_monthly_transactions: Some(30),
                 deposit_locked_until: None,
-                allows_interest: false,
-                allows_joint_signers: false,
+                allows_interest: account_type.allows_interest(),
+                allows_joint_signers: account_type.allows_joint_signers(),
             },
         }
     }
@@ -129,7 +138,10 @@ impl AccountContext {
                 });
             }
             match self.account_type {
-                AccountType::Saving | AccountType::Deposit | AccountType::Loan => {
+                AccountType::Saving
+                | AccountType::Deposit
+                | AccountType::Loan
+                | AccountType::Income => {
                     warnings.push(CoreWarning {
                         kind: CoreWarningKind::ContextNotApplicable,
                         message: format!(
@@ -181,12 +193,13 @@ impl AccountContext {
             }
         }
 
-        // allows_interest — only applicable to Saving, Deposit, Loan accounts
+        // allows_interest — only applicable to Saving, Deposit, Loan, Income accounts
         if let Some(value) = allows_interest {
             match self.account_type {
-                AccountType::Saving | AccountType::Deposit | AccountType::Loan => {
-                    self.allows_interest = value
-                }
+                AccountType::Saving
+                | AccountType::Deposit
+                | AccountType::Loan
+                | AccountType::Income => self.allows_interest = value,
                 _ => {
                     warnings.push(CoreWarning {
                         kind: CoreWarningKind::ContextNotApplicable,

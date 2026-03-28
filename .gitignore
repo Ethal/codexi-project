@@ -16,9 +16,8 @@
 *.env
 *.log
 *.html
-MENU.md
-TODO.md
 *.dat
+*.md
 
 # IDE
 .zed
@@ -34,3 +33,9 @@ TODO.md
 !banks.json
 !statement.html
 !stats.html
+!loan.md
+!compliance_matrix.md
+!context_matrix.md
+!CHANGELOG.md
+!README.md
+!LICENSE.md

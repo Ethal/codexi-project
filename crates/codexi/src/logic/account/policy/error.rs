@@ -4,6 +4,8 @@ use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use thiserror::Error;
 
+use crate::logic::account::AccountType;
+
 /// Error type for temporal policy
 #[derive(Debug, Error)]
 pub enum TemporalViolation {
@@ -23,8 +25,8 @@ pub enum TemporalViolation {
     OperationAlreadyVoided(String),
     #[error("FIN_OP: Operation #{0} not found")]
     OperationNotFound(String),
-    #[error("Transfer cannot be voided: twin operation is archived in account {account_id}")]
-    TransferTwinArchived { account_id: String },
+    #[error("Transfer cannot be voided: twin operation is archived in account {0}")]
+    TransferTwinArchived(String),
 }
 
 #[derive(Debug, Error)]
@@ -41,14 +43,26 @@ pub enum ComplianceViolation {
     #[error("Monthly transaction limit reached: {max} operations/month maximum")]
     MonthlyLimitExceeded { max: u32 },
 
-    #[error("Operation not allowed for this account type: {reason}")]
-    NotAllowed { reason: &'static str },
-
     #[error("Invalid context value: {reason}")]
     InvalidContextValue { reason: &'static str },
 
-    #[error("Invalid amount: {amount} — must be strictly positive for regular operations")]
-    InvalidAmount { amount: Decimal },
+    #[error("Invalid amount: {0} — must be strictly positive for regular operations")]
+    InvalidAmount(Decimal),
+
+    #[error("Negative balance not allowed for this account type: {0}")]
+    NegativeBalanceNotAllowed(AccountType),
+
+    #[error("withdrawal locked until deposit maturity date")]
+    NoWithdrawalAllowed,
+
+    #[error("this account does not allow interest operations")]
+    NotAllowedInterestOperation,
+
+    #[error("operation kind not allowed on {0} account")]
+    KindNotAllowed(AccountType),
+
+    #[error("Init with non-zero amount not allowed on Loan account")]
+    InitNonZeroOnLoan,
 }
 
 #[derive(Debug, Error)]

@@ -95,6 +95,34 @@ pub enum RootCommand {
         )]
         description: Vec<String>,
     },
+    /// Add a regular interest operation
+    Interest {
+        #[arg(
+            index = 1,
+            value_name = "DATE",
+            required = true,
+            help = "Date of the credit operation (YYYY-MM-DD)"
+        )]
+        date: String,
+
+        #[arg(
+            index = 2,
+            value_name = "AMOUNT",
+            required = true,
+            allow_negative_numbers = false,
+            help = "Amount of the credit operation"
+        )]
+        amount: String,
+
+        #[arg(
+            index = 3,
+            num_args = 1..,
+            value_name = "DESCRIPTION...",
+            help = "Description of the credit operation",
+            default_value = "no description"
+        )]
+        description: Vec<String>,
+    },
     /// Add a transfer operation between account
     Transfer {
         /// date of the transfer

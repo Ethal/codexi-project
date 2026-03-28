@@ -256,6 +256,9 @@ fn migrate_op_to_v3(old_ops: &Vec<OperationV2>) -> Result<Vec<Operation>, Migrat
             OperationKindV2::Regular(RegularKind::Refund) => {
                 OperationKind::Regular(RegularKind::Refund)
             }
+            OperationKindV2::Regular(RegularKind::Interest) => {
+                OperationKind::Regular(RegularKind::Interest)
+            }
         };
 
         let new_op = Operation {

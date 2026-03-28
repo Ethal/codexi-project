@@ -7,30 +7,15 @@ use std::ops::Neg;
 use crate::logic::{
     account::policy::{AccountContext, ComplianceViolation},
     account::{Account, AccountType},
-    operation::{OperationFlow, OperationKind, SystemKind},
+    operation::{OperationFlow, OperationKind, RegularKind, SystemKind},
 };
 
-/// Action passed to compliance_policy() — a subclass of TemporalAction.
-/// Contains the full context of the operation to be validated.
 #[derive(Debug)]
-pub enum ComplianceAction<'a> {
-    /// Creating a transaction: type + direction + gross amount (always positive for Regular,
-    /// may be signed for System ops calculated internally e.g. Init, Adjust)
-    Create(&'a OperationKind, OperationFlow, Decimal),
-    /// Reversal of a transaction — accounting adjustment, always goes through
+pub enum ComplianceAction {
+    Create(OperationKind, OperationFlow, Decimal),
     Void,
 }
 
-/// Business policy linked to the account type.
-/// Receives a ComplianceAction containing kind, flow and amount.
-/// Each implementation decides what to check based on the kind.
-/// Numeric values always come from AccountContext.
-///
-/// Amount contract:
-///   - Regular(_)         → amount must be strictly positive (user-provided, validated here)
-///   - System(Init|Adjust)→ amount is always positive (pre-sanitized via .abs() by caller)
-///   - System(Checkpoint) → no financial validation
-///   - System(Void)       → no financial validation
 pub trait CompliancePolicy {
     fn validate(
         &self,
@@ -40,49 +25,57 @@ pub trait CompliancePolicy {
         monthly_count: u32,
     ) -> Result<(), ComplianceViolation> {
         match action {
-            // Void — accounting adjustment, always OK
             ComplianceAction::Void => Ok(()),
 
-            ComplianceAction::Create(kind, flow, amount) => {
-                match kind {
-                    // Checkpoint — end of period, not an actual financial movement
-                    OperationKind::System(SystemKind::Checkpoint) => Ok(()),
+            ComplianceAction::Create(kind, flow, amount) => match kind {
+                // Checkpoint and Void — always OK, no financial movement
+                OperationKind::System(SystemKind::Checkpoint)
+                | OperationKind::System(SystemKind::Void) => Ok(()),
 
-                    // System Void — already handled by ComplianceAction::Void
-                    // but in case it goes through Create
-                    OperationKind::System(SystemKind::Void) => Ok(()),
-
-                    // Init and Adjust — internal regularizations.
-                    // Amount is pre-sanitized via .abs() by the caller (action.rs),
-                    // flow is derived via OperationFlow::from_sign().
-                    // Only overdraft is checked — no quota, no min_balance.
-                    OperationKind::System(SystemKind::Init)
-                    | OperationKind::System(SystemKind::Adjust) => {
-                        // Amount is guaranteed positive by caller — compute signed directly
-                        let signed = amount * flow.to_sign();
-                        self.validate_overdraft(ctx, current_balance, signed)
-                    }
-
-                    // Regular (Transaction, Fee, Transfer, Refund) — full validation.
-                    // Amount must be strictly positive — user-provided value, validated here
-                    // before operation.build() to give a meaningful compliance error early.
-                    // flow carries the direction (Debit/Credit).
-                    OperationKind::Regular(_) => {
-                        // ← MODIFIED: amount > 0 check moved here from operation.build()
-                        // for Regular ops to provide a compliance-level error with context
-                        if amount <= Decimal::ZERO {
-                            return Err(ComplianceViolation::InvalidAmount { amount });
-                        }
-                        let signed = amount * flow.to_sign();
-                        self.validate_full(ctx, current_balance, signed, monthly_count)
-                    }
+                // Init and Adjust — overdraft only, no quota, no min_balance
+                OperationKind::System(SystemKind::Init)
+                | OperationKind::System(SystemKind::Adjust) => {
+                    let signed = amount * flow.to_sign();
+                    self.validate_overdraft(ctx, current_balance, signed)
                 }
-            }
+
+                // Regular — common guards applied here before validate_full
+                OperationKind::Regular(regular_kind) => {
+                    // Amount must be strictly positive for all Regular ops
+                    if amount <= Decimal::ZERO {
+                        return Err(ComplianceViolation::InvalidAmount(amount));
+                    }
+                    // Interest Debit — never allowed on any type (use void instead)
+                    if regular_kind == RegularKind::Interest && flow == OperationFlow::Debit {
+                        return Err(ComplianceViolation::KindNotAllowed(ctx.account_type));
+                    }
+                    // Refund Debit — never allowed on any type (use void instead)
+                    if regular_kind == RegularKind::Refund && flow == OperationFlow::Debit {
+                        return Err(ComplianceViolation::KindNotAllowed(ctx.account_type));
+                    }
+                    // Interest Credit — requires allows_interest flag on the account
+                    if regular_kind == RegularKind::Interest
+                        && flow == OperationFlow::Credit
+                        && !ctx.allows_interest
+                    {
+                        return Err(ComplianceViolation::NotAllowedInterestOperation);
+                    }
+                    let signed = amount * flow.to_sign();
+                    self.validate_full(
+                        ctx,
+                        current_balance,
+                        signed,
+                        monthly_count,
+                        &regular_kind,
+                        flow,
+                    )
+                }
+            },
         }
     }
 
     /// Checks only the overdraft limit.
-    /// Used for Init and Adjust — no quota, no min_balance.
+    /// Used for Init and Adjust — no quota, no min_balance, no kind guard.
     fn validate_overdraft(
         &self,
         ctx: &AccountContext,
@@ -99,36 +92,32 @@ pub trait CompliancePolicy {
         Ok(())
     }
 
-    /// Checks overdraft + min_balance + monthly quota.
-    /// Used for Regular (Transaction, Fee, Transfer, Refund).
-    /// Can be overridden per account type (e.g. Saving, Deposit).
-    /// Receives signed amount — caller is responsible for computing it.
+    /// Full validation for Regular operations.
+    /// kind and flow are passed to allow per-type kind/flow guards without
+    /// duplicating the dispatch logic from validate().
     fn validate_full(
         &self,
         ctx: &AccountContext,
         current_balance: Decimal,
         signed: Decimal,
         monthly_count: u32,
+        _kind: &RegularKind,
+        _flow: OperationFlow,
     ) -> Result<(), ComplianceViolation> {
         let resulting = current_balance + signed;
 
-        // Overdraft
         if resulting < ctx.overdraft_limit.neg() {
             return Err(ComplianceViolation::OverdraftExceeded {
                 limit: ctx.overdraft_limit,
                 resulting,
             });
         }
-
-        // Minimum balance — only enforced when no overdraft is allowed
         if ctx.overdraft_limit == Decimal::ZERO && resulting < ctx.min_balance {
             return Err(ComplianceViolation::MinBalanceViolated {
                 minimum: ctx.min_balance,
                 resulting,
             });
         }
-
-        // Monthly quota
         if let Some(max) = ctx.max_monthly_transactions
             && monthly_count >= max
         {
@@ -140,12 +129,42 @@ pub trait CompliancePolicy {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Shared helper — no-overdraft account types (Saving, Deposit, Loan)
+// ─────────────────────────────────────────────────────────────
+
+fn validate_no_overdraft(
+    ctx: &AccountContext,
+    current_balance: Decimal,
+    signed: Decimal,
+    monthly_count: u32,
+) -> Result<(), ComplianceViolation> {
+    if current_balance + signed < Decimal::ZERO {
+        return Err(ComplianceViolation::NegativeBalanceNotAllowed(
+            ctx.account_type,
+        ));
+    }
+    let resulting = current_balance + signed;
+    if ctx.overdraft_limit == Decimal::ZERO && resulting < ctx.min_balance {
+        return Err(ComplianceViolation::MinBalanceViolated {
+            minimum: ctx.min_balance,
+            resulting,
+        });
+    }
+    if let Some(max) = ctx.max_monthly_transactions
+        && monthly_count >= max
+    {
+        return Err(ComplianceViolation::MonthlyLimitExceeded { max });
+    }
+    Ok(())
+}
+
+// ─────────────────────────────────────────────────────────────
 // Implementations per account type
 // ─────────────────────────────────────────────────────────────
 
 pub struct CurrentPolicy;
 impl CompliancePolicy for CurrentPolicy {}
-// No override — default trait behavior
+// Default behavior: overdraft allowed, no kind restrictions
 
 pub struct JointPolicy;
 impl CompliancePolicy for JointPolicy {}
@@ -156,42 +175,10 @@ impl CompliancePolicy for BusinessPolicy {}
 pub struct StudentPolicy;
 impl CompliancePolicy for StudentPolicy {}
 
-pub struct LoanPolicy;
-impl CompliancePolicy for LoanPolicy {
-    fn validate_full(
-        &self,
-        ctx: &AccountContext,
-        current_balance: Decimal,
-        signed: Decimal,
-        monthly_count: u32,
-    ) -> Result<(), ComplianceViolation> {
-        // A loan account can never go negative — no overdraft allowed
-        if current_balance + signed < Decimal::ZERO {
-            return Err(ComplianceViolation::NotAllowed {
-                reason: "saving account cannot go negative",
-            });
-        }
-
-        // Delegate remaining checks to shared logic
-        // Note: overdraft check is skipped here since savings accounts
-        // are already blocked from going negative above
-        let resulting = current_balance + signed;
-
-        if ctx.overdraft_limit == Decimal::ZERO && resulting < ctx.min_balance {
-            return Err(ComplianceViolation::MinBalanceViolated {
-                minimum: ctx.min_balance,
-                resulting,
-            });
-        }
-        if let Some(max) = ctx.max_monthly_transactions
-            && monthly_count >= max
-        {
-            return Err(ComplianceViolation::MonthlyLimitExceeded { max });
-        }
-        Ok(())
-    }
-}
-
+// ── Saving ─────────────────────────────────────────
+// No overdraft. Only Transfer allowed for debit movements.
+// Transaction Debit and Fee Debit forbidden — Transfer only.
+// Credits unrestricted (Transaction, Transfer, Refund, Fee, Interest).
 pub struct SavingPolicy;
 impl CompliancePolicy for SavingPolicy {
     fn validate_full(
@@ -200,34 +187,22 @@ impl CompliancePolicy for SavingPolicy {
         current_balance: Decimal,
         signed: Decimal,
         monthly_count: u32,
+        kind: &RegularKind,
+        flow: OperationFlow,
     ) -> Result<(), ComplianceViolation> {
-        // A savings account can never go negative — no overdraft allowed
-        if current_balance + signed < Decimal::ZERO {
-            return Err(ComplianceViolation::NotAllowed {
-                reason: "saving account cannot go negative",
-            });
+        // Only Transfer is allowed as a debit movement on Saving
+        if flow == OperationFlow::Debit && *kind != RegularKind::Transfer {
+            return Err(ComplianceViolation::KindNotAllowed(ctx.account_type));
         }
-
-        // Delegate remaining checks to shared logic
-        // Note: overdraft check is skipped here since savings accounts
-        // are already blocked from going negative above
-        let resulting = current_balance + signed;
-
-        if ctx.overdraft_limit == Decimal::ZERO && resulting < ctx.min_balance {
-            return Err(ComplianceViolation::MinBalanceViolated {
-                minimum: ctx.min_balance,
-                resulting,
-            });
-        }
-        if let Some(max) = ctx.max_monthly_transactions
-            && monthly_count >= max
-        {
-            return Err(ComplianceViolation::MonthlyLimitExceeded { max });
-        }
-        Ok(())
+        validate_no_overdraft(ctx, current_balance, signed, monthly_count)
     }
 }
 
+// ── Deposit ─────────────────────────────────────────────
+// Credits always allowed. Only Transfer allowed for debit movements.
+// Transaction Debit forbidden even after maturity — Transfer only.
+// All debits blocked before maturity date regardless of kind.
+// No overdraft — no negative balance.
 pub struct DepositPolicy;
 impl CompliancePolicy for DepositPolicy {
     fn validate_full(
@@ -236,40 +211,132 @@ impl CompliancePolicy for DepositPolicy {
         current_balance: Decimal,
         signed: Decimal,
         monthly_count: u32,
+        kind: &RegularKind,
+        flow: OperationFlow,
     ) -> Result<(), ComplianceViolation> {
-        // Withdrawal (negative signed amount) blocked before maturity date
-        if signed < Decimal::ZERO
-            && let Some(locked_until) = ctx.deposit_locked_until
-            && Local::now().date_naive() < locked_until
-        {
-            return Err(ComplianceViolation::NotAllowed {
-                reason: "withdrawal locked until deposit maturity date",
-            });
+        if flow == OperationFlow::Debit {
+            // All debits blocked before maturity date
+            if let Some(locked_until) = ctx.deposit_locked_until {
+                if Local::now().date_naive() < locked_until {
+                    return Err(ComplianceViolation::NoWithdrawalAllowed);
+                }
+            }
+            // Only Transfer allowed as debit movement (after maturity)
+            if *kind != RegularKind::Transfer {
+                return Err(ComplianceViolation::KindNotAllowed(ctx.account_type));
+            }
         }
-
-        // Delegate to common checks
-        let resulting = current_balance + signed;
-        if resulting < ctx.overdraft_limit.neg() {
-            return Err(ComplianceViolation::OverdraftExceeded {
-                limit: ctx.overdraft_limit,
-                resulting,
-            });
-        }
-        if ctx.overdraft_limit == Decimal::ZERO && resulting < ctx.min_balance {
-            return Err(ComplianceViolation::MinBalanceViolated {
-                minimum: ctx.min_balance,
-                resulting,
-            });
-        }
-        if let Some(max) = ctx.max_monthly_transactions
-            && monthly_count >= max
-        {
-            return Err(ComplianceViolation::MonthlyLimitExceeded { max });
-        }
-        Ok(())
+        validate_no_overdraft(ctx, current_balance, signed, monthly_count)
     }
 }
 
+// ── Income ────────────────────────────────────────────────────
+// Pure accumulation account — Transfer only in both directions.
+// Transaction, Fee, Refund, Interest all forbidden.
+// No overdraft — no negative balance.
+pub struct IncomePolicy;
+impl CompliancePolicy for IncomePolicy {
+    fn validate_full(
+        &self,
+        ctx: &AccountContext,
+        current_balance: Decimal,
+        signed: Decimal,
+        monthly_count: u32,
+        kind: &RegularKind,
+        _flow: OperationFlow,
+    ) -> Result<(), ComplianceViolation> {
+        // Only Transfer allowed — all other kinds forbidden
+        if *kind != RegularKind::Transfer {
+            return Err(ComplianceViolation::KindNotAllowed(ctx.account_type));
+        }
+        validate_no_overdraft(ctx, current_balance, signed, monthly_count)
+    }
+}
+
+// ── Loan ──────────────────────────────────────────────────────
+// Only Transfer (both), Interest Credit, Fee (both) allowed.
+// Transaction and Refund Credit forbidden — Transfer only.
+// Init with non-zero amount forbidden.
+// No overdraft — no negative balance.
+
+pub struct LoanPolicy;
+impl CompliancePolicy for LoanPolicy {
+    fn validate(
+        &self,
+        ctx: &AccountContext,
+        current_balance: Decimal,
+        action: ComplianceAction,
+        monthly_count: u32,
+    ) -> Result<(), ComplianceViolation> {
+        // Init with non-zero amount — forbidden on Loan accounts
+        if let ComplianceAction::Create(OperationKind::System(SystemKind::Init), flow, amount) =
+            &action
+        {
+            if *flow != OperationFlow::None && *amount != Decimal::ZERO {
+                return Err(ComplianceViolation::InitNonZeroOnLoan);
+            }
+        }
+        // Delegate to default dispatch — validate_full handles kind/flow guards
+        match action {
+            ComplianceAction::Void => Ok(()),
+            ComplianceAction::Create(kind, flow, amount) => match kind {
+                OperationKind::System(SystemKind::Checkpoint)
+                | OperationKind::System(SystemKind::Void) => Ok(()),
+                OperationKind::System(SystemKind::Init)
+                | OperationKind::System(SystemKind::Adjust) => {
+                    let signed = amount * flow.to_sign();
+                    self.validate_overdraft(ctx, current_balance, signed)
+                }
+                OperationKind::Regular(regular_kind) => {
+                    if amount <= Decimal::ZERO {
+                        return Err(ComplianceViolation::InvalidAmount(amount));
+                    }
+                    if regular_kind == RegularKind::Interest && flow == OperationFlow::Debit {
+                        return Err(ComplianceViolation::KindNotAllowed(ctx.account_type));
+                    }
+                    if regular_kind == RegularKind::Refund && flow == OperationFlow::Debit {
+                        return Err(ComplianceViolation::KindNotAllowed(ctx.account_type));
+                    }
+                    if regular_kind == RegularKind::Interest
+                        && flow == OperationFlow::Credit
+                        && !ctx.allows_interest
+                    {
+                        return Err(ComplianceViolation::NotAllowedInterestOperation);
+                    }
+                    let signed = amount * flow.to_sign();
+                    self.validate_full(
+                        ctx,
+                        current_balance,
+                        signed,
+                        monthly_count,
+                        &regular_kind,
+                        flow,
+                    )
+                }
+            },
+        }
+    }
+
+    fn validate_full(
+        &self,
+        ctx: &AccountContext,
+        current_balance: Decimal,
+        signed: Decimal,
+        monthly_count: u32,
+        kind: &RegularKind,
+        flow: OperationFlow,
+    ) -> Result<(), ComplianceViolation> {
+        // Only Transfer, Interest Credit, and Fee allowed
+        // Transaction and Refund Credit forbidden (Transfer only for cash movements)
+        match (kind, flow) {
+            (RegularKind::Transfer, _) => {}
+            (RegularKind::Interest, OperationFlow::Credit) => {}
+            (RegularKind::Fee, _) => {}
+            _ => return Err(ComplianceViolation::KindNotAllowed(ctx.account_type)),
+        }
+        validate_no_overdraft(ctx, current_balance, signed, monthly_count)
+    }
+}
 // ─────────────────────────────────────────────────────────────
 // Dispatch
 // ─────────────────────────────────────────────────────────────
@@ -284,6 +351,7 @@ pub fn policy_for(account_type: AccountType) -> Box<dyn CompliancePolicy> {
         AccountType::Deposit => Box::new(DepositPolicy),
         AccountType::Business => Box::new(BusinessPolicy),
         AccountType::Student => Box::new(StudentPolicy),
+        AccountType::Income => Box::new(IncomePolicy),
     }
 }
 
@@ -339,15 +407,25 @@ impl Account {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::logic::{account::policy::context::AccountContext, operation::RegularKind};
     use chrono::{Duration, Local};
     use rust_decimal_macros::dec;
+
+    // ── Context helpers ───────────────────────────────────────
 
     fn ctx_current() -> AccountContext {
         AccountContext::from_type(AccountType::Current)
     }
     fn ctx_saving() -> AccountContext {
         AccountContext::from_type(AccountType::Saving)
+    }
+    fn ctx_loan() -> AccountContext {
+        AccountContext::from_type(AccountType::Loan)
+    }
+    fn ctx_loan_no_interest() -> AccountContext {
+        let mut ctx = AccountContext::from_type(AccountType::Loan);
+        ctx.update_context(None, None, None, None, Some(false), None)
+            .unwrap();
+        ctx
     }
     fn ctx_deposit_locked() -> AccountContext {
         let until = Local::now().date_naive() + Duration::days(30);
@@ -363,28 +441,152 @@ mod tests {
             .unwrap();
         ctx
     }
+    fn ctx_deposit_no_lock() -> AccountContext {
+        AccountContext::from_type(AccountType::Deposit)
+    }
+    fn ctx_income() -> AccountContext {
+        AccountContext::from_type(AccountType::Income)
+    }
 
-    // ── Regular / Current ────────────────────────────────────
+    // ── Action helpers ────────────────────────────────────────
+
+    fn regular(kind: RegularKind, flow: OperationFlow, amount: Decimal) -> ComplianceAction {
+        ComplianceAction::Create(OperationKind::Regular(kind), flow, amount)
+    }
+    fn system(kind: SystemKind, flow: OperationFlow, amount: Decimal) -> ComplianceAction {
+        ComplianceAction::Create(OperationKind::System(kind), flow, amount)
+    }
+
+    // ── Common guards (apply to all types) ───────────────────
 
     #[test]
-    fn current_within_overdraft() {
-        let action = ComplianceAction::Create(
-            &OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Debit,
-            dec!(550),
+    fn void_always_ok() {
+        for policy in [
+            &CurrentPolicy as &dyn CompliancePolicy,
+            &JointPolicy,
+            &BusinessPolicy,
+            &StudentPolicy,
+            &SavingPolicy,
+            &DepositPolicy,
+            &LoanPolicy,
+            &IncomePolicy,
+        ] {
+            assert!(
+                policy
+                    .validate(&ctx_current(), dec!(-900), ComplianceAction::Void, 0)
+                    .is_ok()
+            );
+        }
+    }
+
+    #[test]
+    fn checkpoint_always_ok() {
+        let action = || system(SystemKind::Checkpoint, OperationFlow::None, dec!(0));
+        assert!(
+            CurrentPolicy
+                .validate(&ctx_current(), dec!(-900), action(), 0)
+                .is_ok()
         );
-        let res = CurrentPolicy.validate(&ctx_current(), dec!(100), action, 0);
+        assert!(
+            LoanPolicy
+                .validate(&ctx_loan(), dec!(0), action(), 0)
+                .is_ok()
+        );
+        assert!(
+            SavingPolicy
+                .validate(&ctx_saving(), dec!(0), action(), 0)
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn invalid_amount_refused_all_types() {
+        let action = || regular(RegularKind::Transaction, OperationFlow::Credit, dec!(0));
+        assert!(matches!(
+            CurrentPolicy.validate(&ctx_current(), dec!(100), action(), 0),
+            Err(ComplianceViolation::InvalidAmount(_))
+        ));
+        assert!(matches!(
+            SavingPolicy.validate(&ctx_saving(), dec!(100), action(), 0),
+            Err(ComplianceViolation::InvalidAmount(_))
+        ));
+    }
+
+    #[test]
+    fn interest_debit_refused_all_types() {
+        let action = || regular(RegularKind::Interest, OperationFlow::Debit, dec!(10));
+        assert!(matches!(
+            CurrentPolicy.validate(&ctx_current(), dec!(100), action(), 0),
+            Err(ComplianceViolation::KindNotAllowed(_))
+        ));
+        assert!(matches!(
+            SavingPolicy.validate(&ctx_saving(), dec!(100), action(), 0),
+            Err(ComplianceViolation::KindNotAllowed(_))
+        ));
+        assert!(matches!(
+            LoanPolicy.validate(&ctx_loan(), dec!(100), action(), 0),
+            Err(ComplianceViolation::KindNotAllowed(_))
+        ));
+    }
+
+    #[test]
+    fn refund_debit_refused_all_types() {
+        let action = || regular(RegularKind::Refund, OperationFlow::Debit, dec!(10));
+        assert!(matches!(
+            CurrentPolicy.validate(&ctx_current(), dec!(100), action(), 0),
+            Err(ComplianceViolation::KindNotAllowed(_))
+        ));
+        assert!(matches!(
+            LoanPolicy.validate(&ctx_loan(), dec!(100), action(), 0),
+            Err(ComplianceViolation::KindNotAllowed(_))
+        ));
+    }
+
+    #[test]
+    fn interest_credit_refused_without_flag() {
+        let action = || regular(RegularKind::Interest, OperationFlow::Credit, dec!(10));
+        assert!(matches!(
+            CurrentPolicy.validate(&ctx_current(), dec!(100), action(), 0),
+            Err(ComplianceViolation::NotAllowedInterestOperation)
+        ));
+        assert!(matches!(
+            LoanPolicy.validate(&ctx_loan_no_interest(), dec!(100), action(), 0),
+            Err(ComplianceViolation::NotAllowedInterestOperation)
+        ));
+    }
+
+    // ── Current / Joint / Business / Student ─────────────────
+
+    #[test]
+    fn current_transaction_credit_ok() {
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(0),
+            regular(RegularKind::Transaction, OperationFlow::Credit, dec!(100)),
+            0,
+        );
         assert!(res.is_ok());
     }
 
     #[test]
-    fn current_overdraft_exceeded() {
-        let action = ComplianceAction::Create(
-            &OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Debit,
-            dec!(700),
+    fn current_transaction_debit_within_overdraft_ok() {
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(100),
+            regular(RegularKind::Transaction, OperationFlow::Debit, dec!(550)),
+            0,
         );
-        let res = CurrentPolicy.validate(&ctx_current(), dec!(100), action, 0);
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn current_transaction_debit_exceeds_overdraft() {
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(100),
+            regular(RegularKind::Transaction, OperationFlow::Debit, dec!(700)),
+            0,
+        );
         assert!(matches!(
             res,
             Err(ComplianceViolation::OverdraftExceeded { .. })
@@ -392,41 +594,95 @@ mod tests {
     }
 
     #[test]
-    fn current_custom_overdraft() {
-        let mut ctx = AccountContext::from_type(AccountType::Current);
+    fn current_custom_overdraft_ok() {
+        let mut ctx = ctx_current();
         ctx.update_context(Some(dec!(2_000)), None, None, None, None, None)
             .unwrap();
-
-        let action = ComplianceAction::Create(
-            &OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Debit,
-            dec!(1_500),
+        let res = CurrentPolicy.validate(
+            &ctx,
+            dec!(100),
+            regular(RegularKind::Transaction, OperationFlow::Debit, dec!(1_500)),
+            0,
         );
-        let res = CurrentPolicy.validate(&ctx, dec!(100), action, 0);
         assert!(res.is_ok());
     }
 
-    // ── Init ─────────────────────────────────────────────────
+    #[test]
+    fn current_fee_credit_ok() {
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(0),
+            regular(RegularKind::Fee, OperationFlow::Credit, dec!(10)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
 
     #[test]
-    fn init_within_overdraft() {
-        let action = ComplianceAction::Create(
-            &OperationKind::System(SystemKind::Init),
-            OperationFlow::Debit,
-            dec!(300),
+    fn current_fee_debit_ok() {
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(100),
+            regular(RegularKind::Fee, OperationFlow::Debit, dec!(10)),
+            0,
         );
-        let res = CurrentPolicy.validate(&ctx_current(), dec!(0), action, 0);
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn current_refund_credit_ok() {
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(0),
+            regular(RegularKind::Refund, OperationFlow::Credit, dec!(50)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn current_transfer_credit_ok() {
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(0),
+            regular(RegularKind::Transfer, OperationFlow::Credit, dec!(100)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn current_transfer_debit_within_overdraft_ok() {
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(100),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(550)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    // ── System / Init / Adjust ────────────────────────────────
+
+    #[test]
+    fn init_within_overdraft_ok() {
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(0),
+            system(SystemKind::Init, OperationFlow::Debit, dec!(300)),
+            0,
+        );
         assert!(res.is_ok());
     }
 
     #[test]
     fn init_exceeds_overdraft() {
-        let action = ComplianceAction::Create(
-            &OperationKind::System(SystemKind::Init),
-            OperationFlow::Debit,
-            dec!(700),
+        let res = CurrentPolicy.validate(
+            &ctx_current(),
+            dec!(0),
+            system(SystemKind::Init, OperationFlow::Debit, dec!(700)),
+            0,
         );
-        let res = CurrentPolicy.validate(&ctx_current(), dec!(0), action, 0);
         assert!(matches!(
             res,
             Err(ComplianceViolation::OverdraftExceeded { .. })
@@ -435,95 +691,518 @@ mod tests {
 
     #[test]
     fn init_ignores_monthly_quota() {
-        let action = ComplianceAction::Create(
-            &OperationKind::System(SystemKind::Init),
-            OperationFlow::Credit,
-            dec!(100),
-        );
-        let res = SavingPolicy.validate(&ctx_saving(), dec!(0), action, 99);
-        assert!(res.is_ok());
-    }
-
-    // ── Void ─────────────────────────────────────────────────
-
-    #[test]
-    fn void_always_passes() {
-        let res = CurrentPolicy.validate(&ctx_current(), dec!(-900), ComplianceAction::Void, 0);
-        assert!(res.is_ok());
-    }
-
-    // ── Checkpoint ───────────────────────────────────────────
-
-    #[test]
-    fn checkpoint_always_passes() {
-        let action = ComplianceAction::Create(
-            &OperationKind::System(SystemKind::Checkpoint),
-            OperationFlow::None,
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
             dec!(0),
+            system(SystemKind::Init, OperationFlow::Credit, dec!(100)),
+            99,
         );
-        let res = CurrentPolicy.validate(&ctx_current(), dec!(-900), action, 0);
         assert!(res.is_ok());
     }
 
-    // ── Saving ───────────────────────────────────────────────
+    #[test]
+    fn adjust_saving_no_negative() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(50),
+            system(SystemKind::Adjust, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(matches!(
+            res,
+            Err(ComplianceViolation::OverdraftExceeded { .. })
+        ));
+    }
+
+    // ── Saving ────────────────────────────────────────────────
+
+    // Transaction Debit maintenant refusé (transfer only)
+    #[test]
+    fn saving_transaction_debit_refused() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(500),
+            regular(RegularKind::Transaction, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    // Fee Debit maintenant refusé (transfer only)
+    #[test]
+    fn saving_fee_debit_refused() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(500),
+            regular(RegularKind::Fee, OperationFlow::Debit, dec!(10)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    // Transfer Debit maintenant autorisé (no negative)
+    #[test]
+    fn saving_transfer_debit_ok() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(1_000),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
 
     #[test]
-    fn saving_cannot_go_negative() {
-        let action = ComplianceAction::Create(
-            &OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Debit,
-            dec!(100),
+    fn saving_transfer_debit_no_negative() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(50),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
+            0,
         );
-        let res = SavingPolicy.validate(&ctx_saving(), dec!(50), action, 0);
-        assert!(matches!(res, Err(ComplianceViolation::NotAllowed { .. })));
+        assert!(matches!(
+            res,
+            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
+        ));
+    }
+
+    #[test]
+    fn saving_transaction_credit_ok() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(0),
+            regular(RegularKind::Transaction, OperationFlow::Credit, dec!(100)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn saving_transaction_debit_no_negative() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(50),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(matches!(
+            res,
+            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
+        ));
+    }
+
+    #[test]
+    fn saving_transfer_credit_ok() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(0),
+            regular(RegularKind::Transfer, OperationFlow::Credit, dec!(100)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn saving_interest_credit_ok() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(0),
+            regular(RegularKind::Interest, OperationFlow::Credit, dec!(10)),
+            0,
+        );
+        assert!(res.is_ok());
     }
 
     #[test]
     fn saving_monthly_limit_reached() {
-        let action = ComplianceAction::Create(
-            &OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Debit,
-            dec!(10),
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(500),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(10)),
+            6,
         );
-        let res = SavingPolicy.validate(&ctx_saving(), dec!(500), action, 6);
         assert!(matches!(
             res,
             Err(ComplianceViolation::MonthlyLimitExceeded { max: 6 })
         ));
     }
 
-    // ── Deposit ──────────────────────────────────────────────
-
     #[test]
-    fn deposit_withdrawal_blocked_before_maturity() {
-        let action = ComplianceAction::Create(
-            &OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Debit,
-            dec!(100),
+    fn saving_refund_credit_ok() {
+        let res = SavingPolicy.validate(
+            &ctx_saving(),
+            dec!(0),
+            regular(RegularKind::Refund, OperationFlow::Credit, dec!(50)),
+            0,
         );
-        let res = DepositPolicy.validate(&ctx_deposit_locked(), dec!(1_000), action, 0);
-        assert!(matches!(res, Err(ComplianceViolation::NotAllowed { .. })));
+        assert!(res.is_ok());
     }
 
+    // ── Deposit ───────────────────────────────────────────────
+
+    // Transaction Debit refusé même après maturité (transfer only)
     #[test]
-    fn deposit_withdrawal_allowed_after_maturity() {
-        let action = ComplianceAction::Create(
-            &OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Debit,
-            dec!(100),
+    fn deposit_transaction_debit_refused_after_maturity() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_unlocked(),
+            dec!(1_000),
+            regular(RegularKind::Transaction, OperationFlow::Debit, dec!(100)),
+            0,
         );
-        let res = DepositPolicy.validate(&ctx_deposit_unlocked(), dec!(1_000), action, 0);
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    // Transfer Debit autorisé après maturité
+    #[test]
+    fn deposit_transfer_debit_ok_after_maturity() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_unlocked(),
+            dec!(1_000),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
+            0,
+        );
         assert!(res.is_ok());
     }
 
     #[test]
-    fn deposit_credit_always_allowed() {
-        let action = ComplianceAction::Create(
-            &OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Credit,
-            dec!(500),
+    fn deposit_transaction_credit_always_ok() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_locked(),
+            dec!(0),
+            regular(RegularKind::Transaction, OperationFlow::Credit, dec!(500)),
+            0,
         );
-        let res = DepositPolicy.validate(&ctx_deposit_locked(), dec!(1_000), action, 0);
         assert!(res.is_ok());
     }
+
+    #[test]
+    fn deposit_transfer_credit_always_ok() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_locked(),
+            dec!(0),
+            regular(RegularKind::Transfer, OperationFlow::Credit, dec!(500)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn deposit_fee_credit_always_ok() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_locked(),
+            dec!(1_000),
+            regular(RegularKind::Fee, OperationFlow::Credit, dec!(10)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn deposit_transaction_debit_blocked_before_maturity() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_locked(),
+            dec!(1_000),
+            regular(RegularKind::Transaction, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::NoWithdrawalAllowed)));
+    }
+
+    #[test]
+    fn deposit_transfer_debit_blocked_before_maturity() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_locked(),
+            dec!(1_000),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::NoWithdrawalAllowed)));
+    }
+
+    #[test]
+    fn deposit_fee_debit_blocked_before_maturity() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_locked(),
+            dec!(1_000),
+            regular(RegularKind::Fee, OperationFlow::Debit, dec!(10)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::NoWithdrawalAllowed)));
+    }
+
+    #[test]
+    fn deposit_debit_no_negative_after_maturity() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_unlocked(),
+            dec!(50),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(matches!(
+            res,
+            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
+        ));
+    }
+
+    #[test]
+    fn deposit_no_lock_date_debit_ok() {
+        let res = DepositPolicy.validate(
+            &ctx_deposit_no_lock(),
+            dec!(1_000),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    // ── Loan ──────────────────────────────────────────────────
+
+    #[test]
+    fn loan_init_zero_ok() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(0),
+            system(SystemKind::Init, OperationFlow::None, dec!(0)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn loan_init_nonzero_refused() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(0),
+            system(SystemKind::Init, OperationFlow::Credit, dec!(100)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::InitNonZeroOnLoan)));
+    }
+
+    #[test]
+    fn loan_transaction_credit_refused() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(1_000),
+            regular(RegularKind::Transaction, OperationFlow::Credit, dec!(100)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    #[test]
+    fn loan_transaction_debit_refused() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(1_000),
+            regular(RegularKind::Transaction, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    #[test]
+    fn loan_refund_credit_refused() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(1_000),
+            regular(RegularKind::Refund, OperationFlow::Credit, dec!(100)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    #[test]
+    fn loan_transfer_credit_ok() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(0),
+            regular(RegularKind::Transfer, OperationFlow::Credit, dec!(500)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn loan_transfer_debit_ok() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(1_000),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(500)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn loan_transfer_debit_no_negative() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(100),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(200)),
+            0,
+        );
+        assert!(matches!(
+            res,
+            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
+        ));
+    }
+
+    #[test]
+    fn loan_interest_credit_ok() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(1_000),
+            regular(RegularKind::Interest, OperationFlow::Credit, dec!(20)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn loan_interest_credit_refused_no_flag() {
+        let res = LoanPolicy.validate(
+            &ctx_loan_no_interest(),
+            dec!(1_000),
+            regular(RegularKind::Interest, OperationFlow::Credit, dec!(20)),
+            0,
+        );
+        assert!(matches!(
+            res,
+            Err(ComplianceViolation::NotAllowedInterestOperation)
+        ));
+    }
+
+    #[test]
+    fn loan_fee_credit_ok() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(1_000),
+            regular(RegularKind::Fee, OperationFlow::Credit, dec!(10)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn loan_fee_debit_ok() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(1_000),
+            regular(RegularKind::Fee, OperationFlow::Debit, dec!(10)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn loan_fee_debit_no_negative() {
+        let res = LoanPolicy.validate(
+            &ctx_loan(),
+            dec!(5),
+            regular(RegularKind::Fee, OperationFlow::Debit, dec!(10)),
+            0,
+        );
+        assert!(matches!(
+            res,
+            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
+        ));
+    }
+
+    #[test]
+    fn loan_void_ok() {
+        let res = LoanPolicy.validate(&ctx_loan(), dec!(0), ComplianceAction::Void, 0);
+        assert!(res.is_ok());
+    }
+
+    // ── Income ──────────────────────────────────────────────────
+
+    #[test]
+    fn income_transfer_credit_ok() {
+        let res = IncomePolicy.validate(
+            &ctx_income(),
+            dec!(0),
+            regular(RegularKind::Transfer, OperationFlow::Credit, dec!(100)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn income_transfer_debit_ok() {
+        let res = IncomePolicy.validate(
+            &ctx_income(),
+            dec!(1_000),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn income_transfer_debit_no_negative() {
+        let res = IncomePolicy.validate(
+            &ctx_income(),
+            dec!(50),
+            regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(matches!(
+            res,
+            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
+        ));
+    }
+
+    #[test]
+    fn income_transaction_credit_refused() {
+        let res = IncomePolicy.validate(
+            &ctx_income(),
+            dec!(0),
+            regular(RegularKind::Transaction, OperationFlow::Credit, dec!(100)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    #[test]
+    fn income_transaction_debit_refused() {
+        let res = IncomePolicy.validate(
+            &ctx_income(),
+            dec!(1_000),
+            regular(RegularKind::Transaction, OperationFlow::Debit, dec!(100)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    #[test]
+    fn income_fee_refused() {
+        let res = IncomePolicy.validate(
+            &ctx_income(),
+            dec!(1_000),
+            regular(RegularKind::Fee, OperationFlow::Debit, dec!(10)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    #[test]
+    fn income_refund_refused() {
+        let res = IncomePolicy.validate(
+            &ctx_income(),
+            dec!(1_000),
+            regular(RegularKind::Refund, OperationFlow::Credit, dec!(50)),
+            0,
+        );
+        assert!(matches!(res, Err(ComplianceViolation::KindNotAllowed(_))));
+    }
+
+    #[test]
+    fn income_void_ok() {
+        let res = IncomePolicy.validate(&ctx_income(), dec!(0), ComplianceAction::Void, 0);
+        assert!(res.is_ok());
+    }
+
+    // Income in void_always_ok loop — à ajouter
+    // &IncomePolicy dans le tableau du test void_always_ok
 }

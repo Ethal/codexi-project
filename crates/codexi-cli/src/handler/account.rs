@@ -4,8 +4,8 @@ use anyhow::Result;
 
 use codexi::{
     core::{
-        DataPaths, parse_date, parse_id, parse_optional_date, parse_optional_decimal,
-        parse_optional_u32, parse_text,
+        DataPaths, parse_date, parse_optional_date, parse_optional_decimal, parse_optional_u32,
+        parse_text,
     },
     file_management::FileManagement,
     logic::{
@@ -70,7 +70,7 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
         }
 
         AccountCommand::Rename { id, name } => {
-            let id_n = parse_id(&id)?;
+            let id_n = resolve_by_id_or_name::<Account, CodexiError>(&id, &codexi.accounts)?;
             let account = codexi.get_account_by_id_mut(&id_n)?;
             account.name = parse_text(name);
             FileManagement::save_current_state(&codexi, paths)?;

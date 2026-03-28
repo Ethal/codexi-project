@@ -142,6 +142,9 @@ fn migrate_v1_to_v2(old: CodexiV1) -> CodexiV2 {
                 OperationKindV1::Regular(RegularKind::Refund) => {
                     OperationKindV2::Regular(RegularKind::Refund)
                 }
+                OperationKindV1::Regular(RegularKind::Interest) => {
+                    OperationKindV2::Regular(RegularKind::Interest)
+                }
             };
 
             OperationV2 {

@@ -10,14 +10,14 @@ use crate::logic::{
 };
 
 #[derive(Debug)]
-pub enum TemporalAction<'a> {
-    Create(&'a OperationKind), // Create a new operation (Regular, Adjust, Checkpoint...)
-    Void(Nulid),               // Void(op_id)
+pub enum TemporalAction {
+    Create(OperationKind), // Create a new operation (Regular, Adjust, Checkpoint...)
+    Void(Nulid),           // Void(op_id)
 }
 
 impl Account {
     /// Check that operations list is not empty — required before most operations.
-    fn operations_empty(&self, kind: &OperationKind) -> Result<(), TemporalViolation> {
+    fn operations_empty(&self, kind: OperationKind) -> Result<(), TemporalViolation> {
         if self.operations.is_empty() {
             Err(TemporalViolation::HaveNoOperation(format!(
                 "{}  count op: {} ",
@@ -175,7 +175,7 @@ impl Account {
             }
 
             TemporalAction::Void(target_id) => {
-                self.operations_empty(&OperationKind::System(SystemKind::Void))?;
+                self.operations_empty(OperationKind::System(SystemKind::Void))?;
 
                 // Void must be performed today or in the future — never backdated
                 if date < today {
@@ -368,7 +368,7 @@ mod tests {
         let tomorrow = Local::now().date_naive() + Duration::days(1);
 
         let res = account.temporal_policy(
-            TemporalAction::Create(&OperationKind::System(SystemKind::Init)),
+            TemporalAction::Create(OperationKind::System(SystemKind::Init)),
             tomorrow,
         );
 

@@ -75,9 +75,9 @@ impl Account {
             }
 
             // TEST 1 : policy on all operation except the first
-            shadow_account.temporal_policy(TemporalAction::Create(&op.kind), op.date)?;
+            shadow_account.temporal_policy(TemporalAction::Create(op.kind), op.date)?;
             shadow_account.compliance_policy(
-                ComplianceAction::Create(&op.kind, op.flow, op.amount),
+                ComplianceAction::Create(op.kind, op.flow, op.amount),
                 op.date,
             )?;
 

@@ -17,6 +17,7 @@ pub enum AccountType {
     Business,
     Student,
     Loan,
+    Income,
 }
 
 /// Methods for AccountType
@@ -31,6 +32,7 @@ impl AccountType {
             AccountType::Business => "Business",
             AccountType::Student => "Student",
             AccountType::Loan => "Loan",
+            AccountType::Income => "Income",
         }
     }
     /// Try to create an AccountType from a string
@@ -44,15 +46,23 @@ impl AccountType {
             "business" | "bus" => Ok(AccountType::Business),
             "student" | "stu" => Ok(AccountType::Student),
             "loan" | "loa" => Ok(AccountType::Loan),
+            "income" | "inc" => Ok(AccountType::Income),
             _ => Err(AccountTypeError::Unknown(s.to_string())),
         }
     }
-    pub fn is_interest_bearing(&self) -> bool {
-        matches!(self, AccountType::Saving | AccountType::Deposit)
-    }
 
-    pub fn is_shared(&self) -> bool {
-        matches!(self, AccountType::Joint)
+    /// Returns true if this account type allows interest.
+    /// Used as default setting in AccountContext::allows_interest.
+    pub fn allows_interest(&self) -> bool {
+        matches!(
+            self,
+            AccountType::Saving | AccountType::Deposit | AccountType::Loan | AccountType::Income
+        )
+    }
+    /// Returns true if this account type allows joint signers,
+    /// Used as default setting in AccountContext::allows_joint_signers.
+    pub fn allows_joint_signers(&self) -> bool {
+        matches!(self, AccountType::Joint | AccountType::Business)
     }
 }
 
@@ -81,6 +91,6 @@ impl FromStr for AccountType {
 /// Implement Display for AccountType
 impl fmt::Display for AccountType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:<7}", self.as_str())
+        write!(f, "{}", self.as_str())
     }
 }
