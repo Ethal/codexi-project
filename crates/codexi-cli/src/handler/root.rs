@@ -199,8 +199,8 @@ fn normalize_date_amount_desc(
     amount: &str,
     description: Vec<String>,
 ) -> Result<(NaiveDate, Decimal, String), CoreError> {
-    let date_n = parse_date(&date)?;
-    let amount_d = parse_decimal(&amount, "amount")?;
+    let date_n = parse_date(date)?;
+    let amount_d = parse_decimal(amount, "amount")?;
     let desc = parse_text(description.clone());
     Ok((date_n, amount_d, desc))
 }

@@ -216,10 +216,10 @@ impl CompliancePolicy for DepositPolicy {
     ) -> Result<(), ComplianceViolation> {
         if flow == OperationFlow::Debit {
             // All debits blocked before maturity date
-            if let Some(locked_until) = ctx.deposit_locked_until {
-                if Local::now().date_naive() < locked_until {
-                    return Err(ComplianceViolation::NoWithdrawalAllowed);
-                }
+            if let Some(locked_until) = ctx.deposit_locked_until
+                && Local::now().date_naive() < locked_until
+            {
+                return Err(ComplianceViolation::NoWithdrawalAllowed);
             }
             // Only Transfer allowed as debit movement (after maturity)
             if *kind != RegularKind::Transfer {
@@ -271,10 +271,10 @@ impl CompliancePolicy for LoanPolicy {
         // Init with non-zero amount — forbidden on Loan accounts
         if let ComplianceAction::Create(OperationKind::System(SystemKind::Init), flow, amount) =
             &action
+            && *flow != OperationFlow::None
+            && *amount != Decimal::ZERO
         {
-            if *flow != OperationFlow::None && *amount != Decimal::ZERO {
-                return Err(ComplianceViolation::InitNonZeroOnLoan);
-            }
+            return Err(ComplianceViolation::InitNonZeroOnLoan);
         }
         // Delegate to default dispatch — validate_full handles kind/flow guards
         match action {
