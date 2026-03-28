@@ -53,6 +53,13 @@ impl BankList {
             .ok_or_else(|| BankError::BankNotFound(format_id(*id)))
     }
 
+    pub fn bank_name_by_id(&self, id: &Nulid) -> Option<String> {
+        self.banks
+            .iter()
+            .find(|b| &b.id == id)
+            .map(|b| b.name.clone())
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Bank> {
         self.banks.iter()
     }
