@@ -7,5 +7,6 @@ pub mod category;
 pub mod codexi;
 pub mod counts;
 pub mod currency;
+pub mod loan;
 pub mod operation;
 pub mod utils;
