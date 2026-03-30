@@ -27,6 +27,7 @@ pub struct AccountItem {
     pub bank: String,
     pub currency: String,
     pub context: AccountContextItem,
+    pub balance: BalanceItem,
 }
 
 #[derive(Debug)]

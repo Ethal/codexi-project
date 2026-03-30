@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file.
 ---
 
+## [Unreleased] — 
+
+### Added
+- **`balance`** field to `AccountItem` to centralize informations of an account to a single point. `AccountItem` is now used in the view, from the command `report balance-all`, to show the balance, account type and currency. 
+
+### Changed
+- **CLI Command** - `report balance-all` view updated to show the account type and currency.
+
+### Removed
+- **`AccountBalance`** and **`CodexiBalance`** from Balance. 
+
 ## [0.3.0] — 2026-03-28
 
 ### Added

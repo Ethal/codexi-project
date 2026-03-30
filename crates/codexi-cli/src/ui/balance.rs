@@ -2,12 +2,9 @@
 //
 use thousands::Separable;
 
-use codexi::{
-    core::format_id_short,
-    logic::balance::{BalanceItem, CodexiBalanceEntry},
-};
+use codexi::{core::format_id_short, logic::balance::BalanceItem, logic::codexi::AccountEntry};
 
-use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, LABEL_STYLE, TITLE_STYLE, VALUE_STYLE};
+use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, LABEL_STYLE, TITLE_STYLE, VALUE_STYLE, truncate_text};
 
 /// view the balance (credit/debit/balance)
 pub fn view_balance(balance: &BalanceItem) {
@@ -26,32 +23,38 @@ pub fn view_balance(balance: &BalanceItem) {
     println!();
 }
 
-pub fn view_balance_account(balance: &CodexiBalanceEntry) {
+pub fn view_balance_account(account: &AccountEntry) {
     println!(
-        "┌───────┬──────────────────┬──────────────────┬──────────────────┬──────────────────┐"
+        "┌───────┬──────────────────┬──────────┬──────────┬──────────────────┬──────────────────┬──────────────────┐"
     );
     println!(
-        "│Id     │Account           │             Debit│            Credit│           Balance│"
+        "│Id     │Account           │Type      │Currency  │             Debit│            Credit│           Balance│"
     );
     println!(
-        "├───────┼──────────────────┼──────────────────┼──────────────────┼──────────────────┤"
+        "├───────┼──────────────────┼──────────┼──────────┼──────────────────┼──────────────────┼──────────────────┤"
     );
 
-    for bal in &balance.balances {
-        let id_txt = LABEL_STYLE.apply_to(format!("#{}", format_id_short(&bal.id)));
+    for acc in &account.items {
+        let id_txt = LABEL_STYLE.apply_to(format!("#{}", format_id_short(&acc.id)));
         let deb_txt =
-            DEBIT_STYLE.apply_to(format!("{:.2}", bal.balance.debit).separate_with_commas());
+            DEBIT_STYLE.apply_to(format!("{:.2}", acc.balance.debit).separate_with_commas());
         let cre_txt =
-            CREDIT_STYLE.apply_to(format!("{:.2}", bal.balance.credit).separate_with_commas());
+            CREDIT_STYLE.apply_to(format!("{:.2}", acc.balance.credit).separate_with_commas());
         let bal_txt =
-            VALUE_STYLE.apply_to(format!("{:.2}", bal.balance.total).separate_with_commas());
+            VALUE_STYLE.apply_to(format!("{:.2}", acc.balance.total).separate_with_commas());
         println!(
-            "│{:<7}│{:<18}│{:>18}│{:>18}│{:>18}│",
-            id_txt, bal.name, deb_txt, cre_txt, bal_txt,
+            "│{:<7}│{:<18}│{:<10}│{:<10}│{:>18}│{:>18}│{:>18}│",
+            id_txt,
+            truncate_text(&acc.name, 17),
+            acc.context.account_type,
+            acc.currency,
+            deb_txt,
+            cre_txt,
+            bal_txt,
         );
     }
     println!(
-        "└───────┴──────────────────┴──────────────────┴──────────────────┴──────────────────┘"
+        "└───────┴──────────────────┴──────────┴──────────┴──────────────────┴──────────────────┴──────────────────┘"
     );
     println!();
 }

@@ -26,8 +26,8 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
     let account = codexi.get_current_account_mut()?;
     match command {
         ReportCommand::BalanceAll {} => {
-            let balance = Balance::codexi_balance_entry(&codexi);
-            view_balance_account(&balance);
+            let items = codexi.account_entry();
+            view_balance_account(&items);
         }
         ReportCommand::Balance { from, to } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
