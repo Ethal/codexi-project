@@ -2,9 +2,15 @@
 All notable changes to this project will be documented in this file.
 ---
 
+
+Introduce Account::set_context as a wrapper around context.update_context that enforces termination checks and returns CoreWarning results. Update the CLI handler to call set_context instead of directly accessing context.update_context. Also add termination guards in Codexi methods that set account bank and currency, mapping AccountError to CodexiError::TemporalViolation to prevent mutating terminated accounts. Minor import for CoreWarning added.
+
+
 ## [Unreleased] — 
 
 ### Added
+- **Account::set_context** as a wrapper around `context.update_context`.
+- **termination guards** in `set_context`, `set_bank` and `set_currency` to prevent mutating terminated accounts.
 - **`balance`** field to `AccountItem` to centralize informations of an account to a single point. `AccountItem` is now used in the view, from the command `report balance-all`, to show the balance, account type and currency. 
 
 ### Changed
