@@ -89,6 +89,8 @@ impl Codexi {
             item.currency = currency.code.clone();
         }
         item.context = AccountContextItem::from(&acc.context);
+
+        item.balance = BalanceItem::from(Balance::account_balance(acc));
         item
     }
 

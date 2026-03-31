@@ -38,6 +38,9 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum RootCommand {
+    /// Show an overview of the acconunts (id,name,type,currency,debit,credit,balance)
+    Overview {},
+
     /// Add a regular debit operation
     Debit {
         #[arg(

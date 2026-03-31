@@ -104,6 +104,8 @@ impl Codexi {
     pub fn set_account_bank(&mut self, id: &Nulid) -> Result<(), CodexiError> {
         self.banks.get_by_id(id)?;
         let acc = self.get_current_account_mut()?;
+        acc.is_terminated()
+            .map_err(AccountError::TemporalViolation)?;
         acc.bank_id = Some(*id);
         Ok(())
     }
@@ -115,6 +117,8 @@ impl Codexi {
     ) -> Result<(), CodexiError> {
         self.currencies.get_by_id(id)?;
         let acc = self.get_current_account_mut()?;
+        acc.is_terminated()
+            .map_err(AccountError::TemporalViolation)?;
         acc.currency_id = Some(*id);
         if update_operation {
             for op in acc.operations.iter_mut() {

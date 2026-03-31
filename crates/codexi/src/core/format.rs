@@ -32,7 +32,11 @@ pub fn format_optional_path(path: Option<&Path>) -> Option<String> {
 }
 
 pub fn format_text(txt: &str) -> String {
-    txt.to_string()
+    if txt.is_empty() {
+        "—".to_string()
+    } else {
+        txt.to_string()
+    }
 }
 
 pub fn format_optional_text(txt: Option<&str>) -> Option<String> {
@@ -44,9 +48,13 @@ pub fn format_id(id: Nulid) -> String {
 }
 
 pub fn format_id_short(id: &str) -> String {
-    let len = id.len();
-    let start = len.saturating_sub(ID_MIN_SHORT_LEN);
-    id[start..].to_string()
+    if id.is_empty() {
+        "—".into()
+    } else {
+        let len = id.len();
+        let start = len.saturating_sub(ID_MIN_SHORT_LEN);
+        id[start..].to_string()
+    }
 }
 
 pub fn format_optional_id_short(id: Option<&str>) -> String {

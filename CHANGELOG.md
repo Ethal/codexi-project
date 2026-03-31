@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file.
 ---
 
+## [Unreleased] — 
+
+### Added
+- **Account::set_context** as a wrapper around `context.update_context`.
+- **termination guards** in `set_context`, `set_bank` and `set_currency` to prevent mutating terminated accounts.
+- **`balance`** field to `AccountItem` to centralize informations of an account to a single point. `AccountItem` is now used in the view, from the command `overview`.
+- **CLI Command** - `overview` to display the main informations of the accounts, including the balance, account type, bank, and currency. 
+
+### Changed
+
+
+### Removed
+- **`AccountBalance`** and **`CodexiBalance`** from Balance. 
+- **CLI Command** - `report balance-all`.
+
 ## [0.3.0] — 2026-03-28
 
 ### Added

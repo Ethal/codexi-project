@@ -29,6 +29,7 @@ use crate::{
         operation::handle_operation_command, report::handle_report_command,
     },
     msg_info, msg_warn,
+    ui::overview_account,
 };
 
 use crate::ui::view_search;
@@ -37,6 +38,12 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
     let skip_confirm = cli.yes;
 
     match cli.command {
+        RootCommand::Overview {} => {
+            let codexi = FileManagement::load_current_state(paths)?;
+            let accounts = codexi.account_entry();
+            overview_account(&accounts);
+        }
+
         RootCommand::Debit {
             date,
             amount,

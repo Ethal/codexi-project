@@ -5,7 +5,7 @@ use nulid::Nulid;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use crate::core::validate_text_rules;
+use crate::core::{CoreWarning, validate_text_rules};
 use crate::logic::{
     account::{
         AccountAnchors, AccountError, AccountType, CheckpointRef, OperationContainer,
@@ -106,6 +106,28 @@ impl Account {
     }
     pub fn update_meta(&mut self, meta: AccountMeta) {
         self.meta = meta;
+    }
+
+    pub fn set_context(
+        &mut self,
+        overdraft_limit: Option<Decimal>,
+        min_balance: Option<Decimal>,
+        max_monthly_transactions: Option<Option<u32>>, // Some(None) = no limit
+        deposit_locked_until: Option<NaiveDate>,
+        allows_interest: Option<bool>,
+        allows_joint_signers: Option<bool>,
+    ) -> Result<Vec<CoreWarning>, AccountError> {
+        self.is_terminated()?;
+        let warnings = self.context.update_context(
+            overdraft_limit,
+            min_balance,
+            max_monthly_transactions,
+            deposit_locked_until,
+            allows_interest,
+            allows_joint_signers,
+        )?;
+
+        Ok(warnings)
     }
 
     ///Return the Operation or None
