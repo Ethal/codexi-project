@@ -18,17 +18,13 @@ use crate::{
     command::ReportCommand,
     export::{export_statement_html, export_stats_html},
     msg_info, msg_warn,
-    ui::{view_balance, view_balance_account, view_stats, view_summary},
+    ui::{view_balance, view_stats, view_summary},
 };
 
 pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPaths) -> Result<()> {
     let mut codexi = FileManagement::load_current_state(paths)?;
     let account = codexi.get_current_account_mut()?;
     match command {
-        ReportCommand::BalanceAll {} => {
-            let items = codexi.account_entry();
-            view_balance_account(&items);
-        }
         ReportCommand::Balance { from, to } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
             let params = SearchParamsBuilder::default()
