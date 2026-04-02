@@ -29,7 +29,7 @@ pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
                 "op_id":      format!("#{}",format_id_short(&exp.op_id)),
                 "op_date":    exp.op_date,
                 "description": exp.description,
-                "amount":     exp.amount.separate_with_commas(),
+                "amount":     format!("{:.2}",exp.amount).separate_with_commas(),
                 "percentage": format!("{:.1}", exp.percentage),
             })
         })
@@ -43,7 +43,7 @@ pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
                 "op_id":      format!("#{}",format_id_short(&op.id)),
                 "op_date":    op.date,
                 "type":       op.flow,
-                "amount":     op.amount.separate_with_commas(),
+                "amount":     format!("{:.2}",op.amount).separate_with_commas(),
                 "description": op.description,
             })
         })
@@ -52,9 +52,20 @@ pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
     let mut ctx = Context::new();
 
     // Overview
-    ctx.insert("total_credit", &entry.total_credit.separate_with_commas());
-    ctx.insert("total_debit", &entry.total_debit.separate_with_commas());
-    ctx.insert("balance", &entry.balance.separate_with_commas());
+    ctx.insert("date_min", &entry.from.unwrap_or("N/A".to_string()));
+    ctx.insert("date_max", &entry.to.unwrap_or("N/A".to_string()));
+    ctx.insert(
+        "total_credit",
+        &format!("{:.2}", entry.total_credit).separate_with_commas(),
+    );
+    ctx.insert(
+        "total_debit",
+        &format!("{:.2}", entry.total_debit).separate_with_commas(),
+    );
+    ctx.insert(
+        "balance",
+        &format!("{:.2}", entry.balance).separate_with_commas(),
+    );
     ctx.insert("operation_count", &entry.operation_count);
     ctx.insert(
         "average_operation",

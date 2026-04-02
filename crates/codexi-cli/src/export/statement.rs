@@ -22,16 +22,16 @@ pub fn export_statement_html(entry: StatementCollection) -> Result<String> {
             serde_json::json!({
                 "date":    op.date,
                 "description": op.description,
-                "debit": if op.debit == Decimal::ZERO{"".into()} else {op.debit.separate_with_commas()},
-                "credit": if op.credit == Decimal::ZERO{"".into()} else {op.credit.separate_with_commas()},
+                "debit": if op.debit == Decimal::ZERO{"".into()} else {format!("{:.2}",op.debit).separate_with_commas()},
+                "credit": if op.credit == Decimal::ZERO{"".into()} else {format!("{:.2}",op.credit).separate_with_commas()},
             })
         })
         .collect();
 
     let mut ctx = Context::new();
     ctx.insert("items", &operations);
-    ctx.insert("date_min", &entry.from);
-    ctx.insert("date_max", &entry.to);
+    ctx.insert("date_min", &entry.from.unwrap_or("N/A".to_string()));
+    ctx.insert("date_max", &entry.to.unwrap_or("N/A".to_string()));
     ctx.insert("operation_count", &entry.counts.total());
     ctx.insert("account_name", &entry.account.name);
     ctx.insert("account_number", &entry.account.id);
