@@ -2,10 +2,7 @@
 
 use rust_decimal::Decimal;
 
-use crate::logic::{
-    account::{Account, SearchEntry},
-    operation::OperationFlow,
-};
+use crate::logic::{account::Account, operation::OperationFlow, search::SearchOperationList};
 
 #[derive(Debug, Default, Clone)]
 pub struct Balance {
@@ -17,7 +14,7 @@ impl Balance {
     /// Calculates the total of credits, debits,
     /// with several date filters (from/to/day/month/year).
     /// Returns a Balance struct.
-    pub fn new(items: &SearchEntry) -> Self {
+    pub fn build(items: &SearchOperationList) -> Self {
         let mut credit = Decimal::ZERO;
         let mut debit = Decimal::ZERO;
 
@@ -34,7 +31,7 @@ impl Balance {
         self.credit - self.debit
     }
 
-    pub fn account_balance(account: &Account) -> Balance {
+    pub fn for_account(account: &Account) -> Balance {
         let mut credit = Decimal::ZERO;
         let mut debit = Decimal::ZERO;
         for op in &account.operations {

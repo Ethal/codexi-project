@@ -10,11 +10,13 @@ use codexi::{
         CoreError, DataPaths, format_date, parse_date, parse_decimal, parse_optional_decimal,
         parse_text,
     },
+    dto::{AccountCollection, SearchOperationCollection, StatementCollection},
     file_management::FileManagement,
     logic::{
-        account::{Account, SearchParamsBuilder, search},
+        account::Account,
         codexi::CodexiError,
         operation::{OperationFlow, OperationKind, RegularKind},
+        search::{SearchParamsBuilder, search},
         utils::resolve_by_id_or_name,
     },
     types::DateRange,
@@ -22,6 +24,7 @@ use codexi::{
 
 use crate::{
     command::{Cli, RootCommand},
+    export::export_statement_html,
     handler::{
         account::handle_account_command, admin::handle_admin_command, bank::handle_bank_command,
         category::handle_category_command, currency::handle_currency_command,
@@ -40,7 +43,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
     match cli.command {
         RootCommand::Overview {} => {
             let codexi = FileManagement::load_current_state(paths)?;
-            let accounts = codexi.account_entry();
+            let accounts = AccountCollection::build(&codexi);
             overview_account(&accounts);
         }
 
@@ -156,6 +159,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             amount_max,
             last,
             today,
+            open,
         } => {
             let amount_min_d = parse_optional_decimal(&amount_min, "amount_min")?;
             let amount_max_d = parse_optional_decimal(&amount_max, "amount_max")?;
@@ -166,8 +170,8 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 range = DateRange::parse(Some(from.as_ref()), Some(to.as_ref()))?;
             }
 
-            let mut codexi = FileManagement::load_current_state(paths)?;
-            let account = codexi.get_current_account_mut()?;
+            let codexi = FileManagement::load_current_state(paths)?;
+            let account = codexi.get_current_account()?;
 
             let params = SearchParamsBuilder::default()
                 .from(range.from)
@@ -180,9 +184,18 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 .latest(last)
                 .build()?;
 
-            let search_items = search(account, &params)?;
-            if search_items.is_empty() {
+            let s_ops = search(account, &params)?;
+            let search_items = SearchOperationCollection::build(&codexi, account, &s_ops);
+            let statement_results = StatementCollection::build(&codexi, account, &s_ops);
+            if search_items.items.is_empty() {
                 msg_warn!("No data available as per criteria.");
+                return Ok(());
+            }
+            if open {
+                let html = export_statement_html(statement_results)?;
+                let file_path = FileManagement::export_html(&html, cwd)?;
+                msg_info!("search completed (report.html)");
+                opener::open_browser(file_path)?;
             } else {
                 view_search(&search_items);
             }

@@ -4,14 +4,14 @@ use rust_decimal::Decimal;
 use thousands::Separable;
 
 use codexi::{
-    core::{format_id_short, format_optional_id_short},
-    logic::codexi::OperationDetailItem,
+    core::{format_id_short, format_optional_id_short, format_optional_text},
+    dto::SearchOperationItem,
 };
 
 use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, LABEL_STYLE, NOTE_STYLE, TITLE_STYLE, VALUE_STYLE};
 
 /// Display a detailed view of a single operation
-pub fn view_operation(item: &OperationDetailItem) {
+pub fn view_operation(item: &SearchOperationItem) {
     // ── Operation ─────────────────────────────────────────────
     println!();
     println!("{}", TITLE_STYLE.apply_to("Operation"));
@@ -118,7 +118,7 @@ pub fn view_operation(item: &OperationDetailItem) {
     println!(
         "  {:<14} {}",
         LABEL_STYLE.apply_to("Currency"),
-        &item.currency
+        format_optional_text(item.currency.as_deref())
     );
     println!(
         "  {:<14} {}",
@@ -128,17 +128,17 @@ pub fn view_operation(item: &OperationDetailItem) {
     println!(
         "  {:<14} {}",
         LABEL_STYLE.apply_to("Category"),
-        &item.category
+        format_optional_text(item.category.as_deref())
     );
     println!(
         "  {:<14} {}",
         LABEL_STYLE.apply_to("Payee"),
-        &item.payee.clone().unwrap_or("-".into())
+        format_optional_text(item.payee.as_deref())
     );
     println!(
         "  {:<14} {}",
         LABEL_STYLE.apply_to("Reconciled"),
-        &item.reconciled.clone().unwrap_or("-".into())
+        format_optional_text(item.reconciled.as_deref())
     );
 
     // ── Meta ──────────────────────────────────────────────────
@@ -146,22 +146,26 @@ pub fn view_operation(item: &OperationDetailItem) {
     println!("{}", TITLE_STYLE.apply_to("Meta"));
     println!("{}", "─".repeat(45));
 
-    println!("  {:<14} {}", LABEL_STYLE.apply_to("Tags"), &item.tags);
+    println!(
+        "  {:<14} {}",
+        LABEL_STYLE.apply_to("Tags"),
+        format_optional_text(item.tags.as_deref())
+    );
     println!(
         "  {:<14} {}",
         LABEL_STYLE.apply_to("Note"),
-        NOTE_STYLE.apply_to(&item.note.clone().unwrap_or("-".into()))
+        NOTE_STYLE.apply_to(format_optional_text(item.note.as_deref()))
     );
     println!(
         "  {:<14} {}",
         LABEL_STYLE.apply_to("Attachment"),
-        &item.attachment
+        format_optional_text(item.attachment.as_deref())
     );
 
     println!();
 }
 
 /// Display raw debug output — for diagnostic purposes
-pub fn view_operation_raw(item: &OperationDetailItem) {
+pub fn view_operation_raw(item: &SearchOperationItem) {
     println!("{:#?}", item);
 }

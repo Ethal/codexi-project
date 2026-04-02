@@ -2,7 +2,7 @@
 //
 use thousands::Separable;
 
-use codexi::logic::balance::BalanceItem;
+use codexi::dto::BalanceItem;
 
 use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, TITLE_STYLE, VALUE_STYLE};
 

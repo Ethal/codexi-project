@@ -6,11 +6,8 @@ use thousands::Separable;
 
 use codexi::{
     core::{CoreWarning, format_id_short},
+    dto::{SearchOperationCollection, StatsCollection, SummaryCollection},
     file_management::CodexiInfos,
-    logic::{
-        account::{SearchEntry, StatsEntry, SummaryEntry},
-        operation::OperationFlow,
-    },
 };
 
 use crate::ui::{
@@ -111,7 +108,7 @@ pub fn view_archive(datas: &[String]) {
 }
 
 /// view of the search results
-pub fn view_search(items: &SearchEntry) {
+pub fn view_search(datas: &SearchOperationCollection) {
     let title_text = TITLE_STYLE.apply_to("Operation(s)");
     println!(
         "┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐"
@@ -127,27 +124,28 @@ pub fn view_search(items: &SearchEntry) {
         "├───────┼──────────┼───────┼──────────────────┼──────────────────┼────────────────────────────────────────┤"
     );
 
-    for item in items.iter() {
+    for item in datas.items.iter() {
         // Determine the color according to the flow (credit/debit)
-        let amount_style = match item.operation.flow {
-            OperationFlow::Credit => CREDIT_STYLE,
-            OperationFlow::Debit => DEBIT_STYLE,
-            OperationFlow::None => LABEL_STYLE,
+        let amount_style = match item.flow.as_str() {
+            "Credit" => CREDIT_STYLE,
+            "Debit" => DEBIT_STYLE,
+            "None" => LABEL_STYLE,
+            _ => LABEL_STYLE,
         };
         let amount_text =
-            amount_style.apply_to(format!("{:.2}", item.operation.amount).separate_with_commas());
+            amount_style.apply_to(format!("{:.2}", item.amount).separate_with_commas());
 
-        let index_str = item.operation.id.to_string();
+        let index_str = item.id.to_string();
         let index_text = LABEL_STYLE.apply_to(format!("#{}", format_id_short(&index_str)));
 
         println!(
-            "│{:<7}│{}│{}│{:>18}│{:>18}│{:<40}│",
+            "│{:<7}│{}│{:<7}│{:>18}│{:>18}│{:<40}│",
             index_text,
-            item.operation.date,
-            item.operation.flow,
+            item.date,
+            item.flow,
             amount_text,
             VALUE_STYLE.apply_to(format!("{:.2}", item.balance).separate_with_commas()),
-            truncate_text(&item.operation.description, 40),
+            truncate_text(&item.description, 40),
         );
     }
 
@@ -155,7 +153,7 @@ pub fn view_search(items: &SearchEntry) {
         "└───────┴──────────┴───────┴──────────────────┴──────────────────┴────────────────────────────────────────┘"
     );
     println!();
-    println!("Total operations found: {}", items.items.len());
+    println!("Total operations found: {}", datas.counts.total());
     println!();
     println!(
         "{}",
@@ -169,7 +167,7 @@ pub fn view_search(items: &SearchEntry) {
     println!();
 }
 /// view to a summary of the codexi
-pub fn view_summary(summary: &SummaryEntry) {
+pub fn view_summary(summary: &SummaryCollection) {
     let title_text = format!("{:<84}", "Current Acccount summary");
     println!(
         "┌─────────────────────────────────────────────────────────────────────────────────────┐"
@@ -279,7 +277,7 @@ pub fn view_summary(summary: &SummaryEntry) {
     println!();
 }
 
-pub fn view_stats(stats: &StatsEntry) {
+pub fn view_stats(stats: &StatsCollection) {
     let savings_style = if stats.savings_rate >= Decimal::ZERO {
         Style::new().green().bold()
     } else {

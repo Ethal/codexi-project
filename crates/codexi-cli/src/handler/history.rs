@@ -4,10 +4,14 @@ use anyhow::Result;
 
 use codexi::{
     core::{DataPaths, parse_date, parse_decimal, parse_id, parse_text},
+    dto::SearchOperationCollection,
     file_management::FileManagement,
-    logic::account::{AccountError, SearchParamsBuilder, search},
-    logic::operation::Operation,
-    logic::utils::resolve_id,
+    logic::{
+        account::AccountError,
+        operation::Operation,
+        search::{SearchParamsBuilder, search},
+        utils::resolve_id,
+    },
 };
 
 use crate::{
@@ -18,7 +22,6 @@ use crate::{
 
 pub fn handle_history_command(command: HistoryCommand, paths: &DataPaths) -> Result<()> {
     let mut codexi = FileManagement::load_current_state(paths)?;
-    let account = codexi.get_current_account_mut()?;
     match command {
         HistoryCommand::Init {
             date,
@@ -26,6 +29,7 @@ pub fn handle_history_command(command: HistoryCommand, paths: &DataPaths) -> Res
         } => {
             let date = parse_date(&date)?;
             let initial_amount_d = parse_decimal(&initial_amount, "initial_amount")?;
+            let account = codexi.get_current_account_mut()?;
             account.initialize(date, initial_amount_d)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!(
@@ -40,6 +44,7 @@ pub fn handle_history_command(command: HistoryCommand, paths: &DataPaths) -> Res
         } => {
             let physical_amount_d = parse_decimal(&physical_amount, "physical_amount")?;
             let date = parse_date(&date)?;
+            let account = codexi.get_current_account_mut()?;
             account.adjust_balance(date, physical_amount_d)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Adjust done: {} {}", date, physical_amount_d);
@@ -47,33 +52,35 @@ pub fn handle_history_command(command: HistoryCommand, paths: &DataPaths) -> Res
         HistoryCommand::Close { date, description } => {
             let date = parse_date(&date)?;
             let description = parse_text(description);
+            let account = codexi.get_current_account_mut()?;
             account.checkpoint(date, description, paths)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Close period of the {} completed", date);
         }
         HistoryCommand::Void { id } => {
-            let mut codexi = FileManagement::load_current_state(paths)?;
-            let op_id = {
-                let account = codexi.get_current_account()?;
-                resolve_id::<Operation, AccountError>(&id, &account.operations)?
-            };
+            let account = codexi.get_current_account()?;
+            let op_id = resolve_id::<Operation, AccountError>(&id, &account.operations)?;
             codexi.void_from_current(op_id)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Operation {} voided.", op_id);
         }
         HistoryCommand::Archive(archive) => match archive.command {
             ArchiveCommand::List {} => {
+                let account = codexi.get_current_account()?;
                 let results = FileManagement::list_archive(paths, account.id)?;
                 view_archive(&results);
             }
             ArchiveCommand::View { id, date } => {
+                let account = codexi.get_current_account()?;
+
                 let id = parse_id(&id)?;
                 let date = parse_date(&date)?;
-                let codexi_arch = FileManagement::load_archive(id, date, paths)?;
+                let account_archive = FileManagement::load_archive(id, date, paths)?;
                 let params = SearchParamsBuilder::default().build()?;
 
-                let results = search(&codexi_arch, &params)?;
-                view_search(&results);
+                let s_ops = search(&account_archive, &params)?;
+                let datas = SearchOperationCollection::build(&codexi, account, &s_ops);
+                view_search(&datas);
             }
         },
     }

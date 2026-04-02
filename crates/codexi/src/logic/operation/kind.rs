@@ -34,6 +34,10 @@ impl OperationKind {
     pub fn is_void(&self) -> bool {
         matches!(self, OperationKind::System(SystemKind::Void))
     }
+    /// Check if the Operation is an adjust type
+    pub fn is_adjust(&self) -> bool {
+        matches!(self, OperationKind::System(SystemKind::Adjust))
+    }
     /// Get the type of OperationKind as a string
     pub fn kind_type(&self) -> &'static str {
         match self {

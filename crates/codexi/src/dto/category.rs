@@ -1,6 +1,9 @@
-// src/logic/category/dto.rts
+// src/dto/category.rs
 
-use crate::{core::format_id, logic::category::Category};
+use crate::{
+    core::format_id,
+    logic::category::{Category, CategoryList},
+};
 
 #[derive(Debug)]
 pub struct CategoryItem {
@@ -10,7 +13,7 @@ pub struct CategoryItem {
 }
 
 #[derive(Debug)]
-pub struct CategoryEntry {
+pub struct CategoryCollection {
     pub items: Vec<CategoryItem>,
 }
 
@@ -21,5 +24,16 @@ impl From<&Category> for CategoryItem {
             name: category.name.clone(),
             note: category.note.clone(),
         }
+    }
+}
+
+impl CategoryCollection {
+    pub fn build(categories: &CategoryList) -> Self {
+        let items: Vec<CategoryItem> = categories
+            .categories
+            .iter()
+            .map(CategoryItem::from)
+            .collect();
+        Self { items }
     }
 }

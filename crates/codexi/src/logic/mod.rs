@@ -8,4 +8,5 @@ pub mod codexi;
 pub mod counts;
 pub mod currency;
 pub mod operation;
+pub mod search;
 pub mod utils;

@@ -38,3 +38,18 @@ pub fn truncate_text(desc: &str, max_width: usize) -> String {
 
     format!("{:<width$}", format!("{}...", truncated), width = max_width)
 }
+
+use codexi::dto::{BankItem, CurrencyItem};
+pub fn format_optional_currency_item(currency: &Option<CurrencyItem>) -> String {
+    match currency {
+        Some(c) => c.code.to_string(),
+        None => "—".to_string(),
+    }
+}
+
+pub fn format_optional_bank_item(bank: &Option<BankItem>) -> String {
+    match bank {
+        Some(b) => b.name.to_string(),
+        None => "—".to_string(),
+    }
+}

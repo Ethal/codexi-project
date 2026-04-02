@@ -250,6 +250,10 @@ pub enum RootCommand {
         /// The operation of today
         #[arg(long, help = "The operation  of today")]
         today: bool,
+
+        /// open in the defaut browser
+        #[arg(long, help = "open the statemnt with defaut browser")]
+        open: bool,
     },
 
     /// Manage Operations

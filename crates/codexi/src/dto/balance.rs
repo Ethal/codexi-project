@@ -1,4 +1,4 @@
-// src/logic/balance/dto.rs
+// src/dto/balance.rs
 
 use rust_decimal::Decimal;
 
