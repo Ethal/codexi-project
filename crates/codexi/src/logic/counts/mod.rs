@@ -1,8 +1,8 @@
 // src/logic/counts/mod.rs
 
 use crate::logic::{
-    account::SearchEntry,
     operation::{OperationKind, SystemKind},
+    search::SearchOperationList,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -15,7 +15,7 @@ pub struct Counts {
 }
 
 impl Counts {
-    pub fn new(items: &SearchEntry) -> Self {
+    pub fn new(items: &SearchOperationList) -> Self {
         let mut counts = Counts::default();
 
         for item in items.iter() {

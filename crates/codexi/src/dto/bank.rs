@@ -1,6 +1,9 @@
-// src/logic/bank/dto.rts
+// src/dto/bank.rs
 
-use crate::{core::format_id, logic::bank::Bank};
+use crate::{
+    core::format_id,
+    logic::bank::{Bank, BankList},
+};
 
 #[derive(Debug)]
 pub struct BankItem {
@@ -11,7 +14,7 @@ pub struct BankItem {
 }
 
 #[derive(Debug)]
-pub struct BankEntry {
+pub struct BankCollection {
     pub items: Vec<BankItem>,
 }
 
@@ -23,5 +26,12 @@ impl From<&Bank> for BankItem {
             branch: bank.branch.clone(),
             note: bank.note.clone(),
         }
+    }
+}
+
+impl BankCollection {
+    pub fn build(banks: &BankList) -> Self {
+        let items: Vec<BankItem> = banks.banks.iter().map(BankItem::from).collect();
+        Self { items }
     }
 }

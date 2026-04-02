@@ -143,5 +143,27 @@
     {% endfor %}
   </table>
 
+  <!-- Ignored -->
+  {% if ignored %}
+  <div class="section-title">Operations not included in the calculation of stats (voided and void not in the same period)</div>
+  <table>
+    <tr>
+      <th>Id</th>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Amount</th>
+      <th>Description</th>
+    </tr>
+    {% for ing in ignored %}
+    <tr>
+      <td>{{ ing.op_id }}</td>
+      <td>{{ ing.op_date }}</td>
+      <td>{{ ing.type }}</td>
+      <td>{{ ing.amount }}</td>
+      <td>{{ ing.description }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
 </body>
 </html>

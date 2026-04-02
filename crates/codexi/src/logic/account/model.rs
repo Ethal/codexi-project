@@ -199,15 +199,11 @@ impl Account {
             .fold(Decimal::ZERO, |acc, op| op.flow.apply(acc, op.amount))
     }
     /// Determine if a specific operation can be undone (Void)
-    pub fn can_void(&self, op_id: Nulid) -> Result<bool, AccountError> {
+    pub fn can_void(&self, op_id: Nulid) -> bool {
         // current date
         let today = chrono::Local::now().date_naive();
-
-        // check if void is allow as per the current date
-        match self.temporal_policy(TemporalAction::Void(op_id), today) {
-            Ok(_) => Ok(true),   // Ok
-            Err(_) => Ok(false), // not Ok
-        }
+        self.temporal_policy(TemporalAction::Void(op_id), today)
+            .is_ok()
     }
 }
 

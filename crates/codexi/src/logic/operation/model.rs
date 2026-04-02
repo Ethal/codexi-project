@@ -71,21 +71,22 @@ pub struct Operation {
 
 /// Methods for Operation
 impl Operation {
-    /// Return the signed financial impact of the operation.
-    /// Credit  -> +amount
-    /// Debit   -> -amount
-    /// Void    -> reversed sign
-    pub fn signed_amount(&self) -> Decimal {
-        let base = self.amount * self.flow.to_sign();
-        if self.kind.is_void() { -base } else { base }
-    }
-
     pub fn update(&mut self, description: &str, context: &OperationContext, meta: &OperationMeta) {
         self.description = description.into();
         self.context.category_id = context.category_id;
         self.context.payee = context.payee.clone();
         self.context.reconciled = context.reconciled;
         self.meta = meta.clone();
+    }
+
+    pub fn is_void(&self) -> bool {
+        self.kind.is_void()
+    }
+    pub fn is_voided(&self) -> bool {
+        self.links.void_by.is_some()
+    }
+    pub fn is_adjust(&self) -> bool {
+        self.kind.is_adjust()
     }
 }
 

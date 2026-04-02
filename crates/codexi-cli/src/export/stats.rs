@@ -5,11 +5,11 @@ use rust_decimal::Decimal;
 use tera::{Context, Tera};
 use thousands::Separable;
 
-use codexi::logic::account::StatsEntry;
+use codexi::{core::format_id_short, dto::StatsCollection};
 
 const STATS_TEMPLATE: &str = include_str!("../assets/templates/stats.html");
 
-pub fn export_stats_html(entry: StatsEntry) -> Result<String> {
+pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
     let mut tera = Tera::default();
     tera.add_raw_template("stats.html", STATS_TEMPLATE)?;
 
@@ -26,11 +26,25 @@ pub fn export_stats_html(entry: StatsEntry) -> Result<String> {
         .iter()
         .map(|exp| {
             serde_json::json!({
-                "op_id":      exp.op_id,
+                "op_id":      format!("#{}",format_id_short(&exp.op_id)),
                 "op_date":    exp.op_date,
                 "description": exp.description,
                 "amount":     exp.amount.separate_with_commas(),
                 "percentage": format!("{:.1}", exp.percentage),
+            })
+        })
+        .collect();
+
+    let ignored: Vec<serde_json::Value> = entry
+        .ignored
+        .iter()
+        .map(|op| {
+            serde_json::json!({
+                "op_id":      format!("#{}",format_id_short(&op.id)),
+                "op_date":    op.date,
+                "type":       op.flow,
+                "amount":     op.amount.separate_with_commas(),
+                "description": op.description,
             })
         })
         .collect();
@@ -70,6 +84,9 @@ pub fn export_stats_html(entry: StatsEntry) -> Result<String> {
 
     // Top expenses
     ctx.insert("top_expenses", &top_expenses);
+
+    // Ignored
+    ctx.insert("ignored", &ignored);
 
     let html = tera.render("stats.html", &ctx)?;
 

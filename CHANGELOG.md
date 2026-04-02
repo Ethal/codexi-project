@@ -3,19 +3,37 @@ All notable changes to this project will be documented in this file.
 ---
 
 ## [Unreleased] — 
+> ⚠️ Breaking: DTO modules have been moved from `logic/*` to `dto/*`
 
 ### Added
+
 - **Account::set_context** as a wrapper around `context.update_context`.
 - **termination guards** in `set_context`, `set_bank` and `set_currency` to prevent mutating terminated accounts.
-- **`balance`** field to `AccountItem` to centralize informations of an account to a single point. `AccountItem` is now used in the view, from the command `overview`.
 - **CLI Command** - `overview` to display the main informations of the accounts, including the balance, account type, bank, and currency. 
-
+- **`ignored`** operations list to stats output to surface operations excluded from calculations (e.g. unmatched void/voided pairs)
+- 
 ### Changed
-
+- **Refactored DTO layer**:
+  - Moved DTOs from `logic/*` into dedicated `dto/*` modules
+  - Simplified DTOs to only handle basic type conversions (e.g. `NaiveDate`, `Nulid`, `Path` → `String`)
+- **Moved formatting logic** (e.g. booleans, display helpers) from DTOs to CLI UI layer
+- **CLI handlers** to use new DTO construction patterns
+- **CLI command** `search`, alias `view` now support the flag `--open` to open the result in the default browser.
+- **Stats calculation** — Reworked logic to ensure consistency with account statements.
+  - Stats now exclude init and checkpoint operations while including all other valid operations,
+  - Introduced robust handling of void and voided operations: Operations are only included if both sides of the pair exist within the selected period,
+  - Unmatched operations are excluded from financial calculations,
+  - Improved accuracy of financial indicators (balance, totals, savings rate, averages, daily burn rate),
+  - Refactored stats computation pipeline for clarity, consistency, and performance (single-pass processing).
 
 ### Removed
 - **`AccountBalance`** and **`CodexiBalance`** from Balance. 
-- **CLI Command** - `report balance-all`.
+- **`signed_amount`** function in `logic/operation/model.rs`.
+- **CLI Command** - `report balance-all`. Replace by the command `òverview`.
+- **Formatting responsibilities** from DTOs (now handled exclusively in UI)
+- Replaced legacy `entry.rs` mapping functions with DTO-based conversions
+- **CLI command** `report stats`, the flag `--net` is not more available 
+
 
 ## [0.3.0] — 2026-03-28
 

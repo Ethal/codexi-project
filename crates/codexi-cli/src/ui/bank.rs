@@ -1,12 +1,12 @@
 // src/ui/dictionnaries.rs
 
 use codexi::core::format_id_short;
-use codexi::logic::bank::BankEntry;
+use codexi::dto::BankCollection;
 
 use crate::ui::TITLE_STYLE;
 
 /// view to list of the bank
-pub fn view_bank(datas: &BankEntry) {
+pub fn view_bank(datas: &BankCollection) {
     let title_text = TITLE_STYLE.apply_to("Banks - <id> <short id> <name> <branch> [note]");
     println!();
     println!("{}", title_text);

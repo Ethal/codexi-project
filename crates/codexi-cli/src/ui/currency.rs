@@ -1,12 +1,12 @@
 // src/ui/dictionnaries.rs
 
 use codexi::core::format_id_short;
-use codexi::logic::currency::CurrencyEntry;
+use codexi::dto::CurrencyCollection;
 
 use crate::ui::TITLE_STYLE;
 
-/// view to list the snapshot file
-pub fn view_currency(datas: &CurrencyEntry) {
+/// view to list the currency
+pub fn view_currency(datas: &CurrencyCollection) {
     let title_text =
         TITLE_STYLE.apply_to("Currencies - <id> <short id> <name> <code> <symbol> [note]");
     println!();

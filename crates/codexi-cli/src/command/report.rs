@@ -42,13 +42,6 @@ pub enum ReportCommand {
         #[arg(long, value_name = "YYYY-MM-DD", help = "End date for stats")]
         to: Option<String>,
 
-        /// Compute statistics on operations
-        ///
-        /// By default, voided operations are excluded, even if voided outside the period.
-        /// Use --net to compute the net impact of all flows within the selected period.
-        #[arg(long)]
-        net: bool,
-
         #[arg(long, help = "open the stats with defaut browser")]
         open: bool,
     },

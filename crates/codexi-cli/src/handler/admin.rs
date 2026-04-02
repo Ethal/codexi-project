@@ -6,7 +6,7 @@ use rust_decimal::Decimal;
 use std::path::{Path, PathBuf};
 
 use codexi::{
-    core::{DataPaths, format_max_monthly_transactions, format_optional_date, format_optional_id},
+    core::{DataPaths, format_optional_date, format_optional_id, format_optional_u32},
     file_management::FileManagement,
     logic::{
         codexi::{Codexi, migrate_v1, migrate_v2},
@@ -166,7 +166,7 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
             "# codexi-cli account set-context -o {} -b {} -m {} -d {} -i {} -s {}",
             account.context.overdraft_limit,
             account.context.min_balance,
-            format_max_monthly_transactions(account.context.max_monthly_transactions),
+            format_optional_u32(account.context.max_monthly_transactions),
             format_optional_date(account.context.deposit_locked_until).unwrap_or("".into()),
             account.context.allows_interest,
             account.context.allows_joint_signers
