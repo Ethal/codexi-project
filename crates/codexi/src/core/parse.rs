@@ -1,6 +1,6 @@
 // src/core/parse.rs
 
-use chrono::{Datelike, NaiveDate};
+use chrono::NaiveDate;
 use nulid::Nulid;
 use rust_decimal::Decimal;
 use std::{path::PathBuf, str::FromStr};
@@ -91,57 +91,4 @@ pub fn parse_optional_decimal(
         .as_deref()
         .map(|s| parse_decimal(s, field))
         .transpose()
-}
-
-pub fn parse_flexible_date_range(
-    date_str: &str,
-    is_start_date: bool,
-) -> Result<NaiveDate, CoreError> {
-    // 1. Full format: YYYY-MM-DD
-    if let Ok(date) = NaiveDate::parse_from_str(date_str, "%Y-%m-%d") {
-        return Ok(date);
-    }
-
-    // 2. Monthly format: YYYY-MM
-    if let Ok((start, end)) = month_bounds(date_str) {
-        return Ok(if is_start_date { start } else { end });
-    }
-
-    // 3. Year format: YYYY
-    if let Ok(year) = date_str.parse::<i32>() {
-        return Ok(if is_start_date {
-            NaiveDate::from_ymd_opt(year, 1, 1)
-                .ok_or_else(|| CoreError::InvalidStartDate("Invalid start date".to_string()))?
-        } else {
-            NaiveDate::from_ymd_opt(year, 12, 31)
-                .ok_or_else(|| CoreError::InvalidEndDate("Invalid end date".to_string()))?
-        });
-    }
-
-    Err(CoreError::InvalidDate(
-        "Invalid date format. Expected YYYY-MM-DD, YYYY-MM, or YYYY.".to_string(),
-    ))
-}
-
-fn month_bounds(month_str: &str) -> Result<(NaiveDate, NaiveDate), CoreError> {
-    let start =
-        NaiveDate::parse_from_str(&format!("{}-01", month_str), "%Y-%m-%d").map_err(|_| {
-            CoreError::InvalidMonth("Invalid month format: expected YYYY-MM".to_string())
-        })?;
-
-    let (next_year, next_month) = if start.month() == 12 {
-        (start.year() + 1, 1)
-    } else {
-        (start.year(), start.month() + 1)
-    };
-
-    let first_next_month = NaiveDate::from_ymd_opt(next_year, next_month, 1).ok_or_else(|| {
-        CoreError::InvalidIntermediateDate("Invalid intermediate date".to_string())
-    })?;
-
-    let end = first_next_month.pred_opt().ok_or_else(|| {
-        CoreError::ErrorComputingEndOfMonth("Error computing end-of-month".to_string())
-    })?;
-
-    Ok((start, end))
 }

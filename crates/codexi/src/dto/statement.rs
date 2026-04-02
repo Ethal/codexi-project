@@ -1,6 +1,5 @@
 // src/dto/staement.rs
 
-use chrono::NaiveDate;
 use rust_decimal::Decimal;
 
 use crate::{
@@ -17,6 +16,7 @@ use crate::{
         operation::OperationFlow,
         search::{SearchOperation, SearchOperationList},
     },
+    types::DateRange,
 };
 
 #[derive(Debug)]
@@ -58,8 +58,8 @@ impl From<&SearchOperation> for StatementItem {
 #[derive(Debug)]
 pub struct StatementCollection {
     pub account: AccountItem,
-    pub from: String,
-    pub to: String,
+    pub from: Option<String>,
+    pub to: Option<String>,
     pub counts: Counts,
     pub balance: BalanceItem,
     pub items: Vec<SearchOperationItem>,
@@ -70,23 +70,13 @@ impl StatementCollection {
     /// names from the Codexi context. Returns None if the account is not found.
     pub fn build(codexi: &Codexi, account: &Account, s_ops: &SearchOperationList) -> Self {
         // date min/max
-        let (date_min, date_max) = find_date_range(s_ops)
-            .map(|(min, max)| (format_date(min), format_date(max)))
-            .unwrap_or(("N/A".into(), "N/A".into()));
 
-        let min = match s_ops.params.from {
-            Some(v) => format_date(v),
-            None => date_min,
-        };
-        let max = match s_ops.params.to {
-            Some(v) => format_date(v),
-            None => date_max,
-        };
+        let (from, to) = DateRange::compute(&s_ops, s_ops.params.from, s_ops.params.to).formatted();
 
         Self {
             account: AccountItem::build(codexi, account),
-            from: min,
-            to: max,
+            from,
+            to,
             counts: Counts::new(s_ops),
             balance: BalanceItem::from(Balance::build(s_ops)),
             items: s_ops
@@ -95,14 +85,4 @@ impl StatementCollection {
                 .collect(),
         }
     }
-}
-
-/*-------------------------- HELPER -------------------------*/
-
-/// Returns the min and max operation dates from a search result.
-fn find_date_range(items: &SearchOperationList) -> Option<(NaiveDate, NaiveDate)> {
-    let mut iter = items.iter().map(|i| i.operation.date);
-    let first = iter.next()?;
-    let (min, max) = iter.fold((first, first), |(min, max), d| (min.min(d), max.max(d)));
-    Some((min, max))
 }

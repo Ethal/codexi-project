@@ -15,11 +15,15 @@ pub enum OperationCommand {
     /// View an operation
     View {
         /// Operation id
-        #[arg(value_name = "ID", required = true, help = "Account ID")]
+        #[arg(
+            value_name = "ID",
+            required = true,
+            help = "Account id of the operation. Accept full ID, short ID"
+        )]
         id: String,
 
         /// View the raw data
-        #[arg(long)]
+        #[arg(short, long)]
         raw: bool,
     },
 }
