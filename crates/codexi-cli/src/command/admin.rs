@@ -13,6 +13,9 @@ pub struct AdminArgs {
 /// To be use carefully, performed a --help is recommended
 #[derive(Subcommand, Debug)]
 pub enum AdminCommand {
+    /// Get technical information about the current codexi file
+    Infos,
+
     /// Backup(Zip file) the ledger(codexi.dat) include the archive file.
     Backup {
         #[arg(
@@ -53,9 +56,6 @@ pub enum AdminCommand {
 
     /// Manage the application trash (Recover or purge deleted files).
     Trash(TrashArgs),
-
-    /// Get technical information about the current codexi file
-    Infos,
 
     /// Export all the data of the current codexi to json file
     ExportSpecial,
