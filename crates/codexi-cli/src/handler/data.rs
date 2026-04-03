@@ -7,7 +7,10 @@ use codexi::{
     core::DataPaths,
     exchange::Exchangeable,
     file_management::{ExchangeSerdeFormat, FileExchangeError, FileManagement},
-    logic::{account::Account, currency::CurrencyList, operation::AccountOperations},
+    logic::{
+        account::Account, counterparty::CounterpartyList, currency::CurrencyList,
+        operation::AccountOperations,
+    },
 };
 
 use crate::{
@@ -38,6 +41,10 @@ pub fn handle_data_command(
             }
             ExchangeTypeCommand::Currency { format } => {
                 export_with_format(&codexi.currencies, format, cwd)?;
+                msg_info!("Export completed");
+            }
+            ExchangeTypeCommand::Counterparty { format } => {
+                export_with_format(&codexi.counterparties, format, cwd)?;
                 msg_info!("Export completed");
             }
         },
@@ -99,6 +106,28 @@ pub fn handle_data_command(
                 }
                 let (currencies, warnings) = import_with_format::<CurrencyList>(format, cwd)?;
                 let summary = codexi.import_currencies(currencies)?;
+                FileManagement::save_current_state(&codexi, paths)?;
+                msg_info!(
+                    "Import in {}: {} created, {} updated.",
+                    summary.name,
+                    summary.created,
+                    summary.updated
+                );
+                if !warnings.is_empty() {
+                    view_warning(&warnings);
+                    msg_warn!("Import completed, {} warnings", warnings.len());
+                } else {
+                    msg_info!("Import completed");
+                }
+            }
+            ExchangeTypeCommand::Counterparty { format } => {
+                if !skip_confirm && !Prompt::confirm("Import the data?", false)? {
+                    msg_info!("Command cancelled.");
+                    return Ok(());
+                }
+                let (counterparties, warnings) =
+                    import_with_format::<CounterpartyList>(format, cwd)?;
+                let summary = codexi.import_counterparties(counterparties)?;
                 FileManagement::save_current_state(&codexi, paths)?;
                 msg_info!(
                     "Import in {}: {} created, {} updated.",

@@ -7,10 +7,10 @@ use crate::{
 
 #[derive(Debug)]
 pub struct BankItem {
-    pub id: String,             // Nulid
-    pub name: String,           // ex: "Boursorama"
-    pub branch: Option<String>, // ex: "Boursorama France"
-    pub note: Option<String>,   // Free field (address , code swift, ...)
+    pub id: String, // Nulid
+    pub name: String,
+    pub branch: Option<String>,
+    pub note: Option<String>, // Free field (address , code swift, ...)
 }
 
 #[derive(Debug)]

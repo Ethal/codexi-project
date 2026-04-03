@@ -4,7 +4,10 @@ use thiserror::Error;
 
 use crate::{
     core::CoreError,
-    logic::{account::AccountError, bank::BankError, currency::CurrencyError, utils::ResolveError},
+    logic::{
+        account::AccountError, bank::BankError, counterparty::CounterpartyError,
+        currency::CurrencyError, utils::ResolveError,
+    },
 };
 
 #[derive(Debug, Error)]
@@ -23,6 +26,8 @@ pub enum CodexiError {
     Bank(#[from] BankError),
     #[error("SYS_CURRENCY: {0}")]
     Currency(#[from] CurrencyError),
+    #[error("SYS_COUNTERPARTY: {0}")]
+    Counterparty(#[from] CounterpartyError),
     #[error("DATA_ACCOUNT: No account with id: {0}")]
     AccountNotFound(String),
     #[error("DATA_ACCOUNT: No current account selected — use `account use <id>` to select one")]

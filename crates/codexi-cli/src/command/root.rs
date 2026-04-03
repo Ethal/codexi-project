@@ -6,6 +6,7 @@ use crate::command::account::AccountArgs;
 use crate::command::admin::AdminArgs;
 use crate::command::bank::BankArgs;
 use crate::command::category::CategoryArgs;
+use crate::command::countparty::CounterpartyArgs;
 use crate::command::currency::CurrencyArgs;
 use crate::command::data::DataArgs;
 use crate::command::history::HistoryArgs;
@@ -62,12 +63,30 @@ pub enum RootCommand {
 
         #[arg(
             index = 3,
-            value_name = "DESCRIPTION...",
-            num_args = 1..,
-            help = "Description of the debit operation",
-            default_value = "no description"
+            value_name = "DESCRIPTION",
+            required = false,
+            num_args = 0..,
+            help = "Description of the debit operation"
         )]
         description: Vec<String>,
+
+        #[arg(
+            short = 'c',
+            long = "counterparty",
+            value_name = "COUNTERPARTY",
+            required = false,
+            help = "Counterparty of the debit"
+        )]
+        counterparty: Option<String>,
+
+        #[arg(
+            short = 'g',
+            long = "category",
+            value_name = "CATEGORY",
+            required = false,
+            help = "category of the debit"
+        )]
+        category: Option<String>,
     },
 
     /// Add a regular credit operation
@@ -91,12 +110,30 @@ pub enum RootCommand {
 
         #[arg(
             index = 3,
-            num_args = 1..,
-            value_name = "DESCRIPTION...",
-            help = "Description of the credit operation",
-            default_value = "no description"
+            value_name = "DESCRIPTION",
+            required = false,
+            num_args = 0..,
+            help = "Description of the credit operation"
         )]
         description: Vec<String>,
+
+        #[arg(
+            short = 'c',
+            long = "counterparty",
+            value_name = "COUNTERPARTY",
+            required = false,
+            help = "Counterparty of the credit"
+        )]
+        counterparty: Option<String>,
+
+        #[arg(
+            short = 'g',
+            long = "category",
+            value_name = "CATEGORY",
+            required = false,
+            help = "category of the credit"
+        )]
+        category: Option<String>,
     },
     /// Add a regular interest operation
     Interest {
@@ -119,12 +156,30 @@ pub enum RootCommand {
 
         #[arg(
             index = 3,
-            num_args = 1..,
-            value_name = "DESCRIPTION...",
-            help = "Description of the interest operation",
-            default_value = "no description"
+            value_name = "DESCRIPTION",
+            required = false,
+            num_args = 0..,
+            help = "Description of the interest operation"
         )]
         description: Vec<String>,
+
+        #[arg(
+            short = 'c',
+            long = "counterparty",
+            value_name = "COUNTERPARTY",
+            required = false,
+            help = "Counterparty of the interest"
+        )]
+        counterparty: Option<String>,
+
+        #[arg(
+            short = 'g',
+            long = "category",
+            value_name = "CATEGORY",
+            required = false,
+            help = "category of the interest"
+        )]
+        category: Option<String>,
     },
     /// Add a transfer operation between current account and other account in the ledger.
     /// <ACCOUNT_ID_TO> accept full ID, short ID, name of the account
@@ -173,6 +228,15 @@ pub enum RootCommand {
             default_value = "no description"
         )]
         description: Vec<String>,
+
+        #[arg(
+            short = 'g',
+            long = "category",
+            value_name = "CATEGORY",
+            required = false,
+            help = "category of the transfer"
+        )]
+        category: Option<String>,
     },
 
     /// Search and filter on operations in the current account, alias: view.
@@ -268,6 +332,9 @@ pub enum RootCommand {
 
     /// Manage Currencies
     Currency(CurrencyArgs),
+
+    /// Manage Counterparties
+    Counterparty(CounterpartyArgs),
 
     /// Manage Categories
     Category(CategoryArgs),

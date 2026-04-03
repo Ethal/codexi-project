@@ -4,6 +4,7 @@ mod account;
 mod admin;
 mod bank;
 mod category;
+mod counterparty;
 mod currency;
 mod data;
 mod history;

@@ -44,7 +44,9 @@ impl Account {
     /// TEST 5 — Symmetry of void/void_of
     /// TEST 6 — double void
     /// TEST 7 — anchors consistency
-    /// TEST 8 - transfer links
+    /// TEST 8 — transfer links
+    /// TEST 9 — kegacy_account (operation with account_id.is_nil())
+    /// TEST 10 — Counter party exist
     pub fn audit(&self) -> Result<Vec<CoreWarning>, AccountError> {
         let mut warnings = Vec::new();
 
@@ -114,6 +116,16 @@ impl Account {
                     ),
                 });
             }
+            // TEST 9 : Operation with legacy account id
+            if op.is_legacy_account() {
+                warnings.push(CoreWarning {
+                    kind: CoreWarningKind::InvalidData,
+                    message: format!(
+                        "TEST 9: Operation {} missing account_id (legacy data)",
+                        op.id
+                    ),
+                });
+            }
         }
 
         // TEST 4 : current balance of the account
@@ -128,6 +140,31 @@ impl Account {
         }
         // TEST 7
         self.audit_anchors(&shadow_account, &mut warnings);
+
+        Ok(warnings)
+    }
+
+    /// Perfomed and audit and a balance rebuild
+    pub fn audit_and_rebuild(&mut self) -> Result<Vec<CoreWarning>, AccountError> {
+        let warnings = self.audit()?; // si Err → blocking, NO rebuild
+
+        let has_warnings = warnings
+            .iter()
+            .all(|w| matches!(w.kind, CoreWarningKind::InvalidData));
+
+        if !warnings.is_empty() && has_warnings {
+            self.rebuild_balances_from(
+                self.operations
+                    .first()
+                    .map(|op| op.date)
+                    .unwrap_or_default(),
+            );
+            for op in &mut self.operations {
+                if op.is_legacy_account() {
+                    op.account_id = self.id;
+                }
+            }
+        }
 
         Ok(warnings)
     }
@@ -200,26 +237,6 @@ impl Account {
                 });
             }
         }
-    }
-
-    /// Perfomed and audit and a balance rebuild
-    pub fn audit_and_rebuild(&mut self) -> Result<Vec<CoreWarning>, AccountError> {
-        let warnings = self.audit()?; // si Err → blocking, NO rebuild
-
-        let has_only_balance_warnings = warnings
-            .iter()
-            .all(|w| matches!(w.kind, CoreWarningKind::InvalidData));
-
-        if !warnings.is_empty() && has_only_balance_warnings {
-            self.rebuild_balances_from(
-                self.operations
-                    .first()
-                    .map(|op| op.date)
-                    .unwrap_or_default(),
-            );
-        }
-
-        Ok(warnings)
     }
 
     /// Audit of the anchors

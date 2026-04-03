@@ -5,13 +5,28 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] — 
 > ⚠️ Breaking: DTO modules have been moved from `logic/*` to `dto/*`
 
+> ⚠️ Breaking: `Operation` structure, additional field `account_id`, performed the command `admin audit --rebuild`
+
 ### Added
 
 - **Account::set_context** as a wrapper around `context.update_context`.
 - **termination guards** in `set_context`, `set_bank` and `set_currency` to prevent mutating terminated accounts.
-- **CLI Command** - `overview` to display the main informations of the accounts, including the balance, account type, bank, and currency. 
+- **CLI Command** — `overview` to display the main informations of the accounts, including the balance, account type, bank, and currency. 
 - **`ignored`** operations list to stats output to surface operations excluded from calculations (e.g. unmatched void/voided pairs)
-- 
+- **Seed** — default seed for counterparty are available at the creation of a new ledger.
+- **Counterparty** — model, DTO, exchange import/export and validation wired end-to-end.
+  Fields `id`, `name`, `kind` (`Person` / `Organisation`), `note`, `terminated`.
+  Includes default seed at ledger creation and CLI subcommand `counterparty` (list, add, terminate).
+- **`-c / --counterparty`** flag added to CLI commands `debit`, `credit`, `interest`.
+  Accepts full id, short id, or name (exact / prefix / contains). Not available on `transfer` (inter-account operation).
+- **`-g / --category`** flag added to CLI commands `debit`, `credit`, `interest`, `transfer`.
+  Same resolution strategy as counterparty.
+- **`counterparty_id` and `category_id`** added to `OperationContext` — carried through
+  `register_transaction`, `transfer`, merge, audit and rebuild.
+- **`ExchangeCounterparty`** — exchange DTO for counterparty import/export. Validation covers
+  duplicate ids, unknown kind. Import creates or updates counterparties by id.
+
+
 ### Changed
 - **Refactored DTO layer**:
   - Moved DTOs from `logic/*` into dedicated `dto/*` modules
@@ -25,6 +40,9 @@ All notable changes to this project will be documented in this file.
   - Unmatched operations are excluded from financial calculations,
   - Improved accuracy of financial indicators (balance, totals, savings rate, averages, daily burn rate),
   - Refactored stats computation pipeline for clarity, consistency, and performance (single-pass processing).
+- **`account_id`** added to `Operation` structure — existing data requires `admin audit --rebuild`.
+- **`Account::set/merge/audit`** updated to handle legacy operations missing `account_id`
+  and to populate it during audit/rebuild.
 
 ### Removed
 - **`AccountBalance`** and **`CodexiBalance`** from Balance. 

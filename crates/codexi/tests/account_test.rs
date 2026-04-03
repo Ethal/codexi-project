@@ -57,6 +57,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Credit,
         dec!(100.0),
         "Atm".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -67,6 +69,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Credit,
         dec!(50.0),
         "Atm".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -77,6 +81,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(25.50),
         "Minimarket".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -87,6 +93,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(14.20),
         "Book".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -97,6 +105,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(44.80),
         "Post office".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -107,6 +117,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Credit,
         dec!(150.0),
         "Atm".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -117,6 +129,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(15.70),
         "Bakery".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -127,6 +141,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(11.00),
         "Fruits".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -137,6 +153,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Credit,
         dec!(10.0),
         "Refund".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -147,6 +165,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(23.60),
         "Newspapers".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -418,6 +438,8 @@ fn operation_is_not_voided_by_default() {
             OperationFlow::Credit,
             dec!(50.0),
             "Atm".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -455,6 +477,8 @@ fn void_operation() {
             OperationFlow::Credit,
             dec!(50.0),
             "Atm".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -486,6 +510,8 @@ fn void_operation_can_not_void_itself() {
             OperationFlow::Credit,
             dec!(50.0),
             "Atm".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -509,6 +535,8 @@ fn cannot_void_same_operation_twice() {
             OperationFlow::Credit,
             dec!(50.0),
             "Atm".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -606,6 +634,8 @@ fn compliance_rejects_overdraft_on_past_date() {
             OperationFlow::Debit,
             dec!(55),
             "ok debit".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -616,6 +646,8 @@ fn compliance_rejects_overdraft_on_past_date() {
         OperationFlow::Debit,
         dec!(10),
         "exceeds overdraft".into(),
+        None,
+        None,
     );
     assert!(res.is_err(), "overdraft at past date should be rejected");
 }
@@ -639,6 +671,8 @@ fn void_allowed_for_op_after_adjust_same_day() {
             OperationFlow::Debit,
             dec!(50),
             "op1".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -653,6 +687,8 @@ fn void_allowed_for_op_after_adjust_same_day() {
             OperationFlow::Credit,
             dec!(100),
             "op3".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -681,6 +717,8 @@ fn void_blocked_for_op_before_adjust_same_day() {
             OperationFlow::Debit,
             dec!(50),
             "op1".into(),
+            None,
+            None,
         )
         .unwrap();
 
