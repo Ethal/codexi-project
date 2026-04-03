@@ -33,12 +33,16 @@ impl Account {
         flow: OperationFlow,
         amount: Decimal,
         description: String,
+        counterparty_id: Option<Nulid>,
+        category_id: Option<Nulid>,
     ) -> Result<Nulid, AccountError> {
         self.temporal_policy(TemporalAction::Create(kind), date)?;
         self.compliance_policy(ComplianceAction::Create(kind, flow, amount), date)?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;
+        context.counterparty_id = counterparty_id;
+        context.category_id = category_id;
 
         // On prépare le builder
         let op = OperationBuilder::default()
@@ -47,6 +51,7 @@ impl Account {
             .flow(flow)
             .amount(amount)
             .description(description)
+            .account_id(self.id)
             .context(context)
             .build()?;
 
@@ -98,6 +103,7 @@ impl Account {
             .flow(op_flow)
             .amount(op_amount)
             .description(description)
+            .account_id(self.id)
             .links(links)
             .context(context)
             .build()?;
@@ -141,6 +147,7 @@ impl Account {
             .flow(op_flow)
             .amount(op_amount)
             .description(description)
+            .account_id(self.id)
             .context(context)
             .build()?;
 
@@ -192,6 +199,7 @@ impl Account {
             .flow(op_flow)
             .amount(op_amount)
             .description(description)
+            .account_id(self.id)
             .context(context)
             .build()?;
 
@@ -305,6 +313,7 @@ impl Account {
             .flow(op_flow)
             .amount(op_amount)
             .description(description)
+            .account_id(self.id)
             .context(context)
             .balance(checkpoint_balance)
             .build()?;

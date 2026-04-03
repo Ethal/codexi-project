@@ -1,4 +1,4 @@
-// src/ui/dictionnaries.rs
+// src/ui/bank.rs
 
 use codexi::core::format_id_short;
 use codexi::dto::BankCollection;

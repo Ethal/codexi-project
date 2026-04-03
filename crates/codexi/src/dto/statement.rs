@@ -71,7 +71,7 @@ impl StatementCollection {
     pub fn build(codexi: &Codexi, account: &Account, s_ops: &SearchOperationList) -> Self {
         // date min/max
 
-        let (from, to) = DateRange::compute(&s_ops, s_ops.params.from, s_ops.params.to).formatted();
+        let (from, to) = DateRange::compute(s_ops, s_ops.params.from, s_ops.params.to).formatted();
 
         Self {
             account: AccountItem::build(codexi, account),

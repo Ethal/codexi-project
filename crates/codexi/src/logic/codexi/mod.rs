@@ -9,7 +9,9 @@ mod settings;
 mod transfer;
 
 pub use error::CodexiError;
-pub use init_data::{default_banks, default_categories, default_currencies};
+pub use init_data::{
+    default_banks, default_categories, default_counterparties, default_currencies,
+};
 pub use migration_v1::migrate_v1;
 pub use migration_v2::migrate_v2;
 pub use model::Codexi;

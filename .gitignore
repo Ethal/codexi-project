@@ -29,6 +29,8 @@
 !Cargo.toml
 !categories_en.json
 !categories_fr.json
+!counterparties_en.json
+!counterparties_fr.json
 !currencies.json
 !banks.json
 !statement.html

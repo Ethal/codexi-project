@@ -122,7 +122,7 @@ pub enum AccountCommand {
     SetContext {
         /// Overdraft limit
         #[arg(
-            short,
+            short = 'o',
             long,
             value_name = "OVERDRAFT",
             allow_negative_numbers = false,
@@ -131,7 +131,7 @@ pub enum AccountCommand {
         overdraft: Option<String>,
         /// Minimiun balance
         #[arg(
-            short,
+            short = 'b',
             long,
             value_name = "BALANCE_MIN",
             allow_negative_numbers = false,
@@ -140,7 +140,7 @@ pub enum AccountCommand {
         balance_min: Option<String>,
         /// Max monthly transactions
         #[arg(
-            short,
+            short = 'm',
             long,
             value_name = "COUNT",
             allow_negative_numbers = false,
@@ -149,17 +149,17 @@ pub enum AccountCommand {
         max_monthly_transactions: Option<String>,
         /// Deposit locked until date
         #[arg(
-            short,
+            short = 'd',
             long,
             value_name = "DEPOSIT_LOCKED_DATE",
             help = "Deposit locked until date (YYYY-MM-DD)"
         )]
         deposit_locked_until: Option<String>,
         /// Allow interest
-        #[arg(short, long, help = "Allow interest")]
+        #[arg(short = 'i', long, help = "Allow interest")]
         interest: Option<bool>,
         /// Allow signers
-        #[arg(short, long, help = "Allow signers")]
+        #[arg(short = 's', long, help = "Allow signers")]
         signers: Option<bool>,
     },
 }

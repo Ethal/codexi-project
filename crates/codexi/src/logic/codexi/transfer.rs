@@ -27,6 +27,7 @@ impl Codexi {
         to_id: Nulid,
         amount_to: Decimal,
         description: String,
+        category_id: Option<Nulid>,
     ) -> Result<(Nulid, Nulid), CodexiError> {
         let from_id = self.current_account;
 
@@ -91,6 +92,7 @@ impl Codexi {
 
         let mut ctx_from = OperationContext::default();
         ctx_from.currency_id = Some(currency_from);
+        ctx_from.category_id = category_id;
 
         let mut op_from = OperationBuilder::default()
             .date(date)
@@ -98,8 +100,9 @@ impl Codexi {
             .flow(OperationFlow::Debit)
             .amount(amount_from)
             .description(desc_from)
+            .account_id(from_id)
             .links(links_from)
-            .context(ctx_from.clone())
+            .context(ctx_from)
             .build()
             .map_err(AccountError::Operation)?;
 
@@ -120,6 +123,7 @@ impl Codexi {
 
         let mut ctx_to = OperationContext::default();
         ctx_to.currency_id = Some(currency_to);
+        ctx_to.category_id = category_id;
 
         // Pre-set the id we reserved earlier
         let mut op_to = OperationBuilder::default()
@@ -128,6 +132,7 @@ impl Codexi {
             .flow(OperationFlow::Credit)
             .amount(amount_to)
             .description(desc_to)
+            .account_id(to_id)
             .links(links_to)
             .context(ctx_to)
             .build()
@@ -304,6 +309,7 @@ mod tests {
             to_id,
             dec!(1_000_000),
             "ATM withdrawal".into(),
+            None,
         );
         assert!(res.is_ok());
         let (op_from_id, op_to_id) = res.unwrap();
@@ -336,6 +342,7 @@ mod tests {
                 to_id,
                 dec!(1_000_000),
                 "ATM".into(),
+                None,
             )
             .unwrap();
 
@@ -355,6 +362,7 @@ mod tests {
             from_id, // same as current_account
             dec!(100),
             "self".into(),
+            None,
         );
         assert!(matches!(res, Err(CodexiError::TransferSameAccount)));
     }
@@ -368,6 +376,7 @@ mod tests {
             to_id,
             dec!(100_000),
             "test".into(),
+            None,
         );
         assert!(matches!(
             res,
@@ -380,7 +389,14 @@ mod tests {
     #[test]
     fn transfer_amount_to_zero_fails() {
         let (mut codexi, _, to_id) = setup_codexi_two_accounts();
-        let res = codexi.transfer(transfer_date(), dec!(100), to_id, dec!(0), "test".into());
+        let res = codexi.transfer(
+            transfer_date(),
+            dec!(100),
+            to_id,
+            dec!(0),
+            "test".into(),
+            None,
+        );
         assert!(matches!(
             res,
             Err(CodexiError::Account(AccountError::ComplianceViolation(
@@ -400,6 +416,7 @@ mod tests {
             to_id,
             dec!(100_000),
             "test".into(),
+            None,
         );
         assert!(matches!(res, Err(CodexiError::TransferNoCurrency(_))));
     }
@@ -415,6 +432,7 @@ mod tests {
             to_id,
             dec!(100_000),
             "test".into(),
+            None,
         );
         assert!(matches!(res, Err(CodexiError::TransferNoCurrency(_))));
     }
@@ -429,6 +447,7 @@ mod tests {
             to_id,
             dec!(30_000_000),
             "too much".into(),
+            None,
         );
         assert!(matches!(res, Err(CodexiError::Account(_))));
     }
@@ -445,6 +464,7 @@ mod tests {
                 to_id,
                 dec!(1_000_000),
                 "ATM".into(),
+                None,
             )
             .unwrap();
 
@@ -479,6 +499,7 @@ mod tests {
                 to_id,
                 dec!(1_000_000),
                 "ATM".into(),
+                None,
             )
             .unwrap();
 
@@ -504,6 +525,8 @@ mod tests {
                 OperationFlow::Debit,
                 dec!(50),
                 "groceries".into(),
+                None,
+                None,
             )
             .unwrap();
 

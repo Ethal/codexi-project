@@ -46,7 +46,7 @@ pub struct StatsCollection {
 impl StatsCollection {
     pub fn build(codexi: &Codexi, account: &Account, s_ops: &SearchOperationList) -> Self {
         // compute the from / to date
-        let (from, to) = DateRange::compute(&s_ops, s_ops.params.from, s_ops.params.to).formatted();
+        let (from, to) = DateRange::compute(s_ops, s_ops.params.from, s_ops.params.to).formatted();
 
         let active: Vec<&SearchOperation> = s_ops.active_items().collect();
         if active.is_empty() {

@@ -5,6 +5,7 @@ pub mod balance;
 pub mod bank;
 pub mod category;
 pub mod codexi;
+pub mod counterparty;
 pub mod counts;
 pub mod currency;
 pub mod operation;

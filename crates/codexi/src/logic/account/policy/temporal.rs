@@ -286,6 +286,8 @@ mod tests {
                 OperationFlow::Debit,
                 dec!(25),
                 "Grocery".into(),
+                None,
+                None,
             )
             .unwrap();
 
@@ -313,6 +315,8 @@ mod tests {
                 OperationFlow::Debit,
                 dec!(50),
                 "op1".into(),
+                None,
+                None,
             )
             .unwrap();
 
@@ -327,6 +331,8 @@ mod tests {
                 OperationFlow::Credit,
                 dec!(100),
                 "op3".into(),
+                None,
+                None,
             )
             .unwrap();
 
@@ -351,6 +357,8 @@ mod tests {
                 OperationFlow::Debit,
                 dec!(50),
                 "op1".into(),
+                None,
+                None,
             )
             .unwrap();
 

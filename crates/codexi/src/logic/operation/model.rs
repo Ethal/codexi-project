@@ -15,6 +15,7 @@ use crate::logic::operation::OperationFlow;
 use crate::logic::operation::OperationKind;
 use crate::logic::utils::HasNulid;
 
+// IMPORTANT use for exchange , could be deleted avec addition of the field account_id in operation
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AccountOperations {
     pub account_id: Nulid,
@@ -34,8 +35,10 @@ pub struct OperationContext {
     pub category_id: Option<Nulid>,
     pub currency_id: Option<Nulid>,
     pub exchange_rate: Decimal,
+    #[serde(default)]
     pub payee: Option<String>,
     pub reconciled: Option<NaiveDate>,
+    pub counterparty_id: Option<Nulid>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -59,6 +62,10 @@ pub struct Operation {
     pub description: String,
     #[builder(default = "Decimal::ZERO")]
     pub balance: Decimal,
+
+    // --- Relations ---
+    #[serde(default)]
+    pub account_id: Nulid,
 
     // --- Optional field ---
     #[builder(default, setter(into, strip_option = false))]
@@ -87,6 +94,10 @@ impl Operation {
     }
     pub fn is_adjust(&self) -> bool {
         self.kind.is_adjust()
+    }
+
+    pub fn is_legacy_account(&self) -> bool {
+        self.account_id.is_nil()
     }
 }
 

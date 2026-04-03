@@ -4,7 +4,9 @@ use thiserror::Error;
 
 use crate::{
     core::CoreError,
-    logic::{account::AccountError, operation::OperationError},
+    logic::{
+        account::AccountError, counterparty::CounterpartyKindError, operation::OperationError,
+    },
 };
 
 #[derive(Debug, Error)]
@@ -19,6 +21,8 @@ pub enum ExchangeError {
     Account(#[from] AccountError),
     #[error("SYS_OP: {0}")]
     Operation(#[from] OperationError),
+    #[error("SYS_COUNTERPARTY_KIND: {0}")]
+    CounterpartyKind(#[from] CounterpartyKindError),
     #[error("EX_INVALID_VERSION: {0}")]
     InvalidVersion(String),
     #[error("EX_DUPLICATE_OP: {0}")]
@@ -35,6 +39,8 @@ pub enum ExchangeError {
     BrokenTransferLink(String),
     #[error("EX_DUPLICATE_CU: {0}")]
     DuplicateCurrency(String),
+    #[error("EX_DUPLICATE_CO: {0}")]
+    DuplicateCounterparty(String),
     #[error("EX_VAL: {0}")]
     InvalidData(String),
 }

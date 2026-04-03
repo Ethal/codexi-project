@@ -6,9 +6,10 @@ use crate::core::{
 };
 use crate::exchange::{
     ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
-    ExchangeAccountOperations, ExchangeCheckpointRef, ExchangeCurrency, ExchangeCurrencyList,
-    ExchangeOperation,
+    ExchangeAccountOperations, ExchangeCheckpointRef, ExchangeCounterparty,
+    ExchangeCounterpartyList, ExchangeCurrency, ExchangeCurrencyList, ExchangeOperation,
 };
+use crate::logic::counterparty::CounterpartyList;
 use crate::logic::operation::AccountOperations;
 use crate::logic::{account::Account, currency::CurrencyList};
 
@@ -61,6 +62,20 @@ impl ExchangeCurrencyList {
                 .currencies
                 .iter()
                 .map(ExchangeCurrency::from)
+                .collect(),
+        }
+    }
+}
+
+impl ExchangeCounterpartyList {
+    /// Single entry point for exporting the currency list (JSON / TOML / CSV)
+    pub fn export_data(export: &CounterpartyList) -> ExchangeCounterpartyList {
+        ExchangeCounterpartyList {
+            version: CODEXI_EXCHANGE_FORMAT_VERSION,
+            counterparties: export
+                .counterparties
+                .iter()
+                .map(ExchangeCounterparty::from)
                 .collect(),
         }
     }
