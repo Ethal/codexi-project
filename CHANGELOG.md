@@ -25,7 +25,28 @@ All notable changes to this project will be documented in this file.
   `register_transaction`, `transfer`, merge, audit and rebuild.
 - **`ExchangeCounterparty`** — exchange DTO for counterparty import/export. Validation covers
   duplicate ids, unknown kind. Import creates or updates counterparties by id.
-
+- **`logic/loan` module** — standalone calculation module for microloan tracking.
+  No ledger integration — pure computation aid. Two interest models supported:
+  - `LinearInterest` — simple daily interest: `capital × rate × late_days`
+  - `CompoundInterest` — compound daily interest: `capital × ((1 + rate)^days - 1)`
+  Both models share a common `LoanBase` with `LoanPolicy` (cap, penalty, min capital,
+  max duration, free period). Cap applies to interest only; penalty is a fixed percentage
+  of capital added after cap. `LoanSummary` returns `final_due`, `total_interest`,
+  per-day interest vector with dates, and `first_interest_date`.
+- **`LoanKind`** — enum (`Linear` / `Compound`) shared between domain model and settings.
+  Replaces the former `LoanInterestType` in settings layer.
+- **`LoanPolicySettings`** — persisted loan policy stored in `tmp/loan_policy.json`.
+  Loaded via `load_or_create`, saved via `save`, reset to defaults via `reset`.
+  Converted to domain `LoanPolicy` via `to_loan_policy()`.
+- **CLI command `loan policy show`** — display current persisted loan policy.
+- **CLI command `loan policy set`** — update one or more policy fields without
+  overwriting unspecified fields. Flags: `--type`, `--rate`, `--free-days`,
+  `--max-cap`, `--max-days`, `--min-capital`, `--max-penalty`.
+- **CLI command `loan policy reset`** — reset policy to default values and persist.
+- **CLI command `loan simulate`** — compute amount due for a given loan.
+  Required: `--capital`, `--start`, `--refund`.
+  Optional overrides (without modifying policy): `--type`, `--rate`, `--free-days`.
+  Displays: amount due, total interest, first interest date, per-day interest breakdown.
 
 ### Changed
 - **Refactored DTO layer**:
