@@ -1,46 +1,37 @@
 // src/logic/loan/error.rs
 
-use std::fmt;
+use thiserror::Error;
 
 /*------------ LOAN ERROR --------------*/
 
-/// Impl loan error
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Error)]
 pub enum LoanError {
+    #[error("The free day period shall be above zero")]
     FreeDaysPeriodBelowZero,
+    #[error("The refund date shall be equal or above the start date")]
     RefundDateBelowStartDate,
+    #[error("The interest shall be positive")]
     NegativeInterest,
+    #[error("The max interest cap is out of bound (0-100%)")]
     InterestCapOutOfBounds,
+    #[error("The max duration days is out of bound (>=0)")]
     DurationDaysOutOfBounds,
+    #[error("The min capital is out of bound (>=0)")]
     CapitalOutOfBounds,
+    #[error("The max penality is out of bound (0-100%)")]
     PenalityOutOfBounds,
+    #[error("The capital is below the one from policy")]
     CapitalBelowMinimum,
+    #[error("The duration exceeded the one from policy")]
     DurationExceeded,
+    #[error("The penality exceeded the one from policy")]
     PenalityExceeded,
-}
-
-/// Impl loan error
-impl LoanError {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            LoanError::FreeDaysPeriodBelowZero => "The free day period shall be above zero",
-            LoanError::RefundDateBelowStartDate => {
-                "The refund date shall be equal or above the start date"
-            }
-            LoanError::NegativeInterest => "The interest shall be positive",
-            LoanError::InterestCapOutOfBounds => "The max interest cap is out of bound (0-100%)",
-            LoanError::DurationDaysOutOfBounds => "The max duration days is out of bound (>=0)",
-            LoanError::CapitalOutOfBounds => "The min capital is out of bound (>=0)",
-            LoanError::PenalityOutOfBounds => "The max penality is out of bound (0-100%)",
-            LoanError::CapitalBelowMinimum => "The capital is below the one from policy",
-            LoanError::DurationExceeded => "The duration exceeded the one from policy",
-            LoanError::PenalityExceeded => "The penality exceeded the one from policy",
-        }
-    }
-}
-/// Implement Display for LinearInterestError
-impl fmt::Display for LoanError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
+    #[error("Unknown interest type, expected 'linear' or 'compound'")]
+    UnknownInterestType,
+    #[error("Failed to serialize loan policy")]
+    PolicySerialize,
+    #[error("Failed to write loan policy to disk")]
+    PolicyWrite,
+    #[error("Failed to parse policy field: {0}")]
+    PolicyParse(String),
 }

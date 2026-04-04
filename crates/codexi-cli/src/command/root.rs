@@ -9,6 +9,7 @@ use crate::command::category::CategoryArgs;
 use crate::command::currency::CurrencyArgs;
 use crate::command::data::DataArgs;
 use crate::command::history::HistoryArgs;
+use crate::command::loan::LoanArgs;
 use crate::command::operation::OperationArgs;
 use crate::command::report::ReportArgs;
 
@@ -276,4 +277,7 @@ pub enum RootCommand {
     /// Technical maintenance, disaster recovery, and low-level file management
     /// To be use carefully, performed a --help is recommended
     Admin(AdminArgs),
+
+    /// Laon Simulation
+    Loan(LoanArgs),
 }

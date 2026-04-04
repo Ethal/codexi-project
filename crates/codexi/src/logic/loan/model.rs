@@ -2,6 +2,7 @@
 
 use chrono::{Duration, NaiveDate};
 use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 //use rust_decimal_macros::dec;
 
 use crate::logic::loan::LoanError;
@@ -23,7 +24,7 @@ fn pow(val: Decimal, exp: i64) -> Decimal {
 
 /*----------------- LOAN POLICY -----------------*/
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct LoanPolicy {
     pub max_interest_cap: Option<Decimal>,
     pub max_duration_days: Option<Duration>,
@@ -44,8 +45,8 @@ impl Default for LoanPolicy {
 
 /*----------------- LOAN BASE -----------------*/
 
-#[derive(Debug, PartialEq)]
-struct LoanBase {
+#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
+pub struct LoanBase {
     free_period: Duration,
     capital: Decimal,
     interest_rate: Decimal,
@@ -127,23 +128,53 @@ impl LoanBase {
     }
 
     // max x% of the capital
-    fn apply_interest_cap(&self, calculated_due: Decimal) -> Decimal {
+    fn apply_interest_cap(&self, total_interest: Decimal) -> Decimal {
         if let Some(cap_pct) = self.policy.max_interest_cap {
-            let max_due = self.capital * (Decimal::ONE + cap_pct / Decimal::ONE_HUNDRED);
-            return calculated_due.min(max_due);
+            let max_interest = self.capital * (cap_pct / Decimal::ONE_HUNDRED);
+            return total_interest.min(max_interest);
         }
-        calculated_due
+        total_interest
     }
-    fn apply_penality(&self, calculated_due: Decimal) -> Decimal {
-        if let Some(penality) = self.policy.max_penality {
-            let penalty_amount = self.capital * (penality / Decimal::ONE_HUNDRED);
-            return calculated_due + penalty_amount;
+    // % max of the capital
+    fn apply_penality(&self) -> Decimal {
+        if let Some(penality_pct) = self.policy.max_penality {
+            return self.capital * (penality_pct / Decimal::ONE_HUNDRED);
         }
-        calculated_due
+        Decimal::ZERO
     }
 }
 
 /*------------ LOAN --------------*/
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum LoanKind {
+    Linear,
+    Compound,
+}
+
+impl LoanKind {
+    pub fn from_str(s: &str) -> Result<Self, LoanError> {
+        let lower = s.to_ascii_lowercase();
+        match lower.as_str() {
+            "linear" => Ok(Self::Linear),
+            "compound" => Ok(Self::Compound),
+            _ => Err(LoanError::UnknownInterestType),
+        }
+    }
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Compound => "compound",
+            Self::Linear => "linear",
+        }
+    }
+}
+
+impl Default for LoanKind {
+    fn default() -> Self {
+        Self::Linear
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub enum Loan {
@@ -153,9 +184,11 @@ pub enum Loan {
 
 #[derive(Debug, PartialEq)]
 pub struct LoanSummary {
-    final_due: Decimal,
-    cumulative_interest: Vec<Decimal>,
-    total_interest: Decimal,
+    pub final_due: Decimal,
+    pub cumulative_interest: Vec<Decimal>,
+    pub total_interest: Decimal,
+    pub start_date: NaiveDate,
+    pub first_interest_date: NaiveDate, // start_date + free_period + 1 jour
 }
 
 impl Loan {
@@ -201,6 +234,8 @@ impl LinearInterest {
                 final_due: self.base.capital,
                 cumulative_interest: Vec::new(),
                 total_interest: Decimal::ZERO,
+                start_date,
+                first_interest_date: start_date + self.base.free_period + Duration::days(1),
             });
         }
 
@@ -210,14 +245,16 @@ impl LinearInterest {
 
         let total_interest = daily_interest * Decimal::from(late_days);
 
-        let mut due = self.base.capital + total_interest;
-        due = self.base.apply_interest_cap(due);
-        due = self.base.apply_penality(due);
+        let interest_capped = self.base.apply_interest_cap(total_interest);
+        let penality = self.base.apply_penality();
+        let due = self.base.capital + interest_capped + penality;
 
         Ok(LoanSummary {
             final_due: due,
             cumulative_interest: interest_day,
-            total_interest: total_interest,
+            total_interest: interest_capped,
+            start_date,
+            first_interest_date: start_date + self.base.free_period + Duration::days(1),
         })
     }
 }
@@ -253,6 +290,8 @@ impl CompoundInterest {
                 final_due: self.base.capital,
                 cumulative_interest: Vec::new(),
                 total_interest: Decimal::ZERO,
+                start_date,
+                first_interest_date: start_date + self.base.free_period + Duration::days(1),
             });
         }
 
@@ -269,13 +308,15 @@ impl CompoundInterest {
             total_interest += daily;
         }
 
-        let mut due = self.base.capital + total_interest;
-        due = self.base.apply_interest_cap(due);
-        due = self.base.apply_penality(due);
+        let interest_capped = self.base.apply_interest_cap(total_interest);
+        let penality = self.base.apply_penality();
+        let due = self.base.capital + interest_capped + penality;
         Ok(LoanSummary {
             final_due: due,
             cumulative_interest: int_days,
-            total_interest: total_interest,
+            total_interest: interest_capped,
+            start_date,
+            first_interest_date: start_date + self.base.free_period + Duration::days(1),
         })
     }
     fn interest_calculation(&self, rate: Decimal, day: i64) -> Decimal {
@@ -522,5 +563,75 @@ mod tests {
         let refund = parse_date("2026-01-10").unwrap();
         let due = loan.amount_due(start, refund).unwrap();
         assert_eq!(due.final_due, dec!(120));
+    }
+
+    #[test]
+    fn linear_late_with_penalty() {
+        let mut policy = LoanPolicy::default();
+        policy.max_penality = Some(dec!(10)); // 10% du capital
+        policy.max_interest_cap = None; // pas de cap pour isoler la pénalité
+
+        let linear = LinearInterest::new(Duration::days(0), dec!(1_000), dec!(1), policy).unwrap();
+        let loan = Loan::Linear(linear);
+
+        let start = parse_date("2026-01-01").unwrap();
+        let refund = parse_date("2026-01-03").unwrap();
+
+        // capital=1000, rate=1%, 2 late days
+        // interest = 1000 * 0.01 * 2 = 20
+        // penalty  = 1000 * 0.10    = 100
+        // final    = 1000 + 20 + 100 = 1120
+        let due = loan.amount_due(start, refund).unwrap();
+        assert_eq!(due.total_interest, dec!(20));
+        assert_eq!(due.final_due, dec!(1_120));
+    }
+
+    #[test]
+    fn linear_late_with_cap_and_penalty() {
+        let mut policy = LoanPolicy::default();
+        policy.max_interest_cap = Some(dec!(10)); // cap intérêts à 10% du capital
+        policy.max_penality = Some(dec!(5)); // pénalité 5% du capital
+
+        let linear = LinearInterest::new(
+            Duration::days(0),
+            dec!(1_000),
+            dec!(5), // rate élevé pour déclencher le cap
+            policy,
+        )
+        .unwrap();
+        let loan = Loan::Linear(linear);
+
+        let start = parse_date("2026-01-01").unwrap();
+        let refund = parse_date("2026-01-10").unwrap();
+
+        // capital=1000, rate=5%, 9 late days
+        // interest brut = 1000 * 0.05 * 9 = 450 → cappé à 1000 * 10% = 100
+        // penalty       = 1000 * 5%        = 50
+        // final         = 1000 + 100 + 50  = 1150
+        let due = loan.amount_due(start, refund).unwrap();
+        assert_eq!(due.total_interest, dec!(100));
+        assert_eq!(due.final_due, dec!(1_150));
+    }
+
+    #[test]
+    fn compound_late_with_penalty() {
+        let mut policy = LoanPolicy::default();
+        policy.max_penality = Some(dec!(10));
+        policy.max_interest_cap = None;
+
+        let compound =
+            CompoundInterest::new(Duration::days(0), dec!(1_000), dec!(1), policy).unwrap();
+        let loan = Loan::Compound(compound);
+
+        let start = parse_date("2026-01-01").unwrap();
+        let refund = parse_date("2026-01-04").unwrap();
+
+        // capital=1000, rate=1%, 3 late days composé
+        // interest = 1000 * ((1.01)^3 - 1) = 1000 * 0.030301 = 30.301
+        // penalty  = 1000 * 10% = 100
+        // final    = 1000 + 30.301 + 100 = 1130.301
+        let due = loan.amount_due(start, refund).unwrap();
+        assert_eq!(due.total_interest, dec!(30.301));
+        assert_eq!(due.final_due, dec!(1_130.301));
     }
 }

@@ -25,7 +25,7 @@ use crate::{
     handler::{
         account::handle_account_command, admin::handle_admin_command, bank::handle_bank_command,
         category::handle_category_command, currency::handle_currency_command,
-        data::handle_data_command, history::handle_history_command,
+        data::handle_data_command, history::handle_history_command, loan::handle_loan_command,
         operation::handle_operation_command, report::handle_report_command,
     },
     msg_info, msg_warn,
@@ -189,6 +189,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
         RootCommand::Bank(args) => handle_bank_command(args.command, paths)?,
         RootCommand::Currency(args) => handle_currency_command(args.command, paths)?,
         RootCommand::Category(args) => handle_category_command(args.command, paths)?,
+        RootCommand::Loan(args) => handle_loan_command(args.command, paths)?,
     }
     Ok(())
 }
