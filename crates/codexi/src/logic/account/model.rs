@@ -260,6 +260,7 @@ mod tests {
             .flow(OperationFlow::Credit)
             .amount(dec!(10))
             .description("description".to_string())
+            .account_id(account.id)
             .build()
             .unwrap();
         account.operations.push(op);
@@ -270,6 +271,7 @@ mod tests {
             .flow(OperationFlow::Credit)
             .amount(dec!(10))
             .description("description".to_string())
+            .account_id(account.id)
             .build()
             .unwrap();
         account.operations.push(op); // the latest one
@@ -280,6 +282,7 @@ mod tests {
             .flow(OperationFlow::Credit)
             .amount(dec!(10))
             .description("description".to_string())
+            .account_id(account.id)
             .build()
             .unwrap();
         account.operations.push(op);
@@ -308,6 +311,7 @@ mod tests {
             .flow(OperationFlow::Credit)
             .amount(dec!(10))
             .description("description".to_string())
+            .account_id(account.id)
             .build()
             .unwrap();
         account.commit_operation(op);
@@ -320,6 +324,7 @@ mod tests {
             .flow(OperationFlow::Credit)
             .amount(dec!(10))
             .description("fraudulent".to_string())
+            .account_id(account.id)
             .build()
             .unwrap();
 
@@ -352,6 +357,7 @@ mod tests {
                 .flow(OperationFlow::Credit)
                 .amount(dec!(100))
                 .description("ok".to_string())
+                .account_id(account.id)
                 .build()
                 .unwrap(),
         );
@@ -362,6 +368,7 @@ mod tests {
                 .flow(OperationFlow::Credit)
                 .amount(dec!(100))
                 .description("ok".to_string())
+                .account_id(account.id)
                 .build()
                 .unwrap(),
         );
@@ -374,6 +381,7 @@ mod tests {
                 .flow(OperationFlow::Debit)
                 .amount(dec!(10))
                 .description("fraudulent".to_string())
+                .account_id(account.id)
                 .build()
                 .unwrap(),
         );

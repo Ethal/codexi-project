@@ -3,7 +3,7 @@
 use chrono::{Duration, NaiveDate};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-//use rust_decimal_macros::dec;
+use std::str::FromStr;
 
 use crate::logic::loan::LoanError;
 
@@ -95,10 +95,10 @@ impl LoanBase {
             return Err(LoanError::PenalityOutOfBounds);
         }
 
-        if let Some(min) = policy.min_capital {
-            if capital < min {
-                return Err(LoanError::CapitalBelowMinimum);
-            }
+        if let Some(min) = policy.min_capital
+            && capital < min
+        {
+            return Err(LoanError::CapitalBelowMinimum);
         }
 
         Ok(Self {
@@ -117,10 +117,10 @@ impl LoanBase {
         if refund_date < start_date {
             return Err(LoanError::RefundDateBelowStartDate);
         }
-        if let Some(max) = self.policy.max_duration_days {
-            if (refund_date - start_date) > max {
-                return Err(LoanError::DurationExceeded);
-            }
+        if let Some(max) = self.policy.max_duration_days
+            && (refund_date - start_date) > max
+        {
+            return Err(LoanError::DurationExceeded);
         }
 
         let delay = (refund_date - start_date).num_days();
@@ -146,22 +146,14 @@ impl LoanBase {
 
 /*------------ LOAN --------------*/
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub enum LoanKind {
+    #[default]
     Linear,
     Compound,
 }
 
 impl LoanKind {
-    pub fn from_str(s: &str) -> Result<Self, LoanError> {
-        let lower = s.to_ascii_lowercase();
-        match lower.as_str() {
-            "linear" => Ok(Self::Linear),
-            "compound" => Ok(Self::Compound),
-            _ => Err(LoanError::UnknownInterestType),
-        }
-    }
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Compound => "compound",
@@ -170,9 +162,14 @@ impl LoanKind {
     }
 }
 
-impl Default for LoanKind {
-    fn default() -> Self {
-        Self::Linear
+impl FromStr for LoanKind {
+    type Err = LoanError;
+    fn from_str(s: &str) -> Result<Self, LoanError> {
+        match s.to_ascii_lowercase().as_str() {
+            "linear" => Ok(Self::Linear),
+            "compound" => Ok(Self::Compound),
+            _ => Err(LoanError::UnknownInterestType),
+        }
     }
 }
 

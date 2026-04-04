@@ -80,6 +80,7 @@ mod tests {
             .flow(OperationFlow::Credit)
             .amount(dec!(100))
             .description("test".to_string())
+            .account_id(account.id)
             .build()
             .unwrap();
         account.commit_operation(op);

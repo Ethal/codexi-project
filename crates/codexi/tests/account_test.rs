@@ -836,6 +836,7 @@ fn audit_detects_broken_transfer_link() {
         .flow(OperationFlow::Debit)
         .amount(dec!(50))
         .description("broken transfer".to_string())
+        .account_id(account.id)
         .links(links)
         .build()
         .unwrap();

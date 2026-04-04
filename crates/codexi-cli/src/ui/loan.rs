@@ -82,9 +82,9 @@ pub fn view_loan_summary(data: &LoanSummary) {
         for day_interest in data.cumulative_interest.iter() {
             println!(
                 "{} {} {}",
+                LABEL_STYLE.apply_to("interest"),
                 LABEL_STYLE.apply_to(current_date.to_string()),
                 VALUE_STYLE.apply_to(day_interest.separate_with_commas()),
-                LABEL_STYLE.apply_to("interest")
             );
             current_date += Duration::days(1);
         }
