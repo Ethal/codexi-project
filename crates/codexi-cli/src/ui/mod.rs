@@ -7,6 +7,7 @@ mod category;
 mod counterparty;
 mod currency;
 mod display;
+mod loan;
 mod operation;
 
 pub use account::*;
@@ -16,6 +17,7 @@ pub use category::view_category;
 pub use counterparty::view_counterparty;
 pub use currency::view_currency;
 pub use display::*;
+pub use loan::*;
 pub use operation::*;
 
 use console::Style;

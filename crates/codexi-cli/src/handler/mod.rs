@@ -8,6 +8,7 @@ mod counterparty;
 mod currency;
 mod data;
 mod history;
+mod loan;
 mod operation;
 mod report;
 mod root;
