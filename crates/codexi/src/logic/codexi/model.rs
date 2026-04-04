@@ -12,8 +12,10 @@ use crate::{
         bank::BankList,
         category::CategoryList,
         codexi::{
-            CodexiError, CodexiSettings, default_banks, default_categories, default_currencies,
+            CodexiError, CodexiSettings, default_banks, default_categories, default_counterparties,
+            default_currencies,
         },
+        counterparty::CounterpartyList,
         currency::CurrencyList,
         operation::AccountOperations,
     },
@@ -30,6 +32,8 @@ pub struct Codexi {
     pub categories: CategoryList,
     pub banks: BankList,
     pub currencies: CurrencyList,
+    #[serde(default)]
+    pub counterparties: CounterpartyList,
 
     pub note: Option<String>,
 
@@ -43,6 +47,7 @@ impl Codexi {
 
         // Seed data as per language settings
         let categories = CategoryList::from(default_categories(&settings.language));
+        let counterparties = CounterpartyList::from(default_counterparties(&settings.language));
         let currencies = CurrencyList::from(default_currencies());
         let banks = BankList::from(default_banks());
 
@@ -56,6 +61,7 @@ impl Codexi {
             categories,
             banks,
             currencies,
+            counterparties,
             accounts,
             current_account: Nulid::nil(),
             note: None,
@@ -104,6 +110,8 @@ impl Codexi {
     pub fn set_account_bank(&mut self, id: &Nulid) -> Result<(), CodexiError> {
         self.banks.get_by_id(id)?;
         let acc = self.get_current_account_mut()?;
+        acc.is_terminated()
+            .map_err(AccountError::TemporalViolation)?;
         acc.bank_id = Some(*id);
         Ok(())
     }
@@ -115,6 +123,8 @@ impl Codexi {
     ) -> Result<(), CodexiError> {
         self.currencies.get_by_id(id)?;
         let acc = self.get_current_account_mut()?;
+        acc.is_terminated()
+            .map_err(AccountError::TemporalViolation)?;
         acc.currency_id = Some(*id);
         if update_operation {
             for op in acc.operations.iter_mut() {
@@ -198,6 +208,17 @@ impl Codexi {
         imported_currencies: CurrencyList,
     ) -> Result<ImportSummary, CodexiError> {
         let summary = self.currencies.merge_from_import(imported_currencies)?;
+        Ok(summary)
+    }
+    /// Import counterparties from json, toml, csv
+    /// Return a import summary
+    pub fn import_counterparties(
+        &mut self,
+        imported_counterparties: CounterpartyList,
+    ) -> Result<ImportSummary, CodexiError> {
+        let summary = self
+            .counterparties
+            .merge_from_import(imported_counterparties)?;
         Ok(summary)
     }
 

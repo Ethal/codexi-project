@@ -6,6 +6,7 @@ use crate::command::account::AccountArgs;
 use crate::command::admin::AdminArgs;
 use crate::command::bank::BankArgs;
 use crate::command::category::CategoryArgs;
+use crate::command::countparty::CounterpartyArgs;
 use crate::command::currency::CurrencyArgs;
 use crate::command::data::DataArgs;
 use crate::command::history::HistoryArgs;
@@ -17,9 +18,9 @@ use crate::command::report::ReportArgs;
 #[command(
     name = "codexi-cli",
     version,
-    about = "Personal financial ledger & analytics",
+    about = "Codexi - Personal financial ledger & analytics",
     long_about = r#"
-Account is an append-only financial ledger designed for clarity,
+Codexi is an append-only financial ledger designed for clarity,
 traceability and long-term analysis.
 
 Typical workflow:
@@ -39,6 +40,9 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum RootCommand {
+    /// Show an overview of the accounts (id,name,type,currency,debit,credit,balance)
+    Overview {},
+
     /// Add a regular debit operation
     Debit {
         #[arg(
@@ -54,18 +58,36 @@ pub enum RootCommand {
             value_name = "AMOUNT",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount of the debit operation"
+            help = "Amount of the debit operation, shall be positive"
         )]
         amount: String,
 
         #[arg(
             index = 3,
-            value_name = "DESCRIPTION...",
-            num_args = 1..,
-            help = "Description of the debit operation",
-            default_value = "no description"
+            value_name = "DESCRIPTION",
+            required = false,
+            num_args = 0..,
+            help = "Description of the debit operation"
         )]
         description: Vec<String>,
+
+        #[arg(
+            short = 'c',
+            long = "counterparty",
+            value_name = "COUNTERPARTY",
+            required = false,
+            help = "Counterparty of the debit"
+        )]
+        counterparty: Option<String>,
+
+        #[arg(
+            short = 'g',
+            long = "category",
+            value_name = "CATEGORY",
+            required = false,
+            help = "category of the debit"
+        )]
+        category: Option<String>,
     },
 
     /// Add a regular credit operation
@@ -83,18 +105,36 @@ pub enum RootCommand {
             value_name = "AMOUNT",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount of the credit operation"
+            help = "Amount of the credit operation, shall be positive"
         )]
         amount: String,
 
         #[arg(
             index = 3,
-            num_args = 1..,
-            value_name = "DESCRIPTION...",
-            help = "Description of the credit operation",
-            default_value = "no description"
+            value_name = "DESCRIPTION",
+            required = false,
+            num_args = 0..,
+            help = "Description of the credit operation"
         )]
         description: Vec<String>,
+
+        #[arg(
+            short = 'c',
+            long = "counterparty",
+            value_name = "COUNTERPARTY",
+            required = false,
+            help = "Counterparty of the credit"
+        )]
+        counterparty: Option<String>,
+
+        #[arg(
+            short = 'g',
+            long = "category",
+            value_name = "CATEGORY",
+            required = false,
+            help = "category of the credit"
+        )]
+        category: Option<String>,
     },
     /// Add a regular interest operation
     Interest {
@@ -102,7 +142,7 @@ pub enum RootCommand {
             index = 1,
             value_name = "DATE",
             required = true,
-            help = "Date of the credit operation (YYYY-MM-DD)"
+            help = "Date of the interest operation (YYYY-MM-DD)"
         )]
         date: String,
 
@@ -111,20 +151,39 @@ pub enum RootCommand {
             value_name = "AMOUNT",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount of the credit operation"
+            help = "Amount of the interest operation, shall be positive"
         )]
         amount: String,
 
         #[arg(
             index = 3,
-            num_args = 1..,
-            value_name = "DESCRIPTION...",
-            help = "Description of the credit operation",
-            default_value = "no description"
+            value_name = "DESCRIPTION",
+            required = false,
+            num_args = 0..,
+            help = "Description of the interest operation"
         )]
         description: Vec<String>,
+
+        #[arg(
+            short = 'c',
+            long = "counterparty",
+            value_name = "COUNTERPARTY",
+            required = false,
+            help = "Counterparty of the interest"
+        )]
+        counterparty: Option<String>,
+
+        #[arg(
+            short = 'g',
+            long = "category",
+            value_name = "CATEGORY",
+            required = false,
+            help = "category of the interest"
+        )]
+        category: Option<String>,
     },
-    /// Add a transfer operation between account
+    /// Add a transfer operation between current account and other account in the ledger.
+    /// <ACCOUNT_ID_TO> accept full ID, short ID, name of the account
     Transfer {
         /// date of the transfer
         #[arg(
@@ -140,7 +199,7 @@ pub enum RootCommand {
             value_name = "AMOUNT_FROM",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount from the current account to be sent"
+            help = "Amount, in currency, from the current account to be sent, shall be positive"
         )]
         amount_from: String,
         /// Amount of the destination account to be received
@@ -149,7 +208,7 @@ pub enum RootCommand {
             value_name = "AMOUNT_TO",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount of the destination account to be received"
+            help = "Amount, in currency, of the destination account to be received, shall be positive"
         )]
         amount_to: String,
         /// Account id of the destination
@@ -158,7 +217,7 @@ pub enum RootCommand {
             value_name = "ACCOUNT_ID_TO",
             required = true,
             allow_negative_numbers = false,
-            help = "Account id of the destination"
+            help = "Account id of the destination. Accept full ID, short ID or name of the account"
         )]
         account_id_to: String,
         /// Description of the operation
@@ -170,9 +229,18 @@ pub enum RootCommand {
             default_value = "no description"
         )]
         description: Vec<String>,
+
+        #[arg(
+            short = 'g',
+            long = "category",
+            value_name = "CATEGORY",
+            required = false,
+            help = "category of the transfer"
+        )]
+        category: Option<String>,
     },
 
-    /// Search and filter in current account operations.
+    /// Search and filter on operations in the current account, alias: view.
     #[command(alias = "view")]
     Search {
         /// Arbitrary date range
@@ -204,7 +272,7 @@ pub enum RootCommand {
         #[arg(
             short = 'k',
             long,
-            help = "Filter by kind: 'init', 'adjust', 'void', 'close', 'transaction', 'fee', 'transfer', 'refund'",
+            help = "Filter by kind: 'init', 'adjust', 'void', 'close/checkpoint', 'transaction', 'fee', 'transfer', 'interest', 'refund'",
             value_name = "KIND"
         )]
         kind: Option<String>,
@@ -239,30 +307,37 @@ pub enum RootCommand {
         /// The latest operations to display.
         #[arg(
             long,
-            help = "The latest N operations to display",
+            help = "The latest N operations to show",
             value_name = "NUMBER",
             allow_negative_numbers = false
         )]
         last: Option<usize>,
 
         /// The operation of today
-        #[arg(long, help = "The operation  of today")]
+        #[arg(long, help = "The operation(s) of 'today'")]
         today: bool,
+
+        /// open in the defaut browser
+        #[arg(long, help = "Open result in the default browser")]
+        open: bool,
     },
 
     /// Manage Operations
     Operation(OperationArgs),
 
-    /// Manage codexi accounts
+    /// Manage Accounts
     Account(AccountArgs),
 
-    /// Manage codexi banks
+    /// Manage Banks
     Bank(BankArgs),
 
-    /// Manage codexi currencies
+    /// Manage Currencies
     Currency(CurrencyArgs),
 
-    /// Manage codexi categories
+    /// Manage Counterparties
+    Counterparty(CounterpartyArgs),
+
+    /// Manage Categories
     Category(CategoryArgs),
 
     /// Manage accounting timeline (init, checkpoint, adjust, void, archives)

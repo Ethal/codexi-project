@@ -5,33 +5,44 @@ use rust_decimal::Decimal;
 use tera::{Context, Tera};
 use thousands::Separable;
 
-use codexi::logic::codexi::StatementEntry;
+use codexi::dto::StatementCollection;
+
+use crate::ui::{format_optional_bank_item, format_optional_currency_item};
 
 const STATEMENT_TEMPLATE: &str = include_str!("../assets/templates/statement.html");
 
-pub fn export_statement_html(entry: StatementEntry) -> Result<String> {
+pub fn export_statement_html(entry: StatementCollection) -> Result<String> {
     let mut tera = Tera::default();
     tera.add_raw_template("statement.html", STATEMENT_TEMPLATE)?;
 
-    let mut rows = Vec::new();
-    for item in entry.items {
-        rows.push(serde_json::json!({
-            "date": item.date,
-            "description": item.description,
-            "debit": if item.debit == Decimal::ZERO{"".into()} else {item.debit.separate_with_commas()},
-            "credit": if item.credit == Decimal::ZERO{"".into()} else {item.credit.separate_with_commas()}
-        }));
-    }
+    let operations: Vec<serde_json::Value> = entry
+        .items
+        .iter()
+        .map(|op| {
+            serde_json::json!({
+                "date":    op.date,
+                "description": op.description,
+                "debit": if op.debit == Decimal::ZERO{"".into()} else {format!("{:.2}",op.debit).separate_with_commas()},
+                "credit": if op.credit == Decimal::ZERO{"".into()} else {format!("{:.2}",op.credit).separate_with_commas()},
+            })
+        })
+        .collect();
 
     let mut ctx = Context::new();
-    ctx.insert("items", &rows);
-    ctx.insert("date_min", &entry.date_min);
-    ctx.insert("date_max", &entry.date_max);
+    ctx.insert("items", &operations);
+    ctx.insert("date_min", &entry.from.unwrap_or("N/A".to_string()));
+    ctx.insert("date_max", &entry.to.unwrap_or("N/A".to_string()));
     ctx.insert("operation_count", &entry.counts.total());
-    ctx.insert("account_name", &entry.account_name);
-    ctx.insert("account_number", &entry.account_number);
-    ctx.insert("account_bank", &entry.account_bank);
-    ctx.insert("account_currency", &entry.account_currency);
+    ctx.insert("account_name", &entry.account.name);
+    ctx.insert("account_number", &entry.account.id);
+    ctx.insert(
+        "account_bank",
+        &format_optional_bank_item(&entry.account.bank),
+    );
+    ctx.insert(
+        "account_currency",
+        &format_optional_currency_item(&entry.account.currency),
+    );
     ctx.insert("balance_debit", &entry.balance.debit.separate_with_commas());
     ctx.insert(
         "balance_credit",

@@ -10,11 +10,15 @@ use codexi::{
         CoreError, DataPaths, format_date, parse_date, parse_decimal, parse_optional_decimal,
         parse_text,
     },
+    dto::{AccountCollection, SearchOperationCollection, StatementCollection},
     file_management::FileManagement,
     logic::{
-        account::{Account, SearchParamsBuilder, search},
+        account::Account,
+        category::{Category, CategoryError},
         codexi::CodexiError,
+        counterparty::{Counterparty, CounterpartyError},
         operation::{OperationFlow, OperationKind, RegularKind},
+        search::{SearchParamsBuilder, search},
         utils::resolve_by_id_or_name,
     },
     types::DateRange,
@@ -22,13 +26,19 @@ use codexi::{
 
 use crate::{
     command::{Cli, RootCommand},
+    export::export_statement_html,
     handler::{
         account::handle_account_command, admin::handle_admin_command, bank::handle_bank_command,
         category::handle_category_command, currency::handle_currency_command,
         data::handle_data_command, history::handle_history_command, loan::handle_loan_command,
         operation::handle_operation_command, report::handle_report_command,
+        category::handle_category_command, counterparty::handle_counterparty_command,
+        currency::handle_currency_command, data::handle_data_command,
+        history::handle_history_command, operation::handle_operation_command,
+        report::handle_report_command,
     },
     msg_info, msg_warn,
+    ui::overview_account,
 };
 
 use crate::ui::view_search;
@@ -37,15 +47,39 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
     let skip_confirm = cli.yes;
 
     match cli.command {
+        RootCommand::Overview {} => {
+            let codexi = FileManagement::load_current_state(paths)?;
+            let accounts = AccountCollection::build(&codexi);
+            overview_account(&accounts);
+        }
+
         RootCommand::Debit {
             date,
             amount,
             description,
+            counterparty,
+            category,
         } => {
             let amount_d = parse_decimal(&amount, "amount")?;
             let date = parse_date(&date)?;
 
             let mut codexi = FileManagement::load_current_state(paths)?;
+            let category_id = category
+                .map(|name| {
+                    resolve_by_id_or_name::<Category, CategoryError>(
+                        &name,
+                        &codexi.categories.categories,
+                    )
+                })
+                .transpose()?;
+            let counterparty_id = counterparty
+                .map(|name| {
+                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(
+                        &name,
+                        &codexi.counterparties.counterparties,
+                    )
+                })
+                .transpose()?;
             let account = codexi.get_current_account_mut()?;
 
             account.register_transaction(
@@ -54,6 +88,8 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 OperationFlow::Debit,
                 amount_d,
                 parse_text(description.clone()),
+                counterparty_id,
+                category_id,
             )?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!(
@@ -68,11 +104,29 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             date,
             amount,
             description,
+            counterparty,
+            category,
         } => {
             let (date_n, amount_n, desc_n) =
                 normalize_date_amount_desc(&date, &amount, description)?;
 
             let mut codexi = FileManagement::load_current_state(paths)?;
+            let category_id = category
+                .map(|name| {
+                    resolve_by_id_or_name::<Category, CategoryError>(
+                        &name,
+                        &codexi.categories.categories,
+                    )
+                })
+                .transpose()?;
+            let counterparty_id = counterparty
+                .map(|name| {
+                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(
+                        &name,
+                        &codexi.counterparties.counterparties,
+                    )
+                })
+                .transpose()?;
             let account = codexi.get_current_account_mut()?;
 
             let reg_kind = RegularKind::Transaction;
@@ -82,6 +136,8 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 OperationFlow::Credit,
                 amount_n,
                 desc_n.clone(),
+                counterparty_id,
+                category_id,
             )?;
 
             FileManagement::save_current_state(&codexi, paths)?;
@@ -91,11 +147,29 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             date,
             amount,
             description,
+            counterparty,
+            category,
         } => {
             let (date_n, amount_n, desc_n) =
                 normalize_date_amount_desc(&date, &amount, description)?;
 
             let mut codexi = FileManagement::load_current_state(paths)?;
+            let category_id = category
+                .map(|name| {
+                    resolve_by_id_or_name::<Category, CategoryError>(
+                        &name,
+                        &codexi.categories.categories,
+                    )
+                })
+                .transpose()?;
+            let counterparty_id = counterparty
+                .map(|name| {
+                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(
+                        &name,
+                        &codexi.counterparties.counterparties,
+                    )
+                })
+                .transpose()?;
             let account = codexi.get_current_account_mut()?;
 
             let reg_kind = RegularKind::Interest;
@@ -105,6 +179,8 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 OperationFlow::Credit,
                 amount_n,
                 desc_n.clone(),
+                counterparty_id,
+                category_id,
             )?;
 
             FileManagement::save_current_state(&codexi, paths)?;
@@ -116,6 +192,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             amount_to,
             account_id_to,
             description,
+            category,
         } => {
             let mut codexi = FileManagement::load_current_state(paths)?;
 
@@ -125,8 +202,23 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             let acc_id_to =
                 resolve_by_id_or_name::<Account, CodexiError>(&account_id_to, &codexi.accounts)?;
             let desc = parse_text(description.clone());
+            let category_id = category
+                .map(|name| {
+                    resolve_by_id_or_name::<Category, CategoryError>(
+                        &name,
+                        &codexi.categories.categories,
+                    )
+                })
+                .transpose()?;
 
-            codexi.transfer(date, amount_from_d, acc_id_to, amount_to_d, desc.clone())?;
+            codexi.transfer(
+                date,
+                amount_from_d,
+                acc_id_to,
+                amount_to_d,
+                desc.clone(),
+                category_id,
+            )?;
 
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!(
@@ -149,6 +241,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             amount_max,
             last,
             today,
+            open,
         } => {
             let amount_min_d = parse_optional_decimal(&amount_min, "amount_min")?;
             let amount_max_d = parse_optional_decimal(&amount_max, "amount_max")?;
@@ -159,8 +252,8 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 range = DateRange::parse(Some(from.as_ref()), Some(to.as_ref()))?;
             }
 
-            let mut codexi = FileManagement::load_current_state(paths)?;
-            let account = codexi.get_current_account_mut()?;
+            let codexi = FileManagement::load_current_state(paths)?;
+            let account = codexi.get_current_account()?;
 
             let params = SearchParamsBuilder::default()
                 .from(range.from)
@@ -173,9 +266,18 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 .latest(last)
                 .build()?;
 
-            let search_items = search(account, &params)?;
-            if search_items.is_empty() {
+            let s_ops = search(account, &params)?;
+            let search_items = SearchOperationCollection::build(&codexi, account, &s_ops);
+            let statement_results = StatementCollection::build(&codexi, account, &s_ops);
+            if search_items.items.is_empty() {
                 msg_warn!("No data available as per criteria.");
+                return Ok(());
+            }
+            if open {
+                let html = export_statement_html(statement_results)?;
+                let file_path = FileManagement::export_html(&html, cwd)?;
+                msg_info!("search completed (report.html)");
+                opener::open_browser(file_path)?;
             } else {
                 view_search(&search_items);
             }
@@ -188,6 +290,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
         RootCommand::Account(args) => handle_account_command(args.command, paths)?,
         RootCommand::Bank(args) => handle_bank_command(args.command, paths)?,
         RootCommand::Currency(args) => handle_currency_command(args.command, paths)?,
+        RootCommand::Counterparty(args) => handle_counterparty_command(args.command, paths)?,
         RootCommand::Category(args) => handle_category_command(args.command, paths)?,
         RootCommand::Loan(args) => handle_loan_command(args.command, paths)?,
     }

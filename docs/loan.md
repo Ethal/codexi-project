@@ -5,6 +5,9 @@ Each borrower gets their own `Loan` account that records the outstanding debt,
 interest accrual, and repayments. A shared `Interest Income` account accumulates
 all interest received across loans.
 
+A standalone `loan` command is available to simulate interest calculations and
+manage a default loan policy — without any automatic integration with the ledger.
+
 ## Account types
 
 | Account | Type | Per |
@@ -13,8 +16,83 @@ all interest received across loans.
 | Loan Mike, Loan Bob, … | `Loan` | One per borrower |
 | Interest Income | `Income` | Shared — collects all interest received |
 
-## Operation cycle
+## Loan simulation
 
+The `loan` command helps you calculate how much an borrower owes based on
+capital, interest rate, and repayment date. It reads from a persisted policy
+stored in `tmp/loan_policy.json` and can be overridden per simulation.
+
+### Interest models
+
+**Linear** — simple daily interest, same amount each day:
+```
+interest_per_day = capital × (rate / 100)
+total_interest   = interest_per_day × late_days
+```
+
+**Compound** — interest applied daily on the accumulated total:
+```
+total_interest = capital × ((1 + rate / 100) ^ late_days - 1)
+```
+
+### Policy rules
+
+- **Free period** — grace period in days before interest starts accruing.
+- **Interest cap** — maximum interest as a percentage of capital. Applied before penalty.
+- **Penalty** — fixed percentage of capital added after the interest cap. Applied unconditionally if defined.
+- **Min capital** — minimum loan amount accepted by the policy.
+- **Max duration** — maximum loan duration in days.
+
+### Commands
+```bash
+# Show current policy
+loan policy show
+
+# Update policy fields (unspecified fields are unchanged)
+loan policy set --type linear --rate 1 --free-days 7 \
+                --max-cap 50 --max-days 30 --min-capital 100
+
+# Reset policy to defaults
+loan policy reset
+
+# Simulate with policy defaults
+loan simulate --capital 1_000_000 --start 2026-01-01 --refund 2026-02-01
+
+# Simulate with overrides (policy unchanged)
+loan simulate --capital 500_000 --start 2026-01-01 --refund 2026-02-15 \
+              --type compound --rate 2 --free-days 0
+```
+
+### Example output
+```
+Loan summary
+
+Amount due:       1,050,000
+Total interest:      50,000
+Start date:      2026-01-01
+First interest:  2026-01-08
+
+Interest per late day
+2026-01-08    10,000 interest
+2026-01-09    10,000 interest
+...
+```
+
+### Default policy values
+
+| Parameter | Default |
+| --- | --- |
+| Type | `linear` |
+| Daily rate | `1%` |
+| Free days | `7` |
+| Max interest cap | `50%` of capital |
+| Max duration | `30` days |
+| Min capital | `100` |
+| Penalty | none |
+
+---
+
+## Operation cycle
 ```
 Current Account (shared)
    │
@@ -69,7 +147,6 @@ Accounts are created and initialized beforehand with the correct account type.
 ---
 
 ### Loan disbursements
-
 ```bash
 account use current
 
@@ -93,9 +170,6 @@ transfer date2 300_000 300_000 mike "Loan Mike #2"
 ---
 
 ### Repayment #1 from Mike with interest (20,000)
-
-The interest is first accrued on the Loan account, then transferred to Interest Income.
-
 ```bash
 account use mike
 
@@ -119,7 +193,6 @@ transfer date3 20_000 20_000 interest "Interest Mike #1"
 ---
 
 ### Partial repayment from Bob (200,000)
-
 ```bash
 account use bob
 
@@ -138,8 +211,7 @@ transfer date4 200_000 200_000 current "Partial repayment Bob"
 ### Late interest accrual for Bob (15,000)
 
 Bob is late — interest is accrued on his Loan account. The balance increases to
-reflect the total amount now owed (300,000 principal + 15,000 interest).
-
+reflect the total amount still owed (300,000 principal + 15,000 interest).
 ```bash
 account use bob
 
@@ -156,7 +228,6 @@ interest date4 15_000 "Late interest Bob"
 ---
 
 ### Final repayment from Bob (principal + interest)
-
 ```bash
 account use bob
 
@@ -177,7 +248,6 @@ transfer date5 15_000 15_000 interest "Late interest Bob"
 ---
 
 ### Move interest income to Current (partial)
-
 ```bash
 account use interest
 

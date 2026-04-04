@@ -2,6 +2,78 @@
 All notable changes to this project will be documented in this file.
 ---
 
+## [Unreleased] — 
+> ⚠️ Breaking: DTO modules have been moved from `logic/*` to `dto/*`
+
+> ⚠️ Breaking: `Operation` structure, additional field `account_id`, performed the command `admin audit --rebuild`
+
+### Added
+
+- **Account::set_context** as a wrapper around `context.update_context`.
+- **termination guards** in `set_context`, `set_bank` and `set_currency` to prevent mutating terminated accounts.
+- **CLI Command** — `overview` to display the main informations of the accounts, including the balance, account type, bank, and currency. 
+- **`ignored`** operations list to stats output to surface operations excluded from calculations (e.g. unmatched void/voided pairs)
+- **Seed** — default seed for counterparty are available at the creation of a new ledger.
+- **Counterparty** — model, DTO, exchange import/export and validation wired end-to-end.
+  Fields `id`, `name`, `kind` (`Person` / `Organisation`), `note`, `terminated`.
+  Includes default seed at ledger creation and CLI subcommand `counterparty` (list, add, terminate).
+- **`-c / --counterparty`** flag added to CLI commands `debit`, `credit`, `interest`.
+  Accepts full id, short id, or name (exact / prefix / contains). Not available on `transfer` (inter-account operation).
+- **`-g / --category`** flag added to CLI commands `debit`, `credit`, `interest`, `transfer`.
+  Same resolution strategy as counterparty.
+- **`counterparty_id` and `category_id`** added to `OperationContext` — carried through
+  `register_transaction`, `transfer`, merge, audit and rebuild.
+- **`ExchangeCounterparty`** — exchange DTO for counterparty import/export. Validation covers
+  duplicate ids, unknown kind. Import creates or updates counterparties by id.
+- **`logic/loan` module** — standalone calculation module for microloan tracking.
+  No ledger integration — pure computation aid. Two interest models supported:
+  - `LinearInterest` — simple daily interest: `capital × rate × late_days`
+  - `CompoundInterest` — compound daily interest: `capital × ((1 + rate)^days - 1)`
+  Both models share a common `LoanBase` with `LoanPolicy` (cap, penalty, min capital,
+  max duration, free period). Cap applies to interest only; penalty is a fixed percentage
+  of capital added after cap. `LoanSummary` returns `final_due`, `total_interest`,
+  per-day interest vector with dates, and `first_interest_date`.
+- **`LoanKind`** — enum (`Linear` / `Compound`) shared between domain model and settings.
+  Replaces the former `LoanInterestType` in settings layer.
+- **`LoanPolicySettings`** — persisted loan policy stored in `tmp/loan_policy.json`.
+  Loaded via `load_or_create`, saved via `save`, reset to defaults via `reset`.
+  Converted to domain `LoanPolicy` via `to_loan_policy()`.
+- **CLI command `loan policy show`** — display current persisted loan policy.
+- **CLI command `loan policy set`** — update one or more policy fields without
+  overwriting unspecified fields. Flags: `--type`, `--rate`, `--free-days`,
+  `--max-cap`, `--max-days`, `--min-capital`, `--max-penalty`.
+- **CLI command `loan policy reset`** — reset policy to default values and persist.
+- **CLI command `loan simulate`** — compute amount due for a given loan.
+  Required: `--capital`, `--start`, `--refund`.
+  Optional overrides (without modifying policy): `--type`, `--rate`, `--free-days`.
+  Displays: amount due, total interest, first interest date, per-day interest breakdown.
+
+### Changed
+- **Refactored DTO layer**:
+  - Moved DTOs from `logic/*` into dedicated `dto/*` modules
+  - Simplified DTOs to only handle basic type conversions (e.g. `NaiveDate`, `Nulid`, `Path` → `String`)
+- **Moved formatting logic** (e.g. booleans, display helpers) from DTOs to CLI UI layer
+- **CLI handlers** to use new DTO construction patterns
+- **CLI command** `search`, alias `view` now support the flag `--open` to open the result in the default browser.
+- **Stats calculation** — Reworked logic to ensure consistency with account statements.
+  - Stats now exclude init and checkpoint operations while including all other valid operations,
+  - Introduced robust handling of void and voided operations: Operations are only included if both sides of the pair exist within the selected period,
+  - Unmatched operations are excluded from financial calculations,
+  - Improved accuracy of financial indicators (balance, totals, savings rate, averages, daily burn rate),
+  - Refactored stats computation pipeline for clarity, consistency, and performance (single-pass processing).
+- **`account_id`** added to `Operation` structure — existing data requires `admin audit --rebuild`.
+- **`Account::set/merge/audit`** updated to handle legacy operations missing `account_id`
+  and to populate it during audit/rebuild.
+
+### Removed
+- **`AccountBalance`** and **`CodexiBalance`** from Balance. 
+- **`signed_amount`** function in `logic/operation/model.rs`.
+- **CLI Command** - `report balance-all`. Replace by the command `òverview`.
+- **Formatting responsibilities** from DTOs (now handled exclusively in UI)
+- Replaced legacy `entry.rs` mapping functions with DTO-based conversions
+- **CLI command** `report stats`, the flag `--net` is not more available 
+
+
 ## [0.3.0] — 2026-03-28
 
 ### Added

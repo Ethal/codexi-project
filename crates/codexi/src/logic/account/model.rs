@@ -5,7 +5,7 @@ use nulid::Nulid;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use crate::core::validate_text_rules;
+use crate::core::{CoreWarning, validate_text_rules};
 use crate::logic::{
     account::{
         AccountAnchors, AccountError, AccountType, CheckpointRef, OperationContainer,
@@ -108,6 +108,28 @@ impl Account {
         self.meta = meta;
     }
 
+    pub fn set_context(
+        &mut self,
+        overdraft_limit: Option<Decimal>,
+        min_balance: Option<Decimal>,
+        max_monthly_transactions: Option<Option<u32>>, // Some(None) = no limit
+        deposit_locked_until: Option<NaiveDate>,
+        allows_interest: Option<bool>,
+        allows_joint_signers: Option<bool>,
+    ) -> Result<Vec<CoreWarning>, AccountError> {
+        self.is_terminated()?;
+        let warnings = self.context.update_context(
+            overdraft_limit,
+            min_balance,
+            max_monthly_transactions,
+            deposit_locked_until,
+            allows_interest,
+            allows_joint_signers,
+        )?;
+
+        Ok(warnings)
+    }
+
     ///Return the Operation or None
     pub fn get_operation_by_id(&self, op_id: Nulid) -> Option<&Operation> {
         self.operations.iter().find(|op| op.id == op_id)
@@ -177,15 +199,11 @@ impl Account {
             .fold(Decimal::ZERO, |acc, op| op.flow.apply(acc, op.amount))
     }
     /// Determine if a specific operation can be undone (Void)
-    pub fn can_void(&self, op_id: Nulid) -> Result<bool, AccountError> {
+    pub fn can_void(&self, op_id: Nulid) -> bool {
         // current date
         let today = chrono::Local::now().date_naive();
-
-        // check if void is allow as per the current date
-        match self.temporal_policy(TemporalAction::Void(op_id), today) {
-            Ok(_) => Ok(true),   // Ok
-            Err(_) => Ok(false), // not Ok
-        }
+        self.temporal_policy(TemporalAction::Void(op_id), today)
+            .is_ok()
     }
 }
 

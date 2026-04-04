@@ -1,12 +1,12 @@
-// src/ui/dictionnaries.rs
+// src/ui/category.rs
 
 use codexi::core::format_id_short;
-use codexi::logic::category::CategoryEntry;
+use codexi::dto::CategoryCollection;
 
 use crate::ui::TITLE_STYLE;
 
 /// view to list of the category
-pub fn view_category(datas: &CategoryEntry) {
+pub fn view_category(datas: &CategoryCollection) {
     let title_text = TITLE_STYLE.apply_to("Categories - <id> <short id> <name> [note]");
     println!();
     println!("{}", title_text);

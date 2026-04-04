@@ -7,6 +7,7 @@ use codexi::{
         DataPaths, parse_date, parse_optional_date, parse_optional_decimal, parse_optional_u32,
         parse_text,
     },
+    dto::{AccountCollection, AccountItem},
     file_management::FileManagement,
     logic::{
         account::{Account, AccountType},
@@ -27,12 +28,12 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
     let mut codexi = FileManagement::load_current_state(paths)?;
     match command {
         AccountCommand::List => {
-            let items = codexi.account_entry();
+            let items = AccountCollection::build(&codexi);
             view_account(&items);
         }
         AccountCommand::Context => {
-            let current_account = codexi.get_current_account()?;
-            let account_item = codexi.account_item(current_account);
+            let account = codexi.get_current_account()?;
+            let account_item = AccountItem::build(&codexi, account);
             view_account_context(&account_item);
         }
         AccountCommand::Create {
@@ -110,8 +111,7 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
             let max_monthly_transactions =
                 parse_optional_u32(&max_monthly_transactions, "max_monthly transaction")?;
             let deposit_locked_until = parse_optional_date(deposit_locked_until.as_deref())?;
-
-            let warnings = current_account.context.update_context(
+            let warnings = current_account.set_context(
                 limit,
                 min,
                 Some(max_monthly_transactions),

@@ -6,10 +6,11 @@ use std::path::Path;
 
 use codexi::{
     core::DataPaths,
+    dto::{BalanceItem, StatementCollection, StatsCollection, SummaryCollection},
     file_management::FileManagement,
     logic::{
-        account::{SearchParamsBuilder, search},
-        balance::{Balance, BalanceItem},
+        balance::Balance,
+        search::{SearchParamsBuilder, search},
     },
     types::DateRange,
 };
@@ -18,17 +19,13 @@ use crate::{
     command::ReportCommand,
     export::{export_statement_html, export_stats_html},
     msg_info, msg_warn,
-    ui::{view_balance, view_balance_account, view_stats, view_summary},
+    ui::{view_balance, view_stats, view_summary},
 };
 
 pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPaths) -> Result<()> {
-    let mut codexi = FileManagement::load_current_state(paths)?;
-    let account = codexi.get_current_account_mut()?;
+    let codexi = FileManagement::load_current_state(paths)?;
+    let account = codexi.get_current_account()?;
     match command {
-        ReportCommand::BalanceAll {} => {
-            let balance = Balance::codexi_balance_entry(&codexi);
-            view_balance_account(&balance);
-        }
         ReportCommand::Balance { from, to } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
             let params = SearchParamsBuilder::default()
@@ -37,7 +34,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 .build()?;
 
             let balance_items = search(account, &params)?;
-            let balance = BalanceItem::from(Balance::new(&balance_items));
+            let balance = BalanceItem::from(Balance::build(&balance_items));
             if balance.total == Decimal::ZERO
                 && balance.credit == Decimal::ZERO
                 && balance.debit == Decimal::ZERO
@@ -47,34 +44,31 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 view_balance(&balance);
             }
         }
-        ReportCommand::Stats {
-            from,
-            to,
-            net,
-            open,
-        } => {
+        ReportCommand::Stats { from, to, open } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
             let params = SearchParamsBuilder::default()
                 .from(range.from)
                 .to(range.to)
                 .build()?;
-
-            if let Some(stats) = account.stats_entry(&params, net) {
-                if open {
-                    let html = export_stats_html(stats)?;
-                    let file_path = FileManagement::export_html(&html, cwd)?;
-                    msg_info!("stats completed (report.html)");
-                    opener::open_browser(file_path)?;
-                } else {
-                    view_stats(&stats);
-                }
-            } else {
+            let s_ops = search(account, &params)?;
+            let stats = StatsCollection::build(&codexi, account, &s_ops);
+            if s_ops.is_empty() {
                 msg_warn!("No data available");
+                return Ok(());
+            }
+            if open {
+                let html = export_stats_html(stats)?;
+                let file_path = FileManagement::export_html(&html, cwd)?;
+                msg_info!("stats completed (report.html)");
+                opener::open_browser(file_path)?;
+            } else {
+                view_stats(&stats);
             }
         }
         ReportCommand::Summary {} => {
             let params = SearchParamsBuilder::default().build()?;
-            let summary = account.summary_entry(&params);
+            let s_ops = search(account, &params)?;
+            let summary = SummaryCollection::summary_entry(account, &s_ops);
             view_summary(&summary);
         }
         ReportCommand::Statement { from, to, open } => {
@@ -83,20 +77,19 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 .from(range.from)
                 .to(range.to)
                 .build()?;
-            let account_id = codexi.get_current_account()?.id;
-            if let Some(statement_results) = codexi.statement_entry(&account_id, &params) {
-                if statement_results.items.is_empty() {
-                    msg_warn!("No data available");
-                } else {
-                    let html = export_statement_html(statement_results)?;
-                    let file_path = FileManagement::export_html(&html, cwd)?;
-                    msg_info!("statement completed (report.html)");
-                    if open {
-                        opener::open_browser(file_path)?;
-                    }
-                }
-            } else {
+
+            let s_ops = search(account, &params)?;
+            let statement_results = StatementCollection::build(&codexi, account, &s_ops);
+            if s_ops.is_empty() || statement_results.items.is_empty() {
                 msg_warn!("No data available");
+                return Ok(());
+            }
+
+            let html = export_statement_html(statement_results)?;
+            let file_path = FileManagement::export_html(&html, cwd)?;
+            msg_info!("statement completed (report.html)");
+            if open {
+                opener::open_browser(file_path)?;
             }
         }
     }

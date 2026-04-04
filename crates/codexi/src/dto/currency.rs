@@ -1,6 +1,9 @@
-// src/logic/currency/dto.rts
+// src/dto/currency.rs
 
-use crate::{core::format_id, logic::currency::Currency};
+use crate::{
+    core::format_id,
+    logic::currency::{Currency, CurrencyList},
+};
 
 #[derive(Debug)]
 pub struct CurrencyItem {
@@ -12,7 +15,7 @@ pub struct CurrencyItem {
 }
 
 #[derive(Debug)]
-pub struct CurrencyEntry {
+pub struct CurrencyCollection {
     pub items: Vec<CurrencyItem>,
 }
 
@@ -25,5 +28,16 @@ impl From<&Currency> for CurrencyItem {
             decimal_places: currency.decimal_places,
             note: currency.note.clone(),
         }
+    }
+}
+
+impl CurrencyCollection {
+    pub fn build(currencies: &CurrencyList) -> Self {
+        let items: Vec<CurrencyItem> = currencies
+            .currencies
+            .iter()
+            .map(CurrencyItem::from)
+            .collect();
+        Self { items }
     }
 }

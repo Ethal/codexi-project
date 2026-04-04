@@ -4,6 +4,7 @@ mod account;
 mod balance;
 mod bank;
 mod category;
+mod counterparty;
 mod currency;
 mod display;
 mod loan;
@@ -13,6 +14,7 @@ pub use account::*;
 pub use balance::*;
 pub use bank::view_bank;
 pub use category::view_category;
+pub use counterparty::view_counterparty;
 pub use currency::view_currency;
 pub use display::*;
 pub use loan::*;
@@ -39,4 +41,19 @@ pub fn truncate_text(desc: &str, max_width: usize) -> String {
     let truncated: String = desc.chars().take(visible).collect();
 
     format!("{:<width$}", format!("{}...", truncated), width = max_width)
+}
+
+use codexi::dto::{BankItem, CurrencyItem};
+pub fn format_optional_currency_item(currency: &Option<CurrencyItem>) -> String {
+    match currency {
+        Some(c) => c.code.to_string(),
+        None => "—".to_string(),
+    }
+}
+
+pub fn format_optional_bank_item(bank: &Option<BankItem>) -> String {
+    match bank {
+        Some(b) => b.name.to_string(),
+        None => "—".to_string(),
+    }
 }

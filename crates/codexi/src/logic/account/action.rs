@@ -10,14 +10,14 @@ use std::path::PathBuf;
 use crate::core::{DataPaths, format_date, format_id, format_id_short};
 use crate::logic::{
     account::{
-        Account, AccountArchive, AccountError, CheckpointRef, ComplianceAction,
-        SearchParamsBuilder, TemporalAction, search,
+        Account, AccountArchive, AccountError, CheckpointRef, ComplianceAction, TemporalAction,
     },
     balance::Balance,
     operation::{
         OperationBuilder, OperationContext, OperationFlow, OperationKind, OperationLinks,
         RegularKind, SystemKind,
     },
+    search::{SearchParamsBuilder, search},
 };
 
 use crate::file_management::FileManagement;
@@ -33,12 +33,16 @@ impl Account {
         flow: OperationFlow,
         amount: Decimal,
         description: String,
+        counterparty_id: Option<Nulid>,
+        category_id: Option<Nulid>,
     ) -> Result<Nulid, AccountError> {
         self.temporal_policy(TemporalAction::Create(kind), date)?;
         self.compliance_policy(ComplianceAction::Create(kind, flow, amount), date)?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;
+        context.counterparty_id = counterparty_id;
+        context.category_id = category_id;
 
         // On prépare le builder
         let op = OperationBuilder::default()
@@ -47,6 +51,7 @@ impl Account {
             .flow(flow)
             .amount(amount)
             .description(description)
+            .account_id(self.id)
             .context(context)
             .build()?;
 
@@ -98,6 +103,7 @@ impl Account {
             .flow(op_flow)
             .amount(op_amount)
             .description(description)
+            .account_id(self.id)
             .links(links)
             .context(context)
             .build()?;
@@ -141,6 +147,7 @@ impl Account {
             .flow(op_flow)
             .amount(op_amount)
             .description(description)
+            .account_id(self.id)
             .context(context)
             .build()?;
 
@@ -167,7 +174,7 @@ impl Account {
         let params = SearchParamsBuilder::default().to(Some(date)).build()?;
         let balance_items = search(self, &params)?;
 
-        let current_balance = Balance::new(&balance_items);
+        let current_balance = Balance::build(&balance_items);
         let difference = physical_amount - current_balance.total();
         // check the difference if equal to zero or below < 0.001 -> Error
         if difference.abs() < dec!(0.001) || difference.abs() == Decimal::ZERO {
@@ -192,6 +199,7 @@ impl Account {
             .flow(op_flow)
             .amount(op_amount)
             .description(description)
+            .account_id(self.id)
             .context(context)
             .build()?;
 
@@ -305,6 +313,7 @@ impl Account {
             .flow(op_flow)
             .amount(op_amount)
             .description(description)
+            .account_id(self.id)
             .context(context)
             .balance(checkpoint_balance)
             .build()?;

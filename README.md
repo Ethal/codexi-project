@@ -116,11 +116,12 @@ codexi-cli admin backup
 ### Core
 | Command | Description |
 | :--- | :--- |
+| `overview` | Show an overview of the ledger |
 | `credit <date> <amount> [desc]` | Record an incoming flow |
 | `debit <date> <amount> [desc]` | Record an outgoing flow |
 | `interest <date> <amount> [desc]` | Record an interest accrual (Loan/Saving/Deposit/Income accounts) |
 | `transfer <date> <amount_from> <amount_to> <account_id\|name> [desc]` | Transfer from current account to another |
-| `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--min-amount] [--max-amount] [--latest]` | Search and filter operations |
+| `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--min-amount] [--max-amount] [--latest] [--open]` | Search and filter operations |
 
 ### Operation
 | Command | Description |
@@ -159,7 +160,7 @@ codexi-cli admin backup
 | Command | Description |
 | :--- | :--- |
 | `report balance [--from] [--to]` | Debit / credit / balance summary |
-| `report stats [--from] [--to] [--net]` | Full analytics dashboard |
+| `report stats [--from] [--to] [--open]` | Full analytics dashboard |
 | `report summary` | Quick overview of the current account |
 | `report statement [--from] [--to] [--open]` | Export an HTML statement |
 
@@ -194,16 +195,16 @@ codexi-cli admin backup
 ### Maintenance
 | Command | Description |
 | :--- | :--- |
+| `admin infos` | Display ledger metadata and storage info |
 | `admin backup [--target-dir]` | Full ZIP backup (ledger + archives) |
 | `admin restore <filename>` | Restore from a ZIP backup |
 | `admin migrate <version>` | Migrate ledger and archives to a new format version |
 | `admin audit [--rebuild]` | Audit the current account and rebuild balance as per option |
 | `admin clear-data` | ⚠️ Move ledger files to trash |
 | `admin trash` | ⚠️ Manage the trash |
-| `admin infos` | Display ledger metadata and storage info |
 | `admin export-special` | Raw JSON export (no validation) |
 | `admin import-special` | ⚠️ Raw JSON import (no validation) |
-| `admin export-script` | Export current account operations in a script for a replay |
+| `admin export-script` | Export ledger operations in scripts for a replay |
 
 | Command | Description |
 | :--- | :--- |

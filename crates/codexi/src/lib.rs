@@ -8,6 +8,7 @@
 #![allow(clippy::struct_excessive_bools)]
 
 pub mod core;
+pub mod dto;
 pub mod exchange;
 pub mod file_management;
 pub mod logic;

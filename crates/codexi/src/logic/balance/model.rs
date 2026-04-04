@@ -1,14 +1,8 @@
 // src/logic/balance/model.rs
 
-use nulid::Nulid;
 use rust_decimal::Decimal;
 
-use crate::logic::{
-    account::{Account, SearchEntry},
-    balance::{AccountBalanceItem, CodexiBalanceEntry},
-    codexi::Codexi,
-    operation::OperationFlow,
-};
+use crate::logic::{account::Account, operation::OperationFlow, search::SearchOperationList};
 
 #[derive(Debug, Default, Clone)]
 pub struct Balance {
@@ -16,23 +10,11 @@ pub struct Balance {
     pub debit: Decimal,
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct AccountBalance {
-    pub id: Nulid,
-    pub name: String,
-    pub balance: Balance,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct CodexiBalance {
-    pub balances: Vec<AccountBalance>,
-}
-
 impl Balance {
     /// Calculates the total of credits, debits,
     /// with several date filters (from/to/day/month/year).
     /// Returns a Balance struct.
-    pub fn new(items: &SearchEntry) -> Self {
+    pub fn build(items: &SearchOperationList) -> Self {
         let mut credit = Decimal::ZERO;
         let mut debit = Decimal::ZERO;
 
@@ -48,16 +30,8 @@ impl Balance {
     pub fn total(&self) -> Decimal {
         self.credit - self.debit
     }
-    pub fn codexi_balance(codexi: &Codexi) -> CodexiBalance {
-        let mut balances = Vec::new();
-        for account in &codexi.accounts {
-            let account_bal = Self::account_balance(account);
-            balances.push(account_bal);
-        }
-        CodexiBalance { balances }
-    }
 
-    pub fn account_balance(account: &Account) -> AccountBalance {
+    pub fn for_account(account: &Account) -> Balance {
         let mut credit = Decimal::ZERO;
         let mut debit = Decimal::ZERO;
         for op in &account.operations {
@@ -67,22 +41,6 @@ impl Balance {
                 OperationFlow::None => {}
             }
         }
-        AccountBalance {
-            id: account.id,
-            name: account.name.clone(),
-            balance: Balance { credit, debit },
-        }
-    }
-
-    pub fn codexi_balance_entry(codexi: &Codexi) -> CodexiBalanceEntry {
-        let bal_codexi = Self::codexi_balance(codexi);
-        let mut bal_codexi_entry = Vec::new();
-        for bal in bal_codexi.balances {
-            let bal_acc = AccountBalanceItem::from(bal);
-            bal_codexi_entry.push(bal_acc);
-        }
-        CodexiBalanceEntry {
-            balances: bal_codexi_entry,
-        }
+        Balance { credit, debit }
     }
 }

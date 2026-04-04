@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::{
     format_date, format_decimal, format_id, format_optional_date, format_optional_id,
-    format_optional_path, parse_date, parse_decimal, parse_optional_date, parse_optional_id,
-    parse_optional_path, resolve_or_generate_id,
+    format_optional_path, parse_date, parse_decimal, parse_id, parse_optional_date,
+    parse_optional_id, parse_optional_path, resolve_or_generate_id,
 };
 use crate::logic::operation::{
     Operation, OperationContext, OperationError, OperationFlow, OperationKind, OperationLinks,
@@ -33,6 +33,9 @@ pub struct ExchangeOperation {
     pub balance: String,
 
     #[serde(default)]
+    pub account_id: String,
+
+    #[serde(default)]
     pub links: ExchangeOperationLinks,
 
     #[serde(default)]
@@ -52,6 +55,7 @@ impl From<&Operation> for ExchangeOperation {
             description: op.description.clone(),
 
             balance: format_decimal(op.balance),
+            account_id: format_id(op.id),
             links: ExchangeOperationLinks::from(&op.links),
             context: ExchangeOperationContext::from(&op.context),
             meta: ExchangeOperationMeta::from(&op.meta),
@@ -70,6 +74,7 @@ impl TryFrom<&ExchangeOperation> for Operation {
             amount: parse_decimal(&op.amount, "amount")?,
             description: op.description.clone(),
             balance: parse_decimal(&op.balance, "balance.into")?,
+            account_id: parse_id(&op.account_id)?,
             links: OperationLinks::try_from(&op.links)?,
             context: OperationContext::try_from(&op.context)?,
             meta: OperationMeta::try_from(&op.meta)?,
@@ -115,6 +120,7 @@ pub struct ExchangeOperationContext {
     pub exchange_rate: String,
     pub payee: Option<String>,
     pub reconciled: Option<String>,
+    pub counterparty_id: Option<String>,
 }
 
 impl From<&OperationContext> for ExchangeOperationContext {
@@ -125,6 +131,7 @@ impl From<&OperationContext> for ExchangeOperationContext {
             exchange_rate: format_decimal(oc.exchange_rate),
             payee: oc.payee.clone(),
             reconciled: format_optional_date(oc.reconciled),
+            counterparty_id: format_optional_id(oc.counterparty_id),
         }
     }
 }
@@ -138,6 +145,7 @@ impl TryFrom<&ExchangeOperationContext> for OperationContext {
             exchange_rate: parse_decimal(&oc.exchange_rate, "exchaneg rate")?,
             payee: oc.payee.clone(),
             reconciled: parse_optional_date(oc.reconciled.as_deref())?,
+            counterparty_id: parse_optional_id(oc.counterparty_id.as_deref())?,
         })
     }
 }

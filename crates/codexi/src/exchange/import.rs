@@ -9,12 +9,15 @@ use crate::core::{
 use crate::exchange::models::ExchangeAccountOperations;
 use crate::exchange::validator::validate_import_operations;
 use crate::exchange::{
-    ExchangeAccountHeader, ExchangeCurrency, ExchangeCurrencyList, ExchangeError,
-    validate_import_account_header, validate_import_currency,
+    ExchangeAccountHeader, ExchangeCounterparty, ExchangeCounterpartyList, ExchangeCurrency,
+    ExchangeCurrencyList, ExchangeError, validate_import_account_header,
+    validate_import_counterparty, validate_import_currency,
 };
+use crate::logic::counterparty::CounterpartyKind;
 use crate::logic::operation::{AccountOperations, Operation};
 use crate::logic::{
     account::{Account, AccountAnchors, AccountContext, AccountMeta},
+    counterparty::{Counterparty, CounterpartyList},
     currency::{Currency, CurrencyList},
 };
 
@@ -89,10 +92,39 @@ impl ExchangeCurrencyList {
     fn map_currency(c: ExchangeCurrency) -> Currency {
         Currency {
             id: resolve_or_generate_id(c.id.as_deref()),
-            code: c.code.clone(),
-            symbol: c.symbol.clone(),
+            code: c.code,
+            symbol: c.symbol,
             decimal_places: c.decimal_places,
-            note: c.note.clone(),
+            note: c.note,
         }
+    }
+}
+
+impl ExchangeCounterpartyList {
+    pub fn import_data(
+        data: &ExchangeCounterpartyList,
+    ) -> Result<(CounterpartyList, Vec<CoreWarning>), ExchangeError> {
+        let warnings = validate_import_counterparty(data)?;
+
+        let counterparties: Vec<Counterparty> = data
+            .counterparties
+            .iter()
+            .cloned()
+            .map(Self::map_counterparty)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let counterparty_list = CounterpartyList { counterparties };
+        Ok((counterparty_list, warnings))
+    }
+
+    /// Mapping strict Export → Domain (without alteration)
+    fn map_counterparty(c: ExchangeCounterparty) -> Result<Counterparty, ExchangeError> {
+        Ok(Counterparty {
+            id: resolve_or_generate_id(c.id.as_deref()),
+            name: c.name,
+            kind: CounterpartyKind::try_from(c.kind.as_str())?,
+            terminated: parse_optional_date(c.terminated.as_deref())?,
+            note: c.note,
+        })
     }
 }

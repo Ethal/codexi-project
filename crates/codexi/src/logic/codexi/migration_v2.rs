@@ -271,6 +271,7 @@ fn migrate_op_to_v3(old_ops: &Vec<OperationV2>) -> Result<Vec<Operation>, Migrat
 
             balance: Decimal::ZERO,
 
+            account_id: Nulid::nil(),
             links: OperationLinks::default(),
             context: OperationContext::default(),
             meta: OperationMeta::default(),

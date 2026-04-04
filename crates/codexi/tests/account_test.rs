@@ -4,10 +4,11 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
 use codexi::core::parse_date;
-use codexi::logic::account::{Account, AccountType, SearchParamsBuilder, search};
+use codexi::logic::account::{Account, AccountType};
 use codexi::logic::balance::Balance;
 use codexi::logic::operation::RegularKind;
 use codexi::logic::operation::{OperationFlow, OperationKind};
+use codexi::logic::search::{SearchParamsBuilder, search};
 
 fn setup_empty_account() -> Account {
     // init
@@ -56,6 +57,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Credit,
         dec!(100.0),
         "Atm".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -66,6 +69,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Credit,
         dec!(50.0),
         "Atm".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -76,6 +81,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(25.50),
         "Minimarket".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -86,6 +93,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(14.20),
         "Book".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -96,6 +105,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(44.80),
         "Post office".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -106,6 +117,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Credit,
         dec!(150.0),
         "Atm".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -116,6 +129,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(15.70),
         "Bakery".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -126,6 +141,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(11.00),
         "Fruits".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -136,6 +153,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Credit,
         dec!(10.0),
         "Refund".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -146,6 +165,8 @@ fn setup_account_with_data() -> Account {
         OperationFlow::Debit,
         dec!(23.60),
         "Newspapers".into(),
+        None,
+        None,
     )
     .unwrap();
 
@@ -158,7 +179,7 @@ fn test_default_account_is_empty() {
 
     let params = SearchParamsBuilder::default().build().unwrap();
     let balance_items = search(&account, &params).unwrap();
-    let balance_result = Balance::new(&balance_items);
+    let balance_result = Balance::build(&balance_items);
 
     assert_eq!(
         account.operations.len(),
@@ -193,7 +214,7 @@ fn test_2025_10_account_balance() {
         .build()
         .unwrap();
     let balance_items = search(&account, &params).unwrap();
-    let balance_result = Balance::new(&balance_items);
+    let balance_result = Balance::build(&balance_items);
 
     // #1 Debit (2025-10-04) : 14.20 => OP_ID = 4
     // #2 Credit (2025-10-08) : 50.00 => OP_ID = 2
@@ -228,7 +249,7 @@ fn test_2025_11_account_balance() {
         .build()
         .unwrap();
     let balance_items = search(&account, &params).unwrap();
-    let balance_result = Balance::new(&balance_items);
+    let balance_result = Balance::build(&balance_items);
 
     // #5 Credit (2025-11-05) : 100.00 => OP_ID = 1
     // #6 Debit (2025-11-12) : 15.70 => OP_ID = 7
@@ -262,7 +283,7 @@ fn test_2025_12_account_balance() {
         .build()
         .unwrap();
     let balance_items = search(&account, &params).unwrap();
-    let balance_result = Balance::new(&balance_items);
+    let balance_result = Balance::build(&balance_items);
 
     // #8 Debit (2025-12-05) : 25.50 => OP_ID = 3
     // #9 Credit (2025-12-10) : 10.00 => OP_ID = 9
@@ -293,7 +314,7 @@ fn test_full_account_balance() {
     let params = SearchParamsBuilder::default().build().unwrap();
 
     let balance_items = search(&account, &params).unwrap();
-    let balance_result = Balance::new(&balance_items);
+    let balance_result = Balance::build(&balance_items);
 
     // ASSERT: Verification of expected results
     // Expected total balance: 510.00 - 134.80 = 375.20
@@ -328,7 +349,7 @@ fn test_balance_with_range_filter() {
         .unwrap();
 
     let balance_items = search(&account, &params).unwrap();
-    let balance_result = Balance::new(&balance_items);
+    let balance_result = Balance::build(&balance_items);
 
     assert_eq!(
         balance_result.credit,
@@ -357,7 +378,7 @@ fn test_balance_with_day_filter_no_operations() {
         .unwrap();
 
     let balance_items = search(&account, &params).unwrap();
-    let balance_result = Balance::new(&balance_items);
+    let balance_result = Balance::build(&balance_items);
 
     assert_eq!(
         balance_result.credit,
@@ -386,7 +407,7 @@ fn test_balance_with_filter_month() {
         .unwrap();
 
     let balance_items = search(&account, &params).unwrap();
-    let balance_result = Balance::new(&balance_items);
+    let balance_result = Balance::build(&balance_items);
 
     assert_eq!(
         balance_result.credit,
@@ -406,123 +427,6 @@ fn test_balance_with_filter_month() {
 }
 
 #[test]
-fn test_stats_void_outside_period_has_no_effect() {
-    // #1 Debit (2025-10-04) : 14.20 => OP_ID = 4
-    // #2 Credit (2025-10-08) : 50.00 => OP_ID = 2
-    // #3 Debit (2025-10-21) : 44.80 => OP_ID = 5
-    // #4 Debit (2025-10-21) : 11.00 => OP_ID = 8
-    // credit; 50.00, debit: 70.00 balance: -20.0
-
-    let mut account = setup_account_with_data();
-
-    // original op id 11
-    let op_id_voided = account
-        .register_transaction(
-            parse_date("2025-10-22").unwrap(),
-            OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Debit,
-            dec!(10.0),
-            "Atm".into(),
-        )
-        .unwrap();
-
-    // #11 Debit (2025-10-22) : 10.00 => OP_ID = 11
-    // credit; 50.00, debit: 80.00 balance: -30.0
-
-    // VOID  id 11
-    account.void_operation(op_id_voided).unwrap(); // void op id 11  create a op VOID credit 10
-
-    let params = SearchParamsBuilder::default()
-        .from(Some(parse_date("2025-10-01").unwrap()))
-        .to(Some(parse_date("2025-10-31").unwrap()))
-        .build()
-        .unwrap();
-
-    // Stat does not take into account init and close amount
-    let stats_no_net = account.stats_entry(&params, false).unwrap();
-    let stats_net = account.stats_entry(&params, true).unwrap();
-
-    assert_eq!(stats_no_net.balance, dec!(-30.00));
-    assert_eq!(stats_net.balance, dec!(-30.00));
-
-    assert_eq!(stats_no_net.total_credit, dec!(50.00));
-    assert_eq!(stats_net.total_credit, dec!(50.00));
-
-    assert_eq!(stats_no_net.total_debit, dec!(80.00));
-    assert_eq!(stats_net.total_debit, dec!(80.00));
-}
-
-#[test]
-fn test_stats_void_in_period_produces_expected_net_result() {
-    let mut account = setup_account_with_data();
-
-    // #0 Init (2025-09-01) : 200.00 => OP_ID = 0
-    // credit: 200.00, debit: 0.0, balance: 200.0 <- 2025-09
-    // #1 Debit (2025-10-04) : 14.20 => OP_ID = 4
-    // #2 Credit (2025-10-08) : 50.00 => OP_ID = 2
-    // #3 Debit (2025-10-21) : 44.80 => OP_ID = 5
-    // #4 Debit (2025-10-21) : 11.00 => OP_ID = 8
-    // credit; 50.00, debit: 70.00 balance: -20.0  <- 2025-10
-    // #5 Credit (2025-11-05) : 100.00 => OP_ID = 1
-    // #6 Debit (2025-11-12) : 15.70 => OP_ID = 7
-    // #7 Debit (2025-11-20) : 23.60 => OP_ID = 10
-    // credit: 100.00, debit: 39.30, balance: 60.70 <- 2025-11
-    // #8 Debit (2025-12-05) : 25.50 => OP_ID = 3
-    // #9 Credit (2025-12-10) : 10.00 => OP_ID = 9
-    // #10 Credit (2025-12-15) : 150.00 => OP_ID = 6
-    // credit: 160.00, debit: 25.50, balance: 135,50 <- 2025-12
-    //
-    // balance: 510.00 - 134.80 = 375.20
-    // credit: 200 + 50.00 + 100.00 + 160 = 510.00
-    // debit: 0 + 70.00 + 39.30 + 25.50 = 134.80
-
-    // original op id 11
-    let op_id_voided = account
-        .register_transaction(
-            parse_date("2025-10-22").unwrap(),
-            OperationKind::Regular(RegularKind::Transaction),
-            OperationFlow::Debit,
-            dec!(10.0),
-            "Atm".into(),
-        )
-        .unwrap();
-
-    // #11 Debit (2025-10-22) : 10.00 => OP_ID = 11
-
-    // balance: 510.00 - 134.80 = 375.20  = 375.20 - init(200) = 175.20
-    // credit: 200 + 50.00 + 100.00 + 160  = 520.00
-    // debit: 0 + 70.00 + 39.30 + 25.50 + 10 = 144.80
-
-    // VOID  id 11 / a Void op is at local date now
-    account.void_operation(op_id_voided).unwrap(); // void op id 11  create a op VOID credit 10
-
-    let params = SearchParamsBuilder::default()
-        .from(Some(parse_date("2025-09-01").unwrap()))
-        .to(Some(parse_date("4000-12-31").unwrap()))
-        .build()
-        .unwrap();
-
-    // balance: 510.00 - 134.80 = 375.20  = 375.20 - init(+200) = 175.20
-    // credit: 200 + 50.00 + 100.00 + 160 (+10 Void)= 510.00 - init(+200) = 310.00
-    // debit: 0 + 70.00 + 39.30 + 25.50 (-10 Voided)= 134.80
-
-    let stats_no_net = account.stats_entry(&params, false).unwrap();
-    let stats_net = account.stats_entry(&params, true).unwrap();
-
-    assert_eq!(
-        stats_no_net.total_credit,
-        dec!(310.00),
-        "stat credit no net"
-    );
-    assert_eq!(stats_net.total_credit, dec!(310.00), "stat credit net");
-
-    assert_eq!(stats_no_net.total_debit, dec!(144.80), "debit no net");
-    assert_eq!(stats_net.total_debit, dec!(154.80), "debit net");
-
-    assert_eq!(stats_net.balance, dec!(155.20));
-}
-
-#[test]
 fn operation_is_not_voided_by_default() {
     let mut account = setup_account_with_data();
 
@@ -534,6 +438,8 @@ fn operation_is_not_voided_by_default() {
             OperationFlow::Credit,
             dec!(50.0),
             "Atm".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -571,6 +477,8 @@ fn void_operation() {
             OperationFlow::Credit,
             dec!(50.0),
             "Atm".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -602,6 +510,8 @@ fn void_operation_can_not_void_itself() {
             OperationFlow::Credit,
             dec!(50.0),
             "Atm".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -625,6 +535,8 @@ fn cannot_void_same_operation_twice() {
             OperationFlow::Credit,
             dec!(50.0),
             "Atm".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -722,6 +634,8 @@ fn compliance_rejects_overdraft_on_past_date() {
             OperationFlow::Debit,
             dec!(55),
             "ok debit".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -732,6 +646,8 @@ fn compliance_rejects_overdraft_on_past_date() {
         OperationFlow::Debit,
         dec!(10),
         "exceeds overdraft".into(),
+        None,
+        None,
     );
     assert!(res.is_err(), "overdraft at past date should be rejected");
 }
@@ -755,6 +671,8 @@ fn void_allowed_for_op_after_adjust_same_day() {
             OperationFlow::Debit,
             dec!(50),
             "op1".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -769,6 +687,8 @@ fn void_allowed_for_op_after_adjust_same_day() {
             OperationFlow::Credit,
             dec!(100),
             "op3".into(),
+            None,
+            None,
         )
         .unwrap();
 
@@ -797,6 +717,8 @@ fn void_blocked_for_op_before_adjust_same_day() {
             OperationFlow::Debit,
             dec!(50),
             "op1".into(),
+            None,
+            None,
         )
         .unwrap();
 

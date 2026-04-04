@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 use crate::logic::bank::Bank;
 use crate::logic::category::Category;
+use crate::logic::counterparty::{Counterparty, CounterpartyKind};
 use crate::logic::currency::Currency;
 
 // ----------------------------------------------------------------
@@ -14,6 +15,8 @@ use crate::logic::currency::Currency;
 const CURRENCIES_JSON: &str = include_str!("../../seeds/currencies.json");
 const CATEGORIES_FR_JSON: &str = include_str!("../../seeds/categories_fr.json");
 const CATEGORIES_EN_JSON: &str = include_str!("../../seeds/categories_en.json");
+const COUNTERPARTIES_FR_JSON: &str = include_str!("../../seeds/counterparties_fr.json");
+const COUNTERPARTIES_EN_JSON: &str = include_str!("../../seeds/counterparties_en.json");
 const BANKS_JSON: &str = include_str!("../../seeds/banks.json");
 
 // ----------------------------------------------------------------
@@ -38,6 +41,13 @@ struct CurrencySeed {
 #[derive(Deserialize)]
 struct CategorySeed {
     pub name: String,
+    pub note: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct CounterpartySeed {
+    pub name: String,
+    pub kind: CounterpartyKind,
     pub note: Option<String>,
 }
 
@@ -94,6 +104,31 @@ pub fn default_categories(language: &str) -> Vec<Category> {
             id: Nulid::new().expect("Nulid generation failed"),
             name: s.name,
             note: s.note,
+            parent_id: None,
+            terminated: None,
+        })
+        .collect()
+}
+
+/// Returns default counterparties for the given language code.
+/// Falls back to English if language is not supported.
+pub fn default_counterparties(language: &str) -> Vec<Counterparty> {
+    let json = match language {
+        "fr" => COUNTERPARTIES_FR_JSON,
+        _ => COUNTERPARTIES_EN_JSON,
+    };
+
+    let seeds: Vec<CounterpartySeed> =
+        serde_json::from_str(json).expect("Invalid counterparies seed JSON");
+
+    seeds
+        .into_iter()
+        .map(|s| Counterparty {
+            id: Nulid::new().expect("Nulid generation failed"),
+            name: s.name,
+            kind: s.kind,
+            note: s.note,
+            terminated: None,
         })
         .collect()
 }

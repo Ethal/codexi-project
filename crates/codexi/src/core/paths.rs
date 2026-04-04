@@ -8,13 +8,13 @@ use crate::core::{format_date, format_date_time_short, format_id};
 
 // Disk structure of Codexi
 /*
+├── <APP_NAME>.<EXT_MAIN>
+├── <APP_NAME>.<EXT_CFG>
 ├── <DIR_ARCHIVES>
 │   └── <ACCOUNT_ID>
 │       ├── <ACCOUNT_ID>_<APP_NAME>_<YYYY>-<MM>-<DD>.<EXT_ARCHIVE>
 │       ├── ...
 │       └── ...
-├── <APP_NAME>.<EXT_MAIN>
-├── <APP_NAME>.<EXT_CFG>
 ├── <DIR_SNAPSHOTS>
 │   └── <APP_NAME>_<YYYYMMDD>_<HHMMSS>.<EXT_SNAPSHOT>
 │   └── ....

@@ -15,10 +15,6 @@ pub fn default_zero() -> String {
     "0.00".to_owned()
 }
 
-pub fn yes_no(b: bool) -> String {
-    if b { "YES".into() } else { "NO".into() }
-}
-
 pub fn format_decimal(val: Decimal) -> String {
     format!("{:.2}", val)
 }
@@ -31,12 +27,24 @@ pub fn format_optional_path(path: Option<&Path>) -> Option<String> {
     path.map(format_path)
 }
 
-pub fn format_text(txt: &str) -> String {
-    txt.to_string()
+// for ui
+pub fn yes_no(b: bool) -> String {
+    if b { "YES".into() } else { "NO".into() }
 }
 
-pub fn format_optional_text(txt: Option<&str>) -> Option<String> {
-    txt.map(format_text)
+pub fn format_text(txt: &str) -> String {
+    if txt.is_empty() {
+        "—".to_string()
+    } else {
+        txt.to_string()
+    }
+}
+
+pub fn format_optional_text(txt: Option<&str>) -> String {
+    match txt {
+        Some(v) => format_text(v),
+        None => "—".into(),
+    }
 }
 
 pub fn format_id(id: Nulid) -> String {
@@ -44,9 +52,13 @@ pub fn format_id(id: Nulid) -> String {
 }
 
 pub fn format_id_short(id: &str) -> String {
-    let len = id.len();
-    let start = len.saturating_sub(ID_MIN_SHORT_LEN);
-    id[start..].to_string()
+    if id.is_empty() {
+        "—".into()
+    } else {
+        let len = id.len();
+        let start = len.saturating_sub(ID_MIN_SHORT_LEN);
+        id[start..].to_string()
+    }
 }
 
 pub fn format_optional_id_short(id: Option<&str>) -> String {
@@ -60,7 +72,7 @@ pub fn format_optional_id(id: Option<Nulid>) -> Option<String> {
     id.map(format_id)
 }
 
-pub fn format_max_monthly_transactions(value: Option<u32>) -> String {
+pub fn format_optional_u32(value: Option<u32>) -> String {
     match value {
         None => "unlimited".to_string(),
         Some(x) => format!("{}/month", x),

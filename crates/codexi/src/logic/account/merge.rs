@@ -83,6 +83,8 @@ impl Account {
                         op_add.flow,
                         op_add.amount,
                         op_add.description.clone(),
+                        op_add.context.counterparty_id,
+                        op_add.context.category_id,
                     )?;
                     summary.created += 1;
                 }

@@ -5,8 +5,15 @@
   <meta charset="utf-8">
   <title>Statement</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; }
-    table.balance { border-collapse: collapse; }
+    body { font-family: system-ui, sans-serif; margin: 2rem; color: #1a1a1a; }
+
+    .credit { color: #16a34a; }
+    .debit  { color: #dc2626; }
+    .balance { color: #ffa500; }
+    .neutral { color: #1a1a1a; }
+
+    /* Table */
+    table.summary { border-collapse: collapse; }
     table.operation { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ddd; padding: 6px 8px; }
     th { background: #f0f0f0; }
@@ -17,10 +24,11 @@
   <h1>Account statement</h1>
   <hr>
   <div>
-    <p>Account: {{account_number}} - {{account_name}} {{account_currency}} {{account_bank}} - {{operation_count}} Operation(s)</p>
+    <p>Account: {{account_number}} — Name: {{account_name}} — Currency: {{account_currency}} — {{operation_count}} Operation(s)</p>
+    <p>Bank: {{account_bank}}</p>
   </div>
   <hr>
-  <table class="balance">
+  <table class="summary">
     <tr>
       <th>Date</th>
       <th>Debit</th>
@@ -29,9 +37,9 @@
     </tr>
     <tr>
       <td>{{date_min}} / {{date_max}}</td>
-      <td>{{ balance_debit }}</td>
-      <td>{{ balance_credit }}</td>
-      <td>{{ balance_total }}</td>
+      <td class="debit" >{{ balance_debit }}</td>
+      <td class="credit">{{ balance_credit }}</td>
+      <td class="balance" >{{ balance_total }}</td>
     </tr>
   </table>
   <hr>

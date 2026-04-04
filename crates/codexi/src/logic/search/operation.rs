@@ -1,4 +1,4 @@
-// src/codexi/account/search.rs
+// src/logic/search/operation.rs
 
 use chrono::NaiveDate;
 use derive_builder::Builder;
@@ -6,29 +6,35 @@ use nulid::Nulid;
 use rust_decimal::Decimal;
 
 use crate::logic::{
-    account::{OperationContainer, SearchError},
+    account::OperationContainer,
     operation::{Operation, OperationFlow, OperationKind},
+    search::SearchError,
     utils::HasNulid,
 };
 
-/// Struct for search entry
+/// Struct for search operation
 #[derive(Debug, Clone)]
-pub struct SearchEntry {
-    pub items: Vec<SearchItem>,
-}
-
-/// Struct for search item
-#[derive(Debug, Clone)]
-pub struct SearchItem {
+pub struct SearchOperation {
     pub operation: Operation,
     pub balance: Decimal,
 }
 
-impl SearchEntry {
-    pub fn new() -> Self {
-        Self { items: Vec::new() }
+/// Struct for search operation list
+#[derive(Debug, Clone)]
+pub struct SearchOperationList {
+    pub items: Vec<SearchOperation>,
+    pub params: SearchParams,
+}
+
+impl SearchOperationList {
+    pub fn new(params: SearchParams) -> Self {
+        Self {
+            items: Vec::new(),
+            params,
+        }
     }
-    pub fn iter(&self) -> impl Iterator<Item = &SearchItem> {
+
+    pub fn iter(&self) -> impl Iterator<Item = &SearchOperation> {
         self.items.iter()
     }
 
@@ -36,12 +42,12 @@ impl SearchEntry {
         self.items.is_empty()
     }
 
-    ///Return a SearchItem or None
-    pub fn get_searchitem_by_id(&self, si_id: Nulid) -> Option<&SearchItem> {
-        self.items.iter().find(|si| si.operation.id == si_id)
+    ///Return a SearchOperation or None
+    pub fn get_search_operation_by_id(&self, id: Nulid) -> Option<&SearchOperation> {
+        self.items.iter().find(|so| so.operation.id == id)
     }
 
-    pub fn active_items(&self) -> impl Iterator<Item = &SearchItem> {
+    pub fn active_items(&self) -> impl Iterator<Item = &SearchOperation> {
         self.items
             .iter()
             .filter(|i| !i.operation.kind.is_structural()) // not the init and the checkpoint
@@ -51,12 +57,10 @@ impl SearchEntry {
         self.active_items().next().is_none()
     }
 
-    pub fn last_n(&self, n: usize) -> Self {
+    pub fn last_n(&self, n: usize) -> Vec<SearchOperation> {
         let len = self.items.len();
         let start = len.saturating_sub(n);
-        Self {
-            items: self.items[start..].to_vec(),
-        }
+        self.items[start..].to_vec()
     }
 
     pub fn len(&self) -> usize {
@@ -64,19 +68,19 @@ impl SearchEntry {
     }
 }
 
-impl Default for SearchEntry {
+impl Default for SearchOperationList {
     fn default() -> Self {
-        Self::new()
+        Self::new(SearchParams::default())
     }
 }
 
-impl HasNulid for SearchItem {
+impl HasNulid for SearchOperation {
     fn id(&self) -> Nulid {
         self.operation.id
     }
 }
 
-#[derive(Debug, Default, Builder)]
+#[derive(Debug, Default, Clone, Builder)]
 #[builder(default, build_fn(private, name = "fallible_build"))]
 pub struct SearchParams {
     pub from: Option<NaiveDate>,
@@ -101,7 +105,7 @@ impl SearchParamsBuilder {
 pub fn search<T: OperationContainer>(
     container: &T,
     params: &SearchParams,
-) -> Result<SearchEntry, SearchError> {
+) -> Result<SearchOperationList, SearchError> {
     let ops_map = container.get_operations_with_balance();
     let from = params.from;
     let to = params.to;
@@ -124,7 +128,7 @@ pub fn search<T: OperationContainer>(
     let o_flow_filter = match flow {
         Some(s) => match OperationFlow::try_from(s) {
             Ok(v) => Some(v),
-            Err(_) => return Ok(SearchEntry::new()),
+            Err(_) => return Ok(SearchOperationList::new(params.clone())),
         },
         None => None,
     };
@@ -132,12 +136,12 @@ pub fn search<T: OperationContainer>(
     let o_kind_filter = match kind {
         Some(s) => match OperationKind::try_from(s) {
             Ok(v) => Some(v),
-            Err(_) => return Ok(SearchEntry::new()),
+            Err(_) => return Ok(SearchOperationList::new(params.clone())),
         },
         None => None,
     };
 
-    let mut matched: SearchEntry = SearchEntry::new();
+    let mut matched = SearchOperationList::new(params.clone());
 
     for item in ops_map {
         let op = &item.operation;
@@ -193,7 +197,10 @@ pub fn search<T: OperationContainer>(
         if matched.items.len() <= n {
             matched
         } else {
-            matched.last_n(n)
+            SearchOperationList {
+                items: matched.last_n(n),
+                params: matched.params,
+            }
         }
     } else {
         matched
