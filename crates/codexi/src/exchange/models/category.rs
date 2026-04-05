@@ -31,7 +31,7 @@ impl From<&Category> for ExchangeCategory {
         Self {
             id: Some(format_id(c.id)),
             name: c.name.clone(),
-            parent_id: c.parent_id.map(|id| format_id(id)),
+            parent_id: c.parent_id.map(format_id),
             terminated: format_optional_date(c.terminated),
             note: c.note.clone(),
         }
