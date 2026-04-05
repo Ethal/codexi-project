@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file.
 ---
 
+## [Unreleased] — 
+
+### Added
+
+### Changed
+
+### Fixed
+
+
 ## [0.4.0] — 2026-04-05
 > ⚠️ Breaking: DTO modules have been moved from `logic/*` to `dto/*`
 
