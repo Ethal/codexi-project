@@ -57,6 +57,9 @@ dated today. This preserves a complete, tamper-evident audit trail.
   entries dated today, matching real-world banking practice
 - **Immutable Operations** — once recorded, financial fields (amount, date, kind, flow)
   cannot be modified. Only metadata (description, context, tags) can be updated via import.
+- **Counterparty Tracking** — attach a counterparty (person or organisation) to any operation via `-c`; manage counterparties with `counterparty list/add/terminate`
+- **Category Tagging** — tag any operation with a category via `-g` including transfers
+- **Microloan Calculator** — standalone `loan` command to simulate linear or compound interest with configurable policy (cap, penalty, free period); policy persisted in `tmp/loan_policy.json`
 - **Versioned Storage (V3)** — Ciborium binary format with magic header, versioning,
   and SHA-256 checksum
 ---
@@ -117,11 +120,11 @@ codexi-cli admin backup
 | Command | Description |
 | :--- | :--- |
 | `overview` | Show an overview of the ledger |
-| `credit <date> <amount> [desc]` | Record an incoming flow |
-| `debit <date> <amount> [desc]` | Record an outgoing flow |
-| `interest <date> <amount> [desc]` | Record an interest accrual (Loan/Saving/Deposit/Income accounts) |
-| `transfer <date> <amount_from> <amount_to> <account_id\|name> [desc]` | Transfer from current account to another |
-| `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--min-amount] [--max-amount] [--latest] [--open]` | Search and filter operations |
+| `credit <date> <amount> [desc] [-c counterparty] [-g category]` | Record an incoming flow |
+| `debit <date> <amount> [desc] [-c counterparty] [-g category]` | Record an outgoing flow |
+| `interest <date> <amount> [desc] [-c counterparty] [-g category]` | Record an interest accrual (Loan/Saving/Deposit/Income accounts) |
+| `transfer <date> <amount_from> <amount_to> <account_id\|name> [desc] [-g category]` | Transfer from current account to another |
+| `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--a-min] [--a-max] [--last] [--today] [--open]` | Search and filter operations |
 
 ### Operation
 | Command | Description |
@@ -155,6 +158,23 @@ codexi-cli admin backup
 | Command | Description |
 | :--- | :--- |
 | `category list` | List all the category available |
+| `category add <name> [--parent] [--note]` | Add a category |
+| `category terminate <id\|name>` | Terminate a category |
+
+### Counterparty
+| Command | Description |
+| :--- | :--- |
+| `counterparty list` | List all counterparties |
+| `counterparty add <name> <kind> [--note]` | Add a counterparty (`Person` or `Organization`) |
+| `counterparty terminate <id\|name>` | Terminate a counterparty |
+
+### Loan
+| Command | Description |
+| :--- | :--- |
+| `loan policy show` | Display current loan policy |
+| `loan policy set [--type] [--rate] [--free-days] [--max-cap] [--max-days] [--min-capital] [--max-penalty]` | Update policy fields (unspecified fields unchanged) |
+| `loan policy reset` | Reset policy to default values |
+| `loan simulate --capital <amount> --start <date> --refund <date> [--type] [--rate] [--free-days]` | Simulate interest and amount due |
 
 ### Report
 | Command | Description |
@@ -181,8 +201,8 @@ codexi-cli admin backup
 ### Data
 | Command | Description |
 | :--- | :--- |
-| `data export <currency\|account-header\|operation> <json\|toml\|csv>` | Export data |
-| `data import <currency\|account-header\|operation> <json\|toml\|csv>` | Import data |
+| `data export <currency\|counterparty\|category\|account-header\|operation> <json\|toml\|csv>` | Export data |
+| `data import <currency\|counterparty\|category\|account-header\|operation> <json\|toml\|csv>` | Import data |
 | `data snapshot` | Manage the snapshot of the active ledger |
 
 | Command | Description |
@@ -216,7 +236,7 @@ codexi-cli admin backup
 ## 📊 Analytics Dashboard (`report stats`)
 
 - **Smart filtering** — `INIT` and `CLOSE` operations always excluded; `ADJUST` excluded from behavioral metrics
-- **Void semantics** — by default, voided operations are excluded (historical view); use `--net` for net-impact view within a period
+- **Void semantics** — voided operations are excluded from calculations; both sides of a void pair must exist within the selected period to be included.
 - **Savings Rate Bar** — dynamic indicator, turns to danger mode if expenses exceed income
 - **Daily Burn Rate** — average daily spending over the selected period
 - **System Health** — tracks adjustment ratio to monitor data quality
@@ -229,7 +249,7 @@ Fixed filenames are used for simplicity:
 - **Export** → creates `codexi.<ext>` in the current directory
 - **Import** → expects `codexi.<ext>` in the current directory
 
-> ⚠️ Always run `data snapshot` before an import.
+> ⚠️ Always run `data snapshot create` before an import.
 
 JSON and TOML exports include an `export_version` field (currently **V2**) for forward compatibility. These formats are interchange-only and do not carry internal storage metadata.
 
@@ -255,7 +275,7 @@ JSON and TOML exports include an `export_version` field (currently **V2**) for f
 | **macOS** | `~/Library/Application Support/fr.ethal.codexi/` |
 | **Windows**| `%AppData%\Roaming\fr.ethal.codexi\` |
 
-Files: `codexi.dat` (active ledger) · `archives/` · `snapshots/` · `trash/`
+Files: `codexi.dat` (active ledger) · `archives/` · `snapshots/` · `tmp/` · `trash/`
 
 ---
 
@@ -276,8 +296,8 @@ A companion **`www/`** directory contains the static website hosted at [codexi.e
 
 | Layer | Version | Notes |
 | :--- | :--- | :--- |
-| Application (CLI) | `0.3.0` | Semantic versioning — active development |
-| Core library | `0.3.0` | Semantic versioning — active development |
+| Application (CLI) | `0.4.0` | Semantic versioning — active development |
+| Core library | `0.4.0` | Semantic versioning — active development |
 | Storage format | `V3` | Ciborium binary, magic header, SHA-256 checksum |
 | Export format (JSON/TOML) | `V2` | Interchange only, no storage metadata |
 

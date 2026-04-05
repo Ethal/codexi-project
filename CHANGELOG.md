@@ -2,17 +2,30 @@
 All notable changes to this project will be documented in this file.
 ---
 
-## [Unreleased] — 
+## [0.4.0] — 2026-04-05
 > ⚠️ Breaking: DTO modules have been moved from `logic/*` to `dto/*`
 
 > ⚠️ Breaking: `Operation` structure, additional field `account_id`, performed the command `admin audit --rebuild`
 
 ### Added
 
+- **CLI command `loan policy show`** — display current persisted loan policy.
+- **CLI command `loan policy set`** — update one or more policy fields without
+  overwriting unspecified fields. Flags: `--type`, `--rate`, `--free-days`,
+  `--max-cap`, `--max-days`, `--min-capital`, `--max-penalty`.
+- **CLI command `loan policy reset`** — reset policy to default values and persist.
+- **CLI command `loan simulate`** — compute amount due for a given loan.
+  Required: `--capital`, `--start`, `--refund`.
+  Optional overrides (without modifying policy): `--type`, `--rate`, `--free-days`.
+  Displays: amount due, total interest, first interest date, per-day interest breakdown.
+- **CLI Command** — `overview` to display the main informations of the accounts, including the balance, account type, bank, and currency. 
+- **CLI commands** — `data export category` and their `import` counterparts. Format argument: `json or toml`. CSV reserved, returns `UnsupportedFormat`.
+- **CLI commands** — `data export couterparty` and their `import` counterparts. Format argument: `json or toml`. CSV reserved, returns `UnsupportedFormat`.
 - **Account::set_context** as a wrapper around `context.update_context`.
 - **termination guards** in `set_context`, `set_bank` and `set_currency` to prevent mutating terminated accounts.
-- **CLI Command** — `overview` to display the main informations of the accounts, including the balance, account type, bank, and currency. 
 - **`ignored`** operations list to stats output to surface operations excluded from calculations (e.g. unmatched void/voided pairs)
+- **ExchangeCategoryList** — dedicated exchange DTO for the category list. Export produces `categories.json/toml`. Import merges categoris — new categories created, existing updated by id. Duplicate code against existing list rejected as error.
+- **Import validation — categories** — `validate_import_categorie` covers: version, id format if present, name.
 - **Seed** — default seed for counterparty are available at the creation of a new ledger.
 - **Counterparty** — model, DTO, exchange import/export and validation wired end-to-end.
   Fields `id`, `name`, `kind` (`Person` / `Organisation`), `note`, `terminated`.
@@ -38,23 +51,14 @@ All notable changes to this project will be documented in this file.
 - **`LoanPolicySettings`** — persisted loan policy stored in `tmp/loan_policy.json`.
   Loaded via `load_or_create`, saved via `save`, reset to defaults via `reset`.
   Converted to domain `LoanPolicy` via `to_loan_policy()`.
-- **CLI command `loan policy show`** — display current persisted loan policy.
-- **CLI command `loan policy set`** — update one or more policy fields without
-  overwriting unspecified fields. Flags: `--type`, `--rate`, `--free-days`,
-  `--max-cap`, `--max-days`, `--min-capital`, `--max-penalty`.
-- **CLI command `loan policy reset`** — reset policy to default values and persist.
-- **CLI command `loan simulate`** — compute amount due for a given loan.
-  Required: `--capital`, `--start`, `--refund`.
-  Optional overrides (without modifying policy): `--type`, `--rate`, `--free-days`.
-  Displays: amount due, total interest, first interest date, per-day interest breakdown.
 
 ### Changed
+- **CLI handlers** to use new DTO construction patterns
+- **CLI command** `search`, alias `view` now support the flag `--open` to open the result in the default browser.
 - **Refactored DTO layer**:
   - Moved DTOs from `logic/*` into dedicated `dto/*` modules
   - Simplified DTOs to only handle basic type conversions (e.g. `NaiveDate`, `Nulid`, `Path` → `String`)
 - **Moved formatting logic** (e.g. booleans, display helpers) from DTOs to CLI UI layer
-- **CLI handlers** to use new DTO construction patterns
-- **CLI command** `search`, alias `view` now support the flag `--open` to open the result in the default browser.
 - **Stats calculation** — Reworked logic to ensure consistency with account statements.
   - Stats now exclude init and checkpoint operations while including all other valid operations,
   - Introduced robust handling of void and voided operations: Operations are only included if both sides of the pair exist within the selected period,
