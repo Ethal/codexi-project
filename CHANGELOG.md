@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 -**UI** — account switch messaging to include the account name and id ("Switched to account: <name> (<id>)")
+- **UI `Top Expense`** — tie-breaker added to compare op_date so items with equal amounts are ordered deterministically
 
 ### Fixed
 
