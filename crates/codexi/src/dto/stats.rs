@@ -158,6 +158,7 @@ impl StatsCollection {
             b.amount
                 .partial_cmp(&a.amount)
                 .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| b.op_date.cmp(&a.op_date))
         });
         top_expenses.truncate(5);
 
