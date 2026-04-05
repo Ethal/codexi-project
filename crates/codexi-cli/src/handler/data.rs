@@ -59,7 +59,7 @@ pub fn handle_data_command(
                     return Ok(());
                 }
                 let (account, warnings) = import_with_format::<Account>(format, cwd)?;
-                let summary = codexi.import_account(account)?;
+                let summary = codexi.import_account_header(account)?;
                 FileManagement::save_current_state(&codexi, paths)?;
                 msg_info!(
                     "Import in {}: {} created, {} updated.",
