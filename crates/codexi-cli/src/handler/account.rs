@@ -59,7 +59,8 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
             let id_n = resolve_by_id_or_name::<Account, CodexiError>(&id, &codexi.accounts)?;
             codexi.set_current_account(&id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
-            msg_info!("Switched to account {}", id_n);
+            let account = codexi.get_account_by_id(&id_n)?;
+            msg_info!("Switched to account: {} ({})", account.name, id_n);
         }
 
         AccountCommand::Close { id, date } => {

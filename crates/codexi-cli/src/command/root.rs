@@ -41,7 +41,18 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 pub enum RootCommand {
     /// Show an overview of the accounts (id,name,type,currency,debit,credit,balance)
-    Overview {},
+    Overview,
+
+    /// Alias of 'account use'
+    Use {
+        /// Account id
+        #[arg(
+            value_name = "ID",
+            required = true,
+            help = "Account ID. Accept full ID, short ID or name of the account"
+        )]
+        id: String,
+    },
 
     /// Add a regular debit operation
     Debit {

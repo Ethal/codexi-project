@@ -5,8 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] — 
 
 ### Added
+- **CLI command `use`** — alias for the command `account use`.
 
 ### Changed
+-**UI** — account switch messaging to include the account name and id ("Switched to account: <name> (<id>)")
 
 ### Fixed
 

@@ -44,10 +44,18 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
     let skip_confirm = cli.yes;
 
     match cli.command {
-        RootCommand::Overview {} => {
+        RootCommand::Overview => {
             let codexi = FileManagement::load_current_state(paths)?;
             let accounts = AccountCollection::build(&codexi);
             overview_account(&accounts);
+        }
+        RootCommand::Use { id } => {
+            let mut codexi = FileManagement::load_current_state(paths)?;
+            let id_n = resolve_by_id_or_name::<Account, CodexiError>(&id, &codexi.accounts)?;
+            codexi.set_current_account(&id_n)?;
+            FileManagement::save_current_state(&codexi, paths)?;
+            let account = codexi.get_account_by_id(&id_n)?;
+            msg_info!("Switched to account: {} ({})", account.name, id_n);
         }
 
         RootCommand::Debit {
