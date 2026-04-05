@@ -6,19 +6,18 @@ use crate::core::{
     CoreWarning, parse_date, parse_id, parse_optional_date, parse_optional_id,
     resolve_or_generate_id,
 };
-use crate::exchange::models::ExchangeAccountOperations;
-use crate::exchange::validator::validate_import_operations;
 use crate::exchange::{
-    ExchangeAccountHeader, ExchangeCounterparty, ExchangeCounterpartyList, ExchangeCurrency,
-    ExchangeCurrencyList, ExchangeError, validate_import_account_header,
-    validate_import_counterparty, validate_import_currency,
+    ExchangeAccountHeader, ExchangeAccountOperations, ExchangeCategory, ExchangeCategoryList,
+    ExchangeCounterparty, ExchangeCounterpartyList, ExchangeCurrency, ExchangeCurrencyList,
+    ExchangeError, validate_import_account_header, validate_import_category,
+    validate_import_counterparty, validate_import_currency, validate_import_operations,
 };
-use crate::logic::counterparty::CounterpartyKind;
-use crate::logic::operation::{AccountOperations, Operation};
 use crate::logic::{
     account::{Account, AccountAnchors, AccountContext, AccountMeta},
-    counterparty::{Counterparty, CounterpartyList},
+    category::{Category, CategoryList},
+    counterparty::{Counterparty, CounterpartyKind, CounterpartyList},
     currency::{Currency, CurrencyList},
+    operation::{AccountOperations, Operation},
 };
 
 impl ExchangeAccountHeader {
@@ -107,13 +106,15 @@ impl ExchangeCounterpartyList {
         let warnings = validate_import_counterparty(data)?;
 
         let counterparties: Vec<Counterparty> = data
-            .counterparties
+            .list
             .iter()
             .cloned()
             .map(Self::map_counterparty)
             .collect::<Result<Vec<_>, _>>()?;
 
-        let counterparty_list = CounterpartyList { counterparties };
+        let counterparty_list = CounterpartyList {
+            list: counterparties,
+        };
         Ok((counterparty_list, warnings))
     }
 
@@ -123,6 +124,35 @@ impl ExchangeCounterpartyList {
             id: resolve_or_generate_id(c.id.as_deref()),
             name: c.name,
             kind: CounterpartyKind::try_from(c.kind.as_str())?,
+            terminated: parse_optional_date(c.terminated.as_deref())?,
+            note: c.note,
+        })
+    }
+}
+
+impl ExchangeCategoryList {
+    pub fn import_data(
+        data: &ExchangeCategoryList,
+    ) -> Result<(CategoryList, Vec<CoreWarning>), ExchangeError> {
+        let warnings = validate_import_category(data)?;
+
+        let categories: Vec<Category> = data
+            .list
+            .iter()
+            .cloned()
+            .map(Self::map_category)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let categories_list = CategoryList { list: categories };
+        Ok((categories_list, warnings))
+    }
+
+    /// Mapping strict Export → Domain (without alteration)
+    fn map_category(c: ExchangeCategory) -> Result<Category, ExchangeError> {
+        Ok(Category {
+            id: resolve_or_generate_id(c.id.as_deref()),
+            name: c.name,
+            parent_id: parse_optional_id(c.parent_id.as_deref())?,
             terminated: parse_optional_date(c.terminated.as_deref())?,
             note: c.note,
         })

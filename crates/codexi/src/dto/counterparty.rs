@@ -33,11 +33,7 @@ impl From<&Counterparty> for CounterpartyItem {
 
 impl CounterpartyCollection {
     pub fn build(cps: &CounterpartyList) -> Self {
-        let items: Vec<CounterpartyItem> = cps
-            .counterparties
-            .iter()
-            .map(CounterpartyItem::from)
-            .collect();
+        let items: Vec<CounterpartyItem> = cps.list.iter().map(CounterpartyItem::from).collect();
         Self { items }
     }
 }

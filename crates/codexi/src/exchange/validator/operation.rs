@@ -4,10 +4,12 @@ use nulid::Nulid;
 use rust_decimal::Decimal;
 use std::collections::{HashMap, HashSet};
 
-use crate::CODEXI_EXCHANGE_FORMAT_VERSION;
-use crate::core::{CoreWarning, CoreWarningKind, parse_decimal, parse_id, parse_optional_id};
-use crate::exchange::{ExchangeAccountOperations, ExchangeError, ExchangeOperation};
-use crate::logic::operation::{OperationError, OperationKind, OperationKindError, RegularKind};
+use crate::{
+    CODEXI_EXCHANGE_FORMAT_VERSION,
+    core::{CoreWarning, CoreWarningKind, parse_decimal, parse_id, parse_optional_id},
+    exchange::{ExchangeAccountOperations, ExchangeError, ExchangeOperation},
+    logic::operation::{OperationError, OperationKind, OperationKindError, RegularKind},
+};
 
 /// Exchange operations validation (structural + Void + Transfer + Amount consistency)
 pub fn validate_import_operations(
@@ -43,7 +45,7 @@ pub fn validate_import_operations(
             }
             // Amount still validated for new operations
             let amount = parse_decimal(&op.amount, "amount")?;
-            if amount <= Decimal::ZERO {
+            if amount < Decimal::ZERO {
                 return Err(ExchangeError::InvalidAmount(
                     "New operation has invalid amount — must be strictly positive".into(),
                 ));
@@ -66,7 +68,7 @@ pub fn validate_import_operations(
 
         // Amount must be strictly positive
         let amount = parse_decimal(&op.amount, "amount")?;
-        if amount <= Decimal::ZERO {
+        if amount < Decimal::ZERO {
             return Err(ExchangeError::InvalidAmount(format!(
                 "Operation {} has invalid amount {} — must be strictly positive",
                 id_s, amount

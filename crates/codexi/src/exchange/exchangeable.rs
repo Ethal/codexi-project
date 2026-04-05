@@ -8,12 +8,12 @@ use serde::{Deserialize, Serialize};
 use crate::{
     core::CoreWarning,
     exchange::{
-        ExchangeAccountHeader, ExchangeAccountOperations, ExchangeCounterpartyList,
-        ExchangeCurrencyList, ExchangeError,
+        ExchangeAccountHeader, ExchangeAccountOperations, ExchangeCategoryList,
+        ExchangeCounterpartyList, ExchangeCurrencyList, ExchangeError,
     },
     logic::{
-        account::Account, counterparty::CounterpartyList, currency::CurrencyList,
-        operation::AccountOperations,
+        account::Account, category::CategoryList, counterparty::CounterpartyList,
+        currency::CurrencyList, operation::AccountOperations,
     },
 };
 
@@ -113,5 +113,25 @@ impl Exchangeable for CounterpartyList {
 
     fn exchange_filename() -> &'static str {
         "counterparties"
+    }
+}
+
+impl ExchangeBase for CategoryList {
+    type Warning = CoreWarning;
+}
+
+impl Exchangeable for CategoryList {
+    type Exchange = ExchangeCategoryList;
+
+    fn to_exchange(&self) -> Self::Exchange {
+        ExchangeCategoryList::export_data(self)
+    }
+
+    fn from_exchange(data: Self::Exchange) -> Result<(Self, Vec<Self::Warning>), ExchangeError> {
+        ExchangeCategoryList::import_data(&data)
+    }
+
+    fn exchange_filename() -> &'static str {
+        "categories"
     }
 }

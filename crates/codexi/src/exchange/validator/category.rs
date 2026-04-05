@@ -4,13 +4,13 @@ use std::collections::HashSet;
 
 use crate::{
     CODEXI_EXCHANGE_FORMAT_VERSION,
-    core::{CoreWarning, parse_id},
-    exchange::{ExchangeCurrencyList, ExchangeError},
+    core::{CoreWarning, parse_id, validate_text_rules},
+    exchange::{ExchangeCategoryList, ExchangeError},
 };
 
-/// Exchange currency validation
-pub fn validate_import_currency(
-    import: &ExchangeCurrencyList,
+/// Exchange counterparty validation
+pub fn validate_import_category(
+    import: &ExchangeCategoryList,
 ) -> Result<Vec<CoreWarning>, ExchangeError> {
     // Version
     if import.version != CODEXI_EXCHANGE_FORMAT_VERSION {
@@ -25,23 +25,24 @@ pub fn validate_import_currency(
     // Unique IDs
     let mut seen_ids = HashSet::new();
 
-    for currency in &import.currencies {
+    for category in &import.list {
         // Validate id format if present — parse attempted here + check duplicate
-        if let Some(raw_id) = &currency.id {
+        if let Some(raw_id) = &category.id {
             let id = parse_id(raw_id)?;
             if !seen_ids.insert(id) {
-                return Err(ExchangeError::DuplicateCurrency(format!(
-                    "Duplicate currency id {}",
+                return Err(ExchangeError::DuplicateCategory(format!(
+                    "Duplicate category id {}",
                     id
                 )));
             }
         }
-
-        // check currency code as per Currency::new()
-        if currency.code.len() < 3 || currency.code.len() > 3 {
+        // Name comply with text rules
+        let min = 3;
+        let max = 20;
+        if let Err(e) = validate_text_rules(&category.name, min, max) {
             return Err(ExchangeError::InvalidData(format!(
-                "Currency code '{}' must be exactly 3 characters (ISO 4217)",
-                currency.code
+                "category name error: {}",
+                e,
             )));
         }
     }

@@ -63,17 +63,14 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             let mut codexi = FileManagement::load_current_state(paths)?;
             let category_id = category
                 .map(|name| {
-                    resolve_by_id_or_name::<Category, CategoryError>(
-                        &name,
-                        &codexi.categories.categories,
-                    )
+                    resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list)
                 })
                 .transpose()?;
             let counterparty_id = counterparty
                 .map(|name| {
                     resolve_by_id_or_name::<Counterparty, CounterpartyError>(
                         &name,
-                        &codexi.counterparties.counterparties,
+                        &codexi.counterparties.list,
                     )
                 })
                 .transpose()?;
@@ -110,17 +107,14 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             let mut codexi = FileManagement::load_current_state(paths)?;
             let category_id = category
                 .map(|name| {
-                    resolve_by_id_or_name::<Category, CategoryError>(
-                        &name,
-                        &codexi.categories.categories,
-                    )
+                    resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list)
                 })
                 .transpose()?;
             let counterparty_id = counterparty
                 .map(|name| {
                     resolve_by_id_or_name::<Counterparty, CounterpartyError>(
                         &name,
-                        &codexi.counterparties.counterparties,
+                        &codexi.counterparties.list,
                     )
                 })
                 .transpose()?;
@@ -153,17 +147,14 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             let mut codexi = FileManagement::load_current_state(paths)?;
             let category_id = category
                 .map(|name| {
-                    resolve_by_id_or_name::<Category, CategoryError>(
-                        &name,
-                        &codexi.categories.categories,
-                    )
+                    resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list)
                 })
                 .transpose()?;
             let counterparty_id = counterparty
                 .map(|name| {
                     resolve_by_id_or_name::<Counterparty, CounterpartyError>(
                         &name,
-                        &codexi.counterparties.counterparties,
+                        &codexi.counterparties.list,
                     )
                 })
                 .transpose()?;
@@ -201,10 +192,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             let desc = parse_text(description.clone());
             let category_id = category
                 .map(|name| {
-                    resolve_by_id_or_name::<Category, CategoryError>(
-                        &name,
-                        &codexi.categories.categories,
-                    )
+                    resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list)
                 })
                 .transpose()?;
 

@@ -1,6 +1,6 @@
 // src/logic/counterparty/list.rs
 
-use chrono::NaiveDate;
+use chrono::Local;
 use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
@@ -11,19 +11,17 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CounterpartyList {
-    pub counterparties: Vec<Counterparty>,
+    pub list: Vec<Counterparty>,
 }
 
 impl CounterpartyList {
     pub fn new() -> Self {
-        Self {
-            counterparties: Vec::new(),
-        }
+        Self { list: Vec::new() }
     }
 
     pub fn add(&mut self, counterparty: Counterparty) -> Nulid {
         let id = counterparty.id;
-        self.counterparties.push(counterparty);
+        self.list.push(counterparty);
         id
     }
 
@@ -53,47 +51,47 @@ impl CounterpartyList {
     }
 
     pub fn get_by_id(&self, id: &Nulid) -> Result<&Counterparty, CounterpartyError> {
-        self.counterparties
+        self.list
             .iter()
             .find(|c| &c.id == id)
             .ok_or_else(|| CounterpartyError::CounterpartyNotFound(format_id(*id)))
     }
 
     pub fn get_by_id_mut(&mut self, id: &Nulid) -> Result<&mut Counterparty, CounterpartyError> {
-        self.counterparties
+        self.list
             .iter_mut()
             .find(|c| &c.id == id)
             .ok_or_else(|| CounterpartyError::CounterpartyNotFound(format_id(*id)))
     }
 
     pub fn counterparty_name_by_id(&self, id: &Nulid) -> Option<String> {
-        self.counterparties
+        self.list
             .iter()
             .find(|b| &b.id == id)
             .map(|b| b.name.clone())
     }
 
-    pub fn terminate(&mut self, id: &Nulid, date: &NaiveDate) -> Result<(), CounterpartyError> {
+    pub fn terminate(&mut self, id: &Nulid) -> Result<(), CounterpartyError> {
+        let today = Local::now().date_naive();
         let counterparty = self.get_by_id_mut(id)?;
-
-        counterparty.terminated = Some(*date);
+        counterparty.terminated = Some(today);
         Ok(())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Counterparty> {
-        self.counterparties.iter()
+        self.list.iter()
     }
 
     pub fn is_exist(&self, id: &Nulid) -> bool {
-        self.counterparties.iter().any(|c| &c.id == id)
+        self.list.iter().any(|c| &c.id == id)
     }
 
     pub fn count(&self) -> usize {
-        self.counterparties.len()
+        self.list.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.counterparties.is_empty()
+        self.list.is_empty()
     }
 }
 
@@ -105,6 +103,8 @@ impl Default for CounterpartyList {
 
 impl From<Vec<Counterparty>> for CounterpartyList {
     fn from(counterparties: Vec<Counterparty>) -> Self {
-        Self { counterparties }
+        Self {
+            list: counterparties,
+        }
     }
 }

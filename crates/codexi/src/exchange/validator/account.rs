@@ -1,7 +1,7 @@
 // src/exchange/validator/account.rs
 
-use crate::CODEXI_EXCHANGE_FORMAT_VERSION;
 use crate::{
+    CODEXI_EXCHANGE_FORMAT_VERSION,
     core::{CoreWarning, validate_text_rules},
     exchange::{ExchangeAccountHeader, ExchangeError},
     logic::account::AccountType,

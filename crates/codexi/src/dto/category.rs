@@ -33,11 +33,7 @@ impl From<&Category> for CategoryItem {
 
 impl CategoryCollection {
     pub fn build(categories: &CategoryList) -> Self {
-        let items: Vec<CategoryItem> = categories
-            .categories
-            .iter()
-            .map(CategoryItem::from)
-            .collect();
+        let items: Vec<CategoryItem> = categories.list.iter().map(CategoryItem::from).collect();
         Self { items }
     }
 }

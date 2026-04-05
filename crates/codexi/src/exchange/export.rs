@@ -4,14 +4,19 @@ use crate::CODEXI_EXCHANGE_FORMAT_VERSION;
 use crate::core::{
     format_date, format_decimal, format_id, format_optional_date, format_optional_id,
 };
-use crate::exchange::{
-    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
-    ExchangeAccountOperations, ExchangeCheckpointRef, ExchangeCounterparty,
-    ExchangeCounterpartyList, ExchangeCurrency, ExchangeCurrencyList, ExchangeOperation,
+
+use crate::{
+    exchange::{
+        ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
+        ExchangeAccountOperations, ExchangeCategory, ExchangeCategoryList, ExchangeCheckpointRef,
+        ExchangeCounterparty, ExchangeCounterpartyList, ExchangeCurrency, ExchangeCurrencyList,
+        ExchangeOperation,
+    },
+    logic::{
+        account::Account, category::CategoryList, counterparty::CounterpartyList,
+        currency::CurrencyList, operation::AccountOperations,
+    },
 };
-use crate::logic::counterparty::CounterpartyList;
-use crate::logic::operation::AccountOperations;
-use crate::logic::{account::Account, currency::CurrencyList};
 
 impl ExchangeAccountHeader {
     /// Single entry point for exporting the account heder(JSON / TOML / CSV)
@@ -72,11 +77,17 @@ impl ExchangeCounterpartyList {
     pub fn export_data(export: &CounterpartyList) -> ExchangeCounterpartyList {
         ExchangeCounterpartyList {
             version: CODEXI_EXCHANGE_FORMAT_VERSION,
-            counterparties: export
-                .counterparties
-                .iter()
-                .map(ExchangeCounterparty::from)
-                .collect(),
+            list: export.list.iter().map(ExchangeCounterparty::from).collect(),
+        }
+    }
+}
+
+impl ExchangeCategoryList {
+    /// Single entry point for exporting the currency list (JSON / TOML / CSV)
+    pub fn export_data(export: &CategoryList) -> ExchangeCategoryList {
+        ExchangeCategoryList {
+            version: CODEXI_EXCHANGE_FORMAT_VERSION,
+            list: export.list.iter().map(ExchangeCategory::from).collect(),
         }
     }
 }

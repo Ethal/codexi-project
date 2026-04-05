@@ -18,10 +18,14 @@ pub struct Category {
 }
 
 impl Category {
-    pub fn new(name: &str, note: Option<&str>) -> Result<Self, CategoryError> {
+    pub fn new(
+        name: &str,
+        parent: Option<Nulid>,
+        note: Option<&str>,
+    ) -> Result<Self, CategoryError> {
         let id = Nulid::new()?;
         let min = 3;
-        let max = 10;
+        let max = 20;
         if let Err(e) = validate_text_rules(name, min, max) {
             return Err(CategoryError::InvalidName(e));
         }
@@ -30,10 +34,11 @@ impl Category {
             id,
             name: name.to_string(),
             note: note.map(str::to_owned),
-            parent_id: None,
+            parent_id: parent,
             terminated: None,
         })
     }
+
     pub fn is_active(&self) -> bool {
         self.terminated.is_none()
     }

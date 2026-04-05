@@ -28,10 +28,9 @@ impl SystemKind {
     pub fn try_from_str(s: &str) -> Result<Self, SystemKindError> {
         let lower = s.to_ascii_lowercase();
         match lower.as_ref() {
-            "init" => Ok(SystemKind::Init),
+            "initialize" | "init" => Ok(SystemKind::Init),
             "adjust" => Ok(SystemKind::Adjust),
-            "checkpoint" => Ok(SystemKind::Checkpoint),
-            "close" => Ok(SystemKind::Checkpoint),
+            "close" | "checkpoint" => Ok(SystemKind::Checkpoint),
             "void" => Ok(SystemKind::Void),
             _ => Err(SystemKindError::Unknown(s.to_string())),
         }

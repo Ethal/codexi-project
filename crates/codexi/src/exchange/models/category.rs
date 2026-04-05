@@ -1,18 +1,19 @@
-// src/exchange/models/counterparty.rs
+// src/exchange/models/category.rs
 
 use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{format_id, format_optional_date},
-    logic::counterparty::Counterparty,
+    logic::category::Category,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExchangeCounterparty {
+pub struct ExchangeCategory {
     #[serde(default)]
     pub id: Option<String>,
     pub name: String,
-    pub kind: String,
+    #[serde(default)]
+    pub parent_id: Option<String>,
     #[serde(default)]
     pub terminated: Option<String>,
     #[serde(default)]
@@ -20,17 +21,17 @@ pub struct ExchangeCounterparty {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExchangeCounterpartyList {
+pub struct ExchangeCategoryList {
     pub version: u16,
-    pub list: Vec<ExchangeCounterparty>,
+    pub list: Vec<ExchangeCategory>,
 }
 
-impl From<&Counterparty> for ExchangeCounterparty {
-    fn from(c: &Counterparty) -> Self {
+impl From<&Category> for ExchangeCategory {
+    fn from(c: &Category) -> Self {
         Self {
             id: Some(format_id(c.id)),
             name: c.name.clone(),
-            kind: c.kind.as_str().to_string(),
+            parent_id: c.parent_id.map(|id| format_id(id)),
             terminated: format_optional_date(c.terminated),
             note: c.note.clone(),
         }

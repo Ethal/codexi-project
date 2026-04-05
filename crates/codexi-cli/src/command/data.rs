@@ -86,6 +86,11 @@ pub enum ExchangeTypeCommand {
         #[arg(value_enum)]
         format: ExchangeFormat,
     },
+    /// Exchange category
+    Category {
+        #[arg(value_enum)]
+        format: ExchangeFormat,
+    },
     /// Exchange counterparty
     Counterparty {
         #[arg(value_enum)]

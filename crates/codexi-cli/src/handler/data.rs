@@ -8,8 +8,8 @@ use codexi::{
     exchange::Exchangeable,
     file_management::{ExchangeSerdeFormat, FileExchangeError, FileManagement},
     logic::{
-        account::Account, counterparty::CounterpartyList, currency::CurrencyList,
-        operation::AccountOperations,
+        account::Account, category::CategoryList, counterparty::CounterpartyList,
+        currency::CurrencyList, operation::AccountOperations,
     },
 };
 
@@ -32,20 +32,24 @@ pub fn handle_data_command(
             ExchangeTypeCommand::AccountHeader { format } => {
                 let account = codexi.get_current_account_mut()?;
                 export_with_format(account, format, cwd)?;
-                msg_info!("Export completed");
+                msg_info!("Export accounts header completed");
             }
             ExchangeTypeCommand::Operation { format } => {
                 let account = codexi.get_current_account()?;
                 export_with_format(&account.to_account_operations(), format, cwd)?;
-                msg_info!("Export completed");
+                msg_info!("Export operations completed");
             }
             ExchangeTypeCommand::Currency { format } => {
                 export_with_format(&codexi.currencies, format, cwd)?;
-                msg_info!("Export completed");
+                msg_info!("Export currencies completed");
+            }
+            ExchangeTypeCommand::Category { format } => {
+                export_with_format(&codexi.categories, format, cwd)?;
+                msg_info!("Export categories completed");
             }
             ExchangeTypeCommand::Counterparty { format } => {
                 export_with_format(&codexi.counterparties, format, cwd)?;
-                msg_info!("Export completed");
+                msg_info!("Export counterparties completed");
             }
         },
         DataCommand::Import(exchange_type) => match exchange_type.command {
@@ -65,9 +69,12 @@ pub fn handle_data_command(
                 );
                 if !warnings.is_empty() {
                     view_warning(&warnings);
-                    msg_warn!("Import completed, {} warnings", warnings.len());
+                    msg_warn!(
+                        "Import accounts header completed, {} warnings",
+                        warnings.len()
+                    );
                 } else {
-                    msg_info!("Import completed");
+                    msg_info!("Import accounts header completed");
                 }
                 msg_warn!(
                     "It is recommended to run `admin audit --rebuild` to verify data integrity."
@@ -91,9 +98,9 @@ pub fn handle_data_command(
                 );
                 if !warnings.is_empty() {
                     view_warning(&warnings);
-                    msg_warn!("Import completed, {} warnings", warnings.len());
+                    msg_warn!("Import operations completed, {} warnings", warnings.len());
                 } else {
-                    msg_info!("Import completed");
+                    msg_info!("Import operations completed");
                 }
                 msg_warn!(
                     "It is recommended to run `admin audit --rebuild` to verify data integrity."
@@ -115,9 +122,30 @@ pub fn handle_data_command(
                 );
                 if !warnings.is_empty() {
                     view_warning(&warnings);
-                    msg_warn!("Import completed, {} warnings", warnings.len());
+                    msg_warn!("Import currencies completed, {} warnings", warnings.len());
                 } else {
-                    msg_info!("Import completed");
+                    msg_info!("Import currencies completed");
+                }
+            }
+            ExchangeTypeCommand::Category { format } => {
+                if !skip_confirm && !Prompt::confirm("Import the data?", false)? {
+                    msg_info!("Command cancelled.");
+                    return Ok(());
+                }
+                let (categories, warnings) = import_with_format::<CategoryList>(format, cwd)?;
+                let summary = codexi.import_categories(categories)?;
+                FileManagement::save_current_state(&codexi, paths)?;
+                msg_info!(
+                    "Import in {}: {} created, {} updated.",
+                    summary.name,
+                    summary.created,
+                    summary.updated
+                );
+                if !warnings.is_empty() {
+                    view_warning(&warnings);
+                    msg_warn!("Import categories completed, {} warnings", warnings.len());
+                } else {
+                    msg_info!("Import categories completed");
                 }
             }
             ExchangeTypeCommand::Counterparty { format } => {
@@ -137,9 +165,12 @@ pub fn handle_data_command(
                 );
                 if !warnings.is_empty() {
                     view_warning(&warnings);
-                    msg_warn!("Import completed, {} warnings", warnings.len());
+                    msg_warn!(
+                        "Import counterparties completed, {} warnings",
+                        warnings.len()
+                    );
                 } else {
-                    msg_info!("Import completed");
+                    msg_info!("Import counterparties completed");
                 }
             }
         },

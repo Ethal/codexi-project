@@ -164,7 +164,7 @@ impl Codexi {
     }
 
     /// Import account from json, toml, csv
-    /// Return a import summary
+    /// Return an import summary
     pub fn import_account(
         &mut self,
         imported_account: Account,
@@ -202,7 +202,7 @@ impl Codexi {
         }
     }
     /// Import currencies from json, toml, csv
-    /// Return a import summary
+    /// Return an import summary
     pub fn import_currencies(
         &mut self,
         imported_currencies: CurrencyList,
@@ -211,7 +211,7 @@ impl Codexi {
         Ok(summary)
     }
     /// Import counterparties from json, toml, csv
-    /// Return a import summary
+    /// Return an import summary
     pub fn import_counterparties(
         &mut self,
         imported_counterparties: CounterpartyList,
@@ -221,9 +221,17 @@ impl Codexi {
             .merge_from_import(imported_counterparties)?;
         Ok(summary)
     }
-
+    /// Import categories from json, toml, csv
+    /// Return an import summary
+    pub fn import_categories(
+        &mut self,
+        imported_categories: CategoryList,
+    ) -> Result<ImportSummary, CodexiError> {
+        let summary = self.categories.merge_from_import(imported_categories)?;
+        Ok(summary)
+    }
     /// Import operations to an acccount from json, toml, csv
-    /// Return a import summary
+    /// Return an import summary
     pub fn import_operations(
         &mut self,
         imported_operations: AccountOperations,

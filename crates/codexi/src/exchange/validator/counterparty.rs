@@ -2,10 +2,11 @@
 
 use std::collections::HashSet;
 
-use crate::core::{CoreWarning, parse_id};
-use crate::exchange::{ExchangeCounterpartyList, ExchangeError};
-
-use crate::CODEXI_EXCHANGE_FORMAT_VERSION;
+use crate::{
+    CODEXI_EXCHANGE_FORMAT_VERSION,
+    core::{CoreWarning, parse_id, validate_text_rules},
+    exchange::{ExchangeCounterpartyList, ExchangeError},
+};
 
 /// Exchange counterparty validation
 pub fn validate_import_counterparty(
@@ -24,7 +25,7 @@ pub fn validate_import_counterparty(
     // Unique IDs
     let mut seen_ids = HashSet::new();
 
-    for counterparty in &import.counterparties {
+    for counterparty in &import.list {
         // Validate id format if present — parse attempted here + check duplicate
         if let Some(raw_id) = &counterparty.id {
             let id = parse_id(raw_id)?;
@@ -34,6 +35,15 @@ pub fn validate_import_counterparty(
                     id
                 )));
             }
+        }
+        // Name comply with text rules
+        let min = 3;
+        let max = 20;
+        if let Err(e) = validate_text_rules(&counterparty.name, min, max) {
+            return Err(ExchangeError::InvalidData(format!(
+                "counterparty name error: {}",
+                e,
+            )));
         }
     }
 

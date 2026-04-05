@@ -13,8 +13,8 @@ impl CounterpartyList {
         &mut self,
         imported: CounterpartyList,
     ) -> Result<ImportSummary, CounterpartyError> {
-        let mut summary = self.merge_counterparties(imported.counterparties)?;
-        summary.name = "Currencies".into();
+        let mut summary = self.merge_counterparties(imported.list)?;
+        summary.name = "Counterparties".into();
         Ok(summary)
     }
 
@@ -28,14 +28,14 @@ impl CounterpartyList {
 
         {
             let existing_by_id: HashMap<Nulid, &Counterparty> =
-                self.counterparties.iter().map(|c| (c.id, c)).collect();
+                self.list.iter().map(|c| (c.id, c)).collect();
 
             for counterparty in imported_counterparty {
                 summary.total_processed += 1;
                 if existing_by_id.contains_key(&counterparty.id) {
                     to_update.push(counterparty);
                 } else if self
-                    .counterparties
+                    .list
                     .iter()
                     .any(|c| c.name.to_lowercase() == counterparty.name.to_lowercase())
                 {

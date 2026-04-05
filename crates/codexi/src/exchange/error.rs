@@ -41,6 +41,8 @@ pub enum ExchangeError {
     DuplicateCurrency(String),
     #[error("EX_DUPLICATE_CO: {0}")]
     DuplicateCounterparty(String),
+    #[error("EX_DUPLICATE_CA: {0}")]
+    DuplicateCategory(String),
     #[error("EX_VAL: {0}")]
     InvalidData(String),
 }

@@ -2,6 +2,7 @@
 
 mod error;
 mod list;
+mod merge;
 mod model;
 
 pub use error::CategoryError;

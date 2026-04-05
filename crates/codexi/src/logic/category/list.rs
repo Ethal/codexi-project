@@ -1,5 +1,6 @@
 // src/logic/category/list
 
+use chrono::Local;
 use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
@@ -8,24 +9,30 @@ use crate::logic::category::{Category, CategoryError};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CategoryList {
-    pub categories: Vec<Category>,
+    pub list: Vec<Category>,
 }
 
 impl CategoryList {
     pub fn new() -> Self {
-        Self {
-            categories: Vec::new(),
-        }
+        Self { list: Vec::new() }
     }
 
     pub fn add(&mut self, category: Category) -> Nulid {
         let id = category.id;
-        self.categories.push(category);
+        self.list.push(category);
         id
     }
 
-    pub fn create(&mut self, name: &str, note: Option<&str>) -> Result<Nulid, CategoryError> {
-        let category = Category::new(name, note)?;
+    pub fn create(
+        &mut self,
+        name: &str,
+        parent_id: Option<Nulid>,
+        note: Option<&str>,
+    ) -> Result<Nulid, CategoryError> {
+        if let Some(v) = parent_id {
+            let _ = self.get_by_id(&v)?;
+        }
+        let category = Category::new(name, parent_id, note)?;
         let id = self.add(category);
         Ok(id)
     }
@@ -34,45 +41,57 @@ impl CategoryList {
         &mut self,
         id: Nulid,
         name: &str,
+        parent_id: Option<Nulid>,
         note: Option<&str>,
     ) -> Result<(), CategoryError> {
+        if let Some(v) = parent_id {
+            let _ = self.get_by_id(&v)?;
+        }
         let category = self.get_by_id_mut(&id)?;
         category.name = name.into();
+        category.parent_id = parent_id;
         category.note = note.map(str::to_owned);
         Ok(())
     }
 
+    pub fn terminate(&mut self, id: &Nulid) -> Result<(), CategoryError> {
+        let today = Local::now().date_naive();
+        let category = self.get_by_id_mut(id)?;
+        category.terminated = Some(today);
+        Ok(())
+    }
+
     pub fn get_by_id(&self, id: &Nulid) -> Result<&Category, CategoryError> {
-        self.categories
+        self.list
             .iter()
             .find(|c| &c.id == id)
             .ok_or_else(|| CategoryError::CategoryNotFound(format_id(*id)))
     }
 
     pub fn get_by_id_mut(&mut self, id: &Nulid) -> Result<&mut Category, CategoryError> {
-        self.categories
+        self.list
             .iter_mut()
             .find(|c| &c.id == id)
             .ok_or_else(|| CategoryError::CategoryNotFound(format_id(*id)))
     }
 
     pub fn category_name_by_id(&self, id: &Nulid) -> Option<String> {
-        self.categories
+        self.list
             .iter()
             .find(|c| &c.id == id)
             .map(|c| c.name.clone())
     }
 
     pub fn count(&self) -> usize {
-        self.categories.len()
+        self.list.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.categories.is_empty()
+        self.list.is_empty()
     }
 
     pub fn is_exist(&self, id: &Nulid) -> bool {
-        self.categories.iter().any(|c| &c.id == id)
+        self.list.iter().any(|c| &c.id == id)
     }
 }
 
@@ -84,6 +103,6 @@ impl Default for CategoryList {
 
 impl From<Vec<Category>> for CategoryList {
     fn from(categories: Vec<Category>) -> Self {
-        Self { categories }
+        Self { list: categories }
     }
 }
