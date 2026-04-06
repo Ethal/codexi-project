@@ -5,7 +5,7 @@ use thousands::Separable;
 
 use codexi::logic::loan::{LoanPolicySettings, LoanSummary};
 
-use crate::ui::{LABEL_STYLE, TITLE_STYLE, VALUE_STYLE};
+use crate::ui::{STYLE_MUTED, TITLE_STYLE, VALUE_STYLE};
 
 pub fn view_loan_policy_setting(data: &LoanPolicySettings) {
     println!();
@@ -13,37 +13,37 @@ pub fn view_loan_policy_setting(data: &LoanPolicySettings) {
     println!();
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("type of interest type:"),
+        STYLE_MUTED.apply_to("type of interest type:"),
         VALUE_STYLE.apply_to(&data.type_interest)
     );
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("Daily Rate of the loan:"),
+        STYLE_MUTED.apply_to("Daily Rate of the loan:"),
         VALUE_STYLE.apply_to(&data.rate)
     );
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("Free days:"),
+        STYLE_MUTED.apply_to("Free days:"),
         VALUE_STYLE.apply_to(data.free_days)
     );
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("Max days for a loan:"),
+        STYLE_MUTED.apply_to("Max days for a loan:"),
         VALUE_STYLE.apply_to(&data.max_days.unwrap_or_default())
     );
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("Max interest cap (% of capital):"),
+        STYLE_MUTED.apply_to("Max interest cap (% of capital):"),
         VALUE_STYLE.apply_to(&data.max_cap.clone().unwrap_or_default())
     );
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("Max penality (% of capital, applied to the final due):"),
+        STYLE_MUTED.apply_to("Max penality (% of capital, applied to the final due):"),
         VALUE_STYLE.apply_to(data.max_penalty.clone().unwrap_or_default())
     );
     println!(
         "{} {:?}",
-        LABEL_STYLE.apply_to("Min capital to loaned:"),
+        STYLE_MUTED.apply_to("Min capital to loaned:"),
         VALUE_STYLE.apply_to(&data.min_capital.clone().unwrap_or_default())
     );
     println!();
@@ -55,22 +55,22 @@ pub fn view_loan_summary(data: &LoanSummary) {
     println!();
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("Amount due:"),
+        STYLE_MUTED.apply_to("Amount due:"),
         VALUE_STYLE.apply_to(data.final_due.separate_with_commas())
     );
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("Total interest:"),
+        STYLE_MUTED.apply_to("Total interest:"),
         VALUE_STYLE.apply_to(data.total_interest.separate_with_commas())
     );
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("Start date:"),
+        STYLE_MUTED.apply_to("Start date:"),
         VALUE_STYLE.apply_to(data.start_date)
     );
     println!(
         "{} {}",
-        LABEL_STYLE.apply_to("First interest date:"),
+        STYLE_MUTED.apply_to("First interest date:"),
         VALUE_STYLE.apply_to(data.first_interest_date)
     );
 
@@ -82,8 +82,8 @@ pub fn view_loan_summary(data: &LoanSummary) {
         for day_interest in data.cumulative_interest.iter() {
             println!(
                 "{} {} {}",
-                LABEL_STYLE.apply_to("interest"),
-                LABEL_STYLE.apply_to(current_date.to_string()),
+                STYLE_MUTED.apply_to("interest"),
+                STYLE_MUTED.apply_to(current_date.to_string()),
                 VALUE_STYLE.apply_to(day_interest.separate_with_commas()),
             );
             current_date += Duration::days(1);

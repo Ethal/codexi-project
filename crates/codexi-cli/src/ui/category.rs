@@ -3,7 +3,7 @@
 use codexi::core::format_id_short;
 use codexi::dto::CategoryCollection;
 
-use crate::ui::{LABEL_STYLE, TERMINATED_STYLE, TITLE_STYLE};
+use crate::ui::{STYLE_DANGER, STYLE_MUTED, TITLE_STYLE};
 
 /// view to list the category
 pub fn view_category(datas: &CategoryCollection) {
@@ -12,12 +12,12 @@ pub fn view_category(datas: &CategoryCollection) {
     println!("{}", title_text);
     for c in &datas.items {
         let id_style = match &c.terminated {
-            Some(_) => TERMINATED_STYLE,
-            None => LABEL_STYLE,
+            Some(_) => STYLE_DANGER,
+            None => STYLE_MUTED,
         };
         let parent_style = match &c.parent_terminated {
-            Some(_) => TERMINATED_STYLE,
-            None => LABEL_STYLE,
+            Some(_) => STYLE_DANGER,
+            None => STYLE_MUTED,
         };
         let id = id_style.apply_to(format!("#{}", format_id_short(&c.id)));
         let parent = match (&c.parent_name, &c.parent_id) {

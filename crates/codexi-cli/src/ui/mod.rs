@@ -22,15 +22,18 @@ pub use operation::*;
 
 use console::Style;
 const TITLE_STYLE: Style = Style::new().cyan().bold();
-const NOTE_STYLE: Style = Style::new().blue().italic();
-const LABEL_STYLE: Style = Style::new().dim();
-const TERMINATED_STYLE: Style = Style::new().red().dim();
+const NOTE_STYLE: Style = Style::new().cyan().italic();
+const STYLE_MUTED: Style = Style::new().dim();
+const STYLE_NORMAL: Style = Style::new();
+const STYLE_HIGHLIGHT: Style = Style::new().yellow();
+const STYLE_DANGER: Style = Style::new().red();
+const STYLE_CAUTION: Style = Style::new().magenta().bold();
 const DEBIT_STYLE: Style = Style::new().red();
 const CREDIT_STYLE: Style = Style::new().green();
 const VALUE_STYLE: Style = Style::new().yellow().bold();
 
 /// Truncate text for ui
-pub fn truncate_text(desc: &str, max_width: usize) -> String {
+pub(crate) fn truncate_text(desc: &str, max_width: usize) -> String {
     // If the visible length is already OK → simple formatting
     if desc.chars().count() <= max_width {
         return format!("{:<width$}", desc, width = max_width);
@@ -42,6 +45,10 @@ pub fn truncate_text(desc: &str, max_width: usize) -> String {
     let truncated: String = desc.chars().take(visible).collect();
 
     format!("{:<width$}", format!("{}...", truncated), width = max_width)
+}
+
+pub(crate) fn label(text: &str, width: usize) -> impl std::fmt::Display {
+    STYLE_MUTED.apply_to(format!("{:<width$}", text, width = width))
 }
 
 use codexi::dto::{BankItem, CurrencyItem};

@@ -6,10 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **CLI command `use`** — alias for the command `account use`.
-- **UI `TERMINATED_STYLE`** — style for terminated/close information.
 - **DTOs `CategoryItem::build`** — to resolve parent data.
 
 ### Changed
+-**UI** — Introduce unified UI style constants and helpers.
 -**UI** — account switch messaging to include the account name and id ("Switched to account: <name> (<id>)").
 - **UI `Top Expense`** — tie-breaker added to compare op_date so items with equal amounts are ordered deterministically.
 - **UI `category list`** — Enhance category listing and logic to surface parent info and termination state.
