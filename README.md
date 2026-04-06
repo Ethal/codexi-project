@@ -13,6 +13,8 @@
 
 Codexi is a command-line personal finance ledger focused on auditability, traceability, and long-term data integrity. It supports multiple accounts, anchor-based integrity checks, period closing with archival, and a rich analytics dashboard — all stored in a versioned, checksummed binary format.
 
+---
+
 ## 📚 Documentation
 
 - [Loan & microloan management](docs/loan.md)
