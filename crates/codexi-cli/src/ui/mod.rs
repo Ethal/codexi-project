@@ -24,6 +24,7 @@ use console::Style;
 const TITLE_STYLE: Style = Style::new().cyan().bold();
 const NOTE_STYLE: Style = Style::new().blue().italic();
 const LABEL_STYLE: Style = Style::new().dim();
+const TERMINATED_STYLE: Style = Style::new().red().dim();
 const DEBIT_STYLE: Style = Style::new().red();
 const CREDIT_STYLE: Style = Style::new().green();
 const VALUE_STYLE: Style = Style::new().yellow().bold();

@@ -52,6 +52,7 @@ impl CategoryList {
                 category.id,
                 &category.name,
                 category.parent_id,
+                category.terminated,
                 category.note.as_deref(),
             )
             .expect("category id confirmed above");
