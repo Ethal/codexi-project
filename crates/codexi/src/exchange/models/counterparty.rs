@@ -22,6 +22,7 @@ pub struct ExchangeCounterparty {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExchangeCounterpartyList {
     pub version: u16,
+    #[serde(rename = "counterparties")]
     pub list: Vec<ExchangeCounterparty>,
 }
 
