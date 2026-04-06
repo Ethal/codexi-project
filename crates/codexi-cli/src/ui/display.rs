@@ -1,5 +1,5 @@
 // src/ui.rs
-use console::{Style, StyledObject, style};
+use console::{Style, style};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use thousands::Separable;
@@ -35,11 +35,16 @@ pub fn view_codexi_infos(datas: &CodexiInfos) {
     println!();
     println!("💰 {}", TITLE_STYLE.apply_to("Codexi"));
     println!("{}", "─".repeat(55));
-    println!("  {} {}", label("Accounts", 14), datas.codexi_account_count);
-    println!("  {} {}", label("Banks", 14), datas.codexi_bank_count);
-    println!("  {} {}", label("Currencies", 14), datas.codexi_currency_count);
-    println!("  {} {}", label("Categories", 14), datas.codexi_category_count);
-    println!("  {} {}", label("Counterparty", 14), datas.codexi_counterparty_count);
+    println!("  {} {}", label("Accounts", 27), datas.codexi_account_count);
+    println!(
+        "  {} {}",
+        label("Operations(incl. archives)", 27),
+        datas.codexi_operation_count
+    );
+    println!("  {} {}", label("Banks", 27), datas.codexi_bank_count);
+    println!("  {} {}", label("Currencies", 27), datas.codexi_currency_count);
+    println!("  {} {}", label("Categories", 27), datas.codexi_category_count);
+    println!("  {} {}", label("Counterparty", 27), datas.codexi_counterparty_count);
     println!();
     let usage = &datas.disk_usage;
     println!("📦 {}", TITLE_STYLE.apply_to("Disk usage"));
@@ -383,18 +388,23 @@ pub fn view_stats(stats: &StatsCollection) {
 }
 
 /// Utility function for the visual toolbar
-fn draw_savings_bar(rate: Decimal, width: usize) -> StyledObject<String> {
-    if rate < Decimal::ZERO {
-        style("!".repeat(width).to_string()).red()
-    } else {
-        let normalized = rate.max(Decimal::ZERO).min(Decimal::ONE_HUNDRED) / Decimal::ONE_HUNDRED;
+fn draw_savings_bar(rate: Decimal, width: usize) -> String {
+    if rate <= Decimal::ZERO {
+        // red bar proportional to the deficit, max -100%
+        let normalized = rate.abs().min(Decimal::ONE_HUNDRED) / Decimal::ONE_HUNDRED;
         let filled = (normalized * Decimal::from(width)).to_usize().unwrap_or(0);
         let empty = width - filled;
-        style(format!(
+        format!("{}{}", style("█".repeat(filled)).red(), style("░".repeat(empty)).dim())
+    } else {
+        // green bar proportional to the profit, max -100%
+        let normalized = rate.min(Decimal::ONE_HUNDRED) / Decimal::ONE_HUNDRED;
+        let filled = (normalized * Decimal::from(width)).to_usize().unwrap_or(0);
+        let empty = width - filled;
+        format!(
             "{}{}",
             style("█".repeat(filled)).green(),
             style("░".repeat(empty)).dim()
-        ))
+        )
     }
 }
 

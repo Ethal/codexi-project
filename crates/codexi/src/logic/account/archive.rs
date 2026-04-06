@@ -16,6 +16,8 @@ pub struct CheckpointRef {
     pub checkpoint_date: NaiveDate,
     pub checkpoint_balance: Decimal,
     pub archive_file: PathBuf, // "<ID>_codexi_<YYY-MM-DD>.cld"
+    #[serde(default)]
+    pub archive_operation_count: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

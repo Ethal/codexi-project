@@ -258,6 +258,7 @@ impl Account {
         }
 
         // If there's nothing to close, we stop.
+        let archive_operation_count = archived_operations.len();
         if archived_operations.is_empty()
             && self.operations.iter().all(|op| {
                 !matches!(
@@ -317,6 +318,7 @@ impl Account {
             checkpoint_date,
             checkpoint_balance,
             archive_file,
+            archive_operation_count,
         };
         self.checkpoints.push(ck);
 

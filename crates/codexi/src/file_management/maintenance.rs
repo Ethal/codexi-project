@@ -13,6 +13,7 @@ use crate::logic::codexi::Codexi;
 #[derive(Debug, Clone, Serialize)]
 pub struct CodexiInfos {
     pub codexi_account_count: usize,
+    pub codexi_operation_count: usize,
     pub codexi_bank_count: usize,
     pub codexi_currency_count: usize,
     pub codexi_category_count: usize,
@@ -172,6 +173,14 @@ impl FileManagement {
         let codexi_category_count = data.categories.count();
         let codexi_counterparty_count = data.counterparties.count();
 
+        let mut codexi_operation_count = 0;
+        for acc in data.accounts.iter() {
+            codexi_operation_count += acc.operations.len();
+            for chk in acc.checkpoints.iter() {
+                codexi_operation_count += chk.archive_operation_count;
+            }
+        }
+
         let codexi_path = &paths.main_file;
         let codexi_size = if codexi_path.exists() {
             fs::metadata(codexi_path)?.len()
@@ -283,6 +292,7 @@ impl FileManagement {
 
         let result = CodexiInfos {
             codexi_account_count,
+            codexi_operation_count,
             codexi_bank_count,
             codexi_currency_count,
             codexi_category_count,
