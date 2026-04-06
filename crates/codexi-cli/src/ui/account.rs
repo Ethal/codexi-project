@@ -6,14 +6,13 @@ use codexi::core::{format_id_short, format_optional_u32, format_text, yes_no};
 use codexi::dto::{AccountCollection, AccountItem};
 
 use crate::ui::{
-    CREDIT_STYLE, DEBIT_STYLE, LABEL_STYLE, NOTE_STYLE, TITLE_STYLE, VALUE_STYLE,
-    format_optional_bank_item, format_optional_currency_item, truncate_text,
+    CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_CAUTION, STYLE_DANGER, STYLE_HIGHLIGHT, STYLE_MUTED, TITLE_STYLE,
+    VALUE_STYLE, format_optional_bank_item, format_optional_currency_item, truncate_text,
 };
 
 /// view to list of account
 pub fn view_account(items: &AccountCollection) {
-    let title_text =
-        TITLE_STYLE.apply_to("Accounts - <id> <short id> <name> <type> [currency] [bank]");
+    let title_text = TITLE_STYLE.apply_to("Accounts - <id> <short id> <name> <type> [currency] [bank]");
     println!();
     println!("{}", title_text);
 
@@ -63,23 +62,18 @@ pub fn view_account_context(item: &AccountItem) {
     );
     println!(
         " Deposit locked until: {}",
-        item.context
-            .deposit_locked_until
-            .clone()
-            .unwrap_or("-".into())
+        item.context.deposit_locked_until.clone().unwrap_or("-".into())
     );
     println!(
         " Max monthly transactions: {}",
         format_optional_u32(item.context.max_monthly_transactions)
     );
     println!(" Allows interest: {}", yes_no(item.context.allows_interest));
-    println!(
-        " Allows joint signers: {}",
-        yes_no(item.context.allows_joint_signers)
-    );
+    println!(" Allows joint signers: {}", yes_no(item.context.allows_joint_signers));
     println!();
 }
 
+/// Account overview
 pub fn overview_account(account: &AccountCollection) {
     println!(
         "┌───────┬──────────────────┬──────────┬──────────┬──────────┬──────────────────┬──────────────────┬──────────────────┐"
@@ -94,18 +88,15 @@ pub fn overview_account(account: &AccountCollection) {
     for item in &account.items {
         let id_txt = format!("#{}", format_id_short(&item.id));
         let id_txt_fmt = match (item.current, item.close) {
-            (false, false) => LABEL_STYLE.apply_to(id_txt),
-            (true, false) => VALUE_STYLE.apply_to(id_txt),
-            (false, true) => DEBIT_STYLE.apply_to(id_txt),
-            (true, true) => VALUE_STYLE.apply_to(id_txt),
+            (false, false) => STYLE_MUTED.apply_to(id_txt),
+            (true, false) => STYLE_HIGHLIGHT.apply_to(id_txt),
+            (false, true) => STYLE_DANGER.apply_to(id_txt),
+            (true, true) => STYLE_CAUTION.apply_to(id_txt),
         };
 
-        let deb_txt =
-            DEBIT_STYLE.apply_to(format!("{:.2}", item.balance.debit).separate_with_commas());
-        let cre_txt =
-            CREDIT_STYLE.apply_to(format!("{:.2}", item.balance.credit).separate_with_commas());
-        let bal_txt =
-            VALUE_STYLE.apply_to(format!("{:.2}", item.balance.total).separate_with_commas());
+        let deb_txt = DEBIT_STYLE.apply_to(format!("{:.2}", item.balance.debit).separate_with_commas());
+        let cre_txt = CREDIT_STYLE.apply_to(format!("{:.2}", item.balance.credit).separate_with_commas());
+        let bal_txt = VALUE_STYLE.apply_to(format!("{:.2}", item.balance.total).separate_with_commas());
         println!(
             "│{:<7}│{:<18}│{:<10}│{:<10}│{:<10}│{:>18}│{:>18}│{:>18}│",
             id_txt_fmt,
@@ -123,8 +114,12 @@ pub fn overview_account(account: &AccountCollection) {
     );
     println!();
     println!("{}", NOTE_STYLE.apply_to("Note:"));
-    let cu_acc = VALUE_STYLE.apply_to("#XXXXX");
-    let cl_acc = DEBIT_STYLE.apply_to("#XXXXX");
-    println!("{} Current account, {} Close account", cu_acc, cl_acc);
+    let cu_acc = STYLE_HIGHLIGHT.apply_to("#XXXXX");
+    let cl_acc = STYLE_DANGER.apply_to("#XXXXX");
+    let cu_cl_acc = STYLE_CAUTION.apply_to("#XXXXX ⚠");
+    println!(
+        "{} Current account, {} Closed account, {} Current but closed",
+        cu_acc, cl_acc, cu_cl_acc
+    );
     println!();
 }

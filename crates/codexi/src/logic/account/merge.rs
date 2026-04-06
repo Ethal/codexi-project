@@ -6,17 +6,12 @@ use std::collections::HashMap;
 use crate::core::{CoreWarning, CoreWarningKind};
 use crate::exchange::ImportSummary;
 use crate::logic::account::{Account, AccountError};
-use crate::logic::operation::{
-    AccountOperations, Operation, OperationKind, RegularKind, SystemKind,
-};
+use crate::logic::operation::{AccountOperations, Operation, OperationKind, RegularKind, SystemKind};
 
 impl Account {
     /// Merges an imported account header into self, respecting update rules.
     /// Validation is assumed to have been done upstream by validate_import().
-    pub fn merge_account_header_from_import(
-        &mut self,
-        imported: Account,
-    ) -> Result<ImportSummary, AccountError> {
+    pub fn merge_account_header_from_import(&mut self, imported: Account) -> Result<ImportSummary, AccountError> {
         // Terminated accounts are immutable — reject any update
         self.is_terminated()?;
 
@@ -54,8 +49,7 @@ impl Account {
         let mut to_update = Vec::new();
 
         {
-            let existing_by_id: HashMap<Nulid, &Operation> =
-                self.operations.iter().map(|op| (op.id, op)).collect();
+            let existing_by_id: HashMap<Nulid, &Operation> = self.operations.iter().map(|op| (op.id, op)).collect();
 
             for op in &imported.operations {
                 summary.total_processed += 1;
@@ -98,10 +92,7 @@ impl Account {
                     // Skipped intentionally — can be extended later
                     warnings.push(CoreWarning {
                         kind: CoreWarningKind::InvalidData,
-                        message: format!(
-                            "Operation kind '{}' not supported for import — skipped",
-                            op_add.kind
-                        ),
+                        message: format!("Operation kind '{}' not supported for import — skipped", op_add.kind),
                     });
                 }
             }

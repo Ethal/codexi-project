@@ -16,8 +16,8 @@ mod toml;
 pub struct FileManagement;
 
 pub use error::{
-    FileArchiveError, FileBackupError, FileCodexiError, FileExchangeError, FileMaintenanceError,
-    FileManagementError, FileSnapshotError, StorageError,
+    FileArchiveError, FileBackupError, FileCodexiError, FileExchangeError, FileMaintenanceError, FileManagementError,
+    FileSnapshotError, StorageError,
 };
 
 pub use envelope::{FileEnvelope, StorageFormat, StoreEntity, checksum};

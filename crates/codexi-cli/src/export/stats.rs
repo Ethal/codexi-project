@@ -62,10 +62,7 @@ pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
         "total_debit",
         &format!("{:.2}", entry.total_debit).separate_with_commas(),
     );
-    ctx.insert(
-        "balance",
-        &format!("{:.2}", entry.balance).separate_with_commas(),
-    );
+    ctx.insert("balance", &format!("{:.2}", entry.balance).separate_with_commas());
     ctx.insert("operation_count", &entry.operation_count);
     ctx.insert(
         "average_operation",
@@ -87,10 +84,7 @@ pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
         &format!("{:.2}", entry.max_single_debit).separate_with_commas(),
     );
     ctx.insert("adjustment_count", &entry.adjustment_count);
-    ctx.insert(
-        "adjustment_percentage",
-        &format!("{:.1}", entry.adjustment_percentage),
-    );
+    ctx.insert("adjustment_percentage", &format!("{:.1}", entry.adjustment_percentage));
     ctx.insert("days_count", &entry.days_count);
 
     // Top expenses

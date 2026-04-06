@@ -83,12 +83,7 @@ pub enum AccountCommand {
         )]
         id: String,
         /// New cccount name
-        #[arg(
-            index = 2,
-            value_name = "NAME",
-            required = true,
-            help = "new account name"
-        )]
+        #[arg(index = 2, value_name = "NAME", required = true, help = "new account name")]
         name: Vec<String>,
     },
     /// Set bank to current account
@@ -111,11 +106,7 @@ pub enum AccountCommand {
         )]
         id: String,
         /// Update all the operations with the account currency
-        #[arg(
-            short,
-            long,
-            help = "Update all the operations with the account currency"
-        )]
+        #[arg(short, long, help = "Update all the operations with the account currency")]
         update_operation: bool,
     },
     /// Set context to current account

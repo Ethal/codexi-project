@@ -9,9 +9,7 @@ use crate::{
 };
 
 /// Exchange counterparty validation
-pub fn validate_import_counterparty(
-    import: &ExchangeCounterpartyList,
-) -> Result<Vec<CoreWarning>, ExchangeError> {
+pub fn validate_import_counterparty(import: &ExchangeCounterpartyList) -> Result<Vec<CoreWarning>, ExchangeError> {
     // Version
     if import.version != CODEXI_EXCHANGE_FORMAT_VERSION {
         return Err(ExchangeError::InvalidVersion(format!(
@@ -40,10 +38,7 @@ pub fn validate_import_counterparty(
         let min = 3;
         let max = 20;
         if let Err(e) = validate_text_rules(&counterparty.name, min, max) {
-            return Err(ExchangeError::InvalidData(format!(
-                "counterparty name error: {}",
-                e,
-            )));
+            return Err(ExchangeError::InvalidData(format!("counterparty name error: {}", e,)));
         }
     }
 

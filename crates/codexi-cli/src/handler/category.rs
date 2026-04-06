@@ -21,17 +21,11 @@ pub fn handle_category_command(command: CategoryCommand, paths: &DataPaths) -> R
             let items = CategoryCollection::build(&codexi.categories);
             view_category(&items);
         }
-        CategoryCommand::Add {
-            name,
-            parent_id,
-            note,
-        } => {
+        CategoryCommand::Add { name, parent_id, note } => {
             let name_n = name.join(" ");
 
             let parent_id_n = parent_id
-                .map(|name| {
-                    resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list)
-                })
+                .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
                 .transpose()?;
 
             let note = note.map(|n| n.join(" "));
@@ -40,8 +34,7 @@ pub fn handle_category_command(command: CategoryCommand, paths: &DataPaths) -> R
             FileManagement::save_current_state(&codexi, paths)?;
         }
         CategoryCommand::Terminate { id } => {
-            let id_n =
-                resolve_by_id_or_name::<Category, CategoryError>(&id, &codexi.categories.list)?;
+            let id_n = resolve_by_id_or_name::<Category, CategoryError>(&id, &codexi.categories.list)?;
             codexi.categories.terminate(&id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
         }

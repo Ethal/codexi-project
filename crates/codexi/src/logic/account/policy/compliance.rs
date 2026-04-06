@@ -29,12 +29,10 @@ pub trait CompliancePolicy {
 
             ComplianceAction::Create(kind, flow, amount) => match kind {
                 // Checkpoint and Void — always OK, no financial movement
-                OperationKind::System(SystemKind::Checkpoint)
-                | OperationKind::System(SystemKind::Void) => Ok(()),
+                OperationKind::System(SystemKind::Checkpoint) | OperationKind::System(SystemKind::Void) => Ok(()),
 
                 // Init and Adjust — overdraft only, no quota, no min_balance
-                OperationKind::System(SystemKind::Init)
-                | OperationKind::System(SystemKind::Adjust) => {
+                OperationKind::System(SystemKind::Init) | OperationKind::System(SystemKind::Adjust) => {
                     let signed = amount * flow.to_sign();
                     self.validate_overdraft(ctx, current_balance, signed)
                 }
@@ -54,21 +52,11 @@ pub trait CompliancePolicy {
                         return Err(ComplianceViolation::KindNotAllowed(ctx.account_type));
                     }
                     // Interest Credit — requires allows_interest flag on the account
-                    if regular_kind == RegularKind::Interest
-                        && flow == OperationFlow::Credit
-                        && !ctx.allows_interest
-                    {
+                    if regular_kind == RegularKind::Interest && flow == OperationFlow::Credit && !ctx.allows_interest {
                         return Err(ComplianceViolation::NotAllowedInterestOperation);
                     }
                     let signed = amount * flow.to_sign();
-                    self.validate_full(
-                        ctx,
-                        current_balance,
-                        signed,
-                        monthly_count,
-                        &regular_kind,
-                        flow,
-                    )
+                    self.validate_full(ctx, current_balance, signed, monthly_count, &regular_kind, flow)
                 }
             },
         }
@@ -139,9 +127,7 @@ fn validate_no_overdraft(
     monthly_count: u32,
 ) -> Result<(), ComplianceViolation> {
     if current_balance + signed < Decimal::ZERO {
-        return Err(ComplianceViolation::NegativeBalanceNotAllowed(
-            ctx.account_type,
-        ));
+        return Err(ComplianceViolation::NegativeBalanceNotAllowed(ctx.account_type));
     }
     let resulting = current_balance + signed;
     if ctx.overdraft_limit == Decimal::ZERO && resulting < ctx.min_balance {
@@ -269,8 +255,7 @@ impl CompliancePolicy for LoanPolicy {
         monthly_count: u32,
     ) -> Result<(), ComplianceViolation> {
         // Init with non-zero amount — forbidden on Loan accounts
-        if let ComplianceAction::Create(OperationKind::System(SystemKind::Init), flow, amount) =
-            &action
+        if let ComplianceAction::Create(OperationKind::System(SystemKind::Init), flow, amount) = &action
             && *flow != OperationFlow::None
             && *amount != Decimal::ZERO
         {
@@ -280,10 +265,8 @@ impl CompliancePolicy for LoanPolicy {
         match action {
             ComplianceAction::Void => Ok(()),
             ComplianceAction::Create(kind, flow, amount) => match kind {
-                OperationKind::System(SystemKind::Checkpoint)
-                | OperationKind::System(SystemKind::Void) => Ok(()),
-                OperationKind::System(SystemKind::Init)
-                | OperationKind::System(SystemKind::Adjust) => {
+                OperationKind::System(SystemKind::Checkpoint) | OperationKind::System(SystemKind::Void) => Ok(()),
+                OperationKind::System(SystemKind::Init) | OperationKind::System(SystemKind::Adjust) => {
                     let signed = amount * flow.to_sign();
                     self.validate_overdraft(ctx, current_balance, signed)
                 }
@@ -297,21 +280,11 @@ impl CompliancePolicy for LoanPolicy {
                     if regular_kind == RegularKind::Refund && flow == OperationFlow::Debit {
                         return Err(ComplianceViolation::KindNotAllowed(ctx.account_type));
                     }
-                    if regular_kind == RegularKind::Interest
-                        && flow == OperationFlow::Credit
-                        && !ctx.allows_interest
-                    {
+                    if regular_kind == RegularKind::Interest && flow == OperationFlow::Credit && !ctx.allows_interest {
                         return Err(ComplianceViolation::NotAllowedInterestOperation);
                     }
                     let signed = amount * flow.to_sign();
-                    self.validate_full(
-                        ctx,
-                        current_balance,
-                        signed,
-                        monthly_count,
-                        &regular_kind,
-                        flow,
-                    )
+                    self.validate_full(ctx, current_balance, signed, monthly_count, &regular_kind, flow)
                 }
             },
         }
@@ -370,21 +343,14 @@ impl Account {
     ) -> Result<(), ComplianceViolation> {
         // Monthly count is only relevant for Regular operations
         let monthly_count = match action {
-            ComplianceAction::Create(kind, _, _) if kind.is_regular() => {
-                self.monthly_operation_count(date)
-            }
+            ComplianceAction::Create(kind, _, _) if kind.is_regular() => self.monthly_operation_count(date),
             _ => 0,
         };
 
         // Balance at operation date — not current_balance
         let balance_at_date = self.balance_at(date);
 
-        policy_for(self.context.account_type).validate(
-            &self.context,
-            balance_at_date,
-            action,
-            monthly_count,
-        )
+        policy_for(self.context.account_type).validate(&self.context, balance_at_date, action, monthly_count)
     }
 
     /// Counts active Regular operations for the month corresponding to `date`.
@@ -423,22 +389,19 @@ mod tests {
     }
     fn ctx_loan_no_interest() -> AccountContext {
         let mut ctx = AccountContext::from_type(AccountType::Loan);
-        ctx.update_context(None, None, None, None, Some(false), None)
-            .unwrap();
+        ctx.update_context(None, None, None, None, Some(false), None).unwrap();
         ctx
     }
     fn ctx_deposit_locked() -> AccountContext {
         let until = Local::now().date_naive() + Duration::days(30);
         let mut ctx = AccountContext::from_type(AccountType::Deposit);
-        ctx.update_context(None, None, None, Some(until), None, None)
-            .unwrap();
+        ctx.update_context(None, None, None, Some(until), None, None).unwrap();
         ctx
     }
     fn ctx_deposit_unlocked() -> AccountContext {
         let past = Local::now().date_naive() - Duration::days(1);
         let mut ctx = AccountContext::from_type(AccountType::Deposit);
-        ctx.update_context(None, None, None, Some(past), None, None)
-            .unwrap();
+        ctx.update_context(None, None, None, Some(past), None, None).unwrap();
         ctx
     }
     fn ctx_deposit_no_lock() -> AccountContext {
@@ -482,21 +445,9 @@ mod tests {
     #[test]
     fn checkpoint_always_ok() {
         let action = || system(SystemKind::Checkpoint, OperationFlow::None, dec!(0));
-        assert!(
-            CurrentPolicy
-                .validate(&ctx_current(), dec!(-900), action(), 0)
-                .is_ok()
-        );
-        assert!(
-            LoanPolicy
-                .validate(&ctx_loan(), dec!(0), action(), 0)
-                .is_ok()
-        );
-        assert!(
-            SavingPolicy
-                .validate(&ctx_saving(), dec!(0), action(), 0)
-                .is_ok()
-        );
+        assert!(CurrentPolicy.validate(&ctx_current(), dec!(-900), action(), 0).is_ok());
+        assert!(LoanPolicy.validate(&ctx_loan(), dec!(0), action(), 0).is_ok());
+        assert!(SavingPolicy.validate(&ctx_saving(), dec!(0), action(), 0).is_ok());
     }
 
     #[test]
@@ -587,10 +538,7 @@ mod tests {
             regular(RegularKind::Transaction, OperationFlow::Debit, dec!(700)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::OverdraftExceeded { .. })
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::OverdraftExceeded { .. })));
     }
 
     #[test]
@@ -683,10 +631,7 @@ mod tests {
             system(SystemKind::Init, OperationFlow::Debit, dec!(700)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::OverdraftExceeded { .. })
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::OverdraftExceeded { .. })));
     }
 
     #[test]
@@ -708,10 +653,7 @@ mod tests {
             system(SystemKind::Adjust, OperationFlow::Debit, dec!(100)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::OverdraftExceeded { .. })
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::OverdraftExceeded { .. })));
     }
 
     // ── Saving ────────────────────────────────────────────────
@@ -760,10 +702,7 @@ mod tests {
             regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::NegativeBalanceNotAllowed(_))));
     }
 
     #[test]
@@ -785,10 +724,7 @@ mod tests {
             regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::NegativeBalanceNotAllowed(_))));
     }
 
     #[test]
@@ -821,10 +757,7 @@ mod tests {
             regular(RegularKind::Transfer, OperationFlow::Debit, dec!(10)),
             6,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::MonthlyLimitExceeded { max: 6 })
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::MonthlyLimitExceeded { max: 6 })));
     }
 
     #[test]
@@ -938,10 +871,7 @@ mod tests {
             regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::NegativeBalanceNotAllowed(_))));
     }
 
     #[test]
@@ -1042,10 +972,7 @@ mod tests {
             regular(RegularKind::Transfer, OperationFlow::Debit, dec!(200)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::NegativeBalanceNotAllowed(_))));
     }
 
     #[test]
@@ -1067,10 +994,7 @@ mod tests {
             regular(RegularKind::Interest, OperationFlow::Credit, dec!(20)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::NotAllowedInterestOperation)
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::NotAllowedInterestOperation)));
     }
 
     #[test]
@@ -1103,10 +1027,7 @@ mod tests {
             regular(RegularKind::Fee, OperationFlow::Debit, dec!(10)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::NegativeBalanceNotAllowed(_))));
     }
 
     #[test]
@@ -1147,10 +1068,7 @@ mod tests {
             regular(RegularKind::Transfer, OperationFlow::Debit, dec!(100)),
             0,
         );
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::NegativeBalanceNotAllowed(_))
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::NegativeBalanceNotAllowed(_))));
     }
 
     #[test]

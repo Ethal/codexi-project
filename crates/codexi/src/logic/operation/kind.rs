@@ -25,10 +25,7 @@ impl OperationKind {
     }
     /// Check if the operation is purely structural operation (Init/Close)
     pub fn is_structural(&self) -> bool {
-        matches!(
-            self,
-            OperationKind::System(SystemKind::Init | SystemKind::Checkpoint)
-        )
+        matches!(self, OperationKind::System(SystemKind::Init | SystemKind::Checkpoint))
     }
     /// Check if the Operation is a Void type
     pub fn is_void(&self) -> bool {

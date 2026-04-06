@@ -30,10 +30,7 @@ pub fn handle_counterparty_command(command: CounterpartyCommand, paths: &DataPat
             FileManagement::save_current_state(&codexi, paths)?;
         }
         CounterpartyCommand::Terminate { id } => {
-            let id_n = resolve_by_id_or_name::<Counterparty, CounterpartyError>(
-                &id,
-                &codexi.counterparties.list,
-            )?;
+            let id_n = resolve_by_id_or_name::<Counterparty, CounterpartyError>(&id, &codexi.counterparties.list)?;
             codexi.counterparties.terminate(&id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
         }

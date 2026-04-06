@@ -74,9 +74,7 @@ pub enum StorageError {
     InvalidVersion { found: u16, expected: u16 },
     #[error("VAL_INVALID_CHECKSUM: file corrupted, Try the command  migrate <VERSION>")]
     InvalidChecksum,
-    #[error(
-        "VAL_INVALID_STORAGE_FORMAT: Unsupported storage format {format}, Try the command  migrate <VERSION>"
-    )]
+    #[error("VAL_INVALID_STORAGE_FORMAT: Unsupported storage format {format}, Try the command  migrate <VERSION>")]
     InvalidStorageFormat { format: StorageFormat },
     #[error("VAL_INVALID_STORAGE_ENTITY: Invalid storage entity expected: {expected}")]
     InvalidStoreEntity { expected: String },

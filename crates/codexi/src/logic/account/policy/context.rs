@@ -138,10 +138,7 @@ impl AccountContext {
                 });
             }
             match self.account_type {
-                AccountType::Saving
-                | AccountType::Deposit
-                | AccountType::Loan
-                | AccountType::Income => {
+                AccountType::Saving | AccountType::Deposit | AccountType::Loan | AccountType::Income => {
                     warnings.push(CoreWarning {
                         kind: CoreWarningKind::ContextNotApplicable,
                         message: format!(
@@ -196,10 +193,9 @@ impl AccountContext {
         // allows_interest — only applicable to Saving, Deposit, Loan, Income accounts
         if let Some(value) = allows_interest {
             match self.account_type {
-                AccountType::Saving
-                | AccountType::Deposit
-                | AccountType::Loan
-                | AccountType::Income => self.allows_interest = value,
+                AccountType::Saving | AccountType::Deposit | AccountType::Loan | AccountType::Income => {
+                    self.allows_interest = value
+                }
                 _ => {
                     warnings.push(CoreWarning {
                         kind: CoreWarningKind::ContextNotApplicable,
@@ -283,18 +279,13 @@ mod tests {
     fn overdraft_limit_negative_is_error() {
         let mut ctx = ctx_current();
         let res = ctx.update_context(Some(dec!(-100)), None, None, None, None, None);
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::InvalidContextValue { .. })
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::InvalidContextValue { .. })));
     }
 
     #[test]
     fn overdraft_limit_zero_is_valid() {
         let mut ctx = ctx_current();
-        let warnings = ctx
-            .update_context(Some(dec!(0)), None, None, None, None, None)
-            .unwrap();
+        let warnings = ctx.update_context(Some(dec!(0)), None, None, None, None, None).unwrap();
         assert!(warnings.is_empty());
         assert_eq!(ctx.overdraft_limit, dec!(0));
     }
@@ -307,10 +298,7 @@ mod tests {
             .update_context(Some(dec!(500)), None, None, None, None, None)
             .unwrap();
         assert_eq!(warnings.len(), 1);
-        assert!(matches!(
-            warnings[0].kind,
-            CoreWarningKind::ContextNotApplicable
-        ));
+        assert!(matches!(warnings[0].kind, CoreWarningKind::ContextNotApplicable));
         assert_eq!(ctx.overdraft_limit, original); // inchangé
     }
 
@@ -341,10 +329,7 @@ mod tests {
     fn min_balance_negative_is_error() {
         let mut ctx = ctx_saving();
         let res = ctx.update_context(None, Some(dec!(-10)), None, None, None, None);
-        assert!(matches!(
-            res,
-            Err(ComplianceViolation::InvalidContextValue { .. })
-        ));
+        assert!(matches!(res, Err(ComplianceViolation::InvalidContextValue { .. })));
     }
 
     #[test]
@@ -355,19 +340,14 @@ mod tests {
             .update_context(None, Some(dec!(100)), None, None, None, None)
             .unwrap();
         assert_eq!(warnings.len(), 1);
-        assert!(matches!(
-            warnings[0].kind,
-            CoreWarningKind::ContextNotApplicable
-        ));
+        assert!(matches!(warnings[0].kind, CoreWarningKind::ContextNotApplicable));
         assert_eq!(ctx.min_balance, original); // inchangé
     }
 
     #[test]
     fn min_balance_zero_is_valid() {
         let mut ctx = ctx_saving();
-        let warnings = ctx
-            .update_context(None, Some(dec!(0)), None, None, None, None)
-            .unwrap();
+        let warnings = ctx.update_context(None, Some(dec!(0)), None, None, None, None).unwrap();
         assert!(warnings.is_empty());
         assert_eq!(ctx.min_balance, dec!(0));
     }
@@ -387,9 +367,7 @@ mod tests {
     #[test]
     fn max_monthly_transactions_removed() {
         let mut ctx = ctx_saving(); // saving a Some(6) par défaut
-        let warnings = ctx
-            .update_context(None, None, Some(None), None, None, None)
-            .unwrap();
+        let warnings = ctx.update_context(None, None, Some(None), None, None, None).unwrap();
         assert!(warnings.is_empty());
         assert_eq!(ctx.max_monthly_transactions, None);
     }
@@ -400,9 +378,7 @@ mod tests {
     fn deposit_locked_until_set_on_deposit() {
         let mut ctx = ctx_deposit();
         let date = NaiveDate::from_ymd_opt(2027, 1, 1).unwrap();
-        let warnings = ctx
-            .update_context(None, None, None, Some(date), None, None)
-            .unwrap();
+        let warnings = ctx.update_context(None, None, None, Some(date), None, None).unwrap();
         assert!(warnings.is_empty());
         assert_eq!(ctx.deposit_locked_until, Some(date));
     }
@@ -411,14 +387,9 @@ mod tests {
     fn deposit_locked_until_ignored_on_current() {
         let mut ctx = ctx_current();
         let date = NaiveDate::from_ymd_opt(2027, 1, 1).unwrap();
-        let warnings = ctx
-            .update_context(None, None, None, Some(date), None, None)
-            .unwrap();
+        let warnings = ctx.update_context(None, None, None, Some(date), None, None).unwrap();
         assert_eq!(warnings.len(), 1);
-        assert!(matches!(
-            warnings[0].kind,
-            CoreWarningKind::ContextNotApplicable
-        ));
+        assert!(matches!(warnings[0].kind, CoreWarningKind::ContextNotApplicable));
         assert_eq!(ctx.deposit_locked_until, None); // inchangé
     }
 
@@ -427,9 +398,7 @@ mod tests {
     #[test]
     fn allows_interest_set_on_saving() {
         let mut ctx = ctx_saving();
-        let warnings = ctx
-            .update_context(None, None, None, None, Some(false), None)
-            .unwrap();
+        let warnings = ctx.update_context(None, None, None, None, Some(false), None).unwrap();
         assert!(warnings.is_empty());
         assert!(!ctx.allows_interest);
     }
@@ -437,14 +406,9 @@ mod tests {
     #[test]
     fn allows_interest_ignored_on_current() {
         let mut ctx = ctx_current();
-        let warnings = ctx
-            .update_context(None, None, None, None, Some(true), None)
-            .unwrap();
+        let warnings = ctx.update_context(None, None, None, None, Some(true), None).unwrap();
         assert_eq!(warnings.len(), 1);
-        assert!(matches!(
-            warnings[0].kind,
-            CoreWarningKind::ContextNotApplicable
-        ));
+        assert!(matches!(warnings[0].kind, CoreWarningKind::ContextNotApplicable));
         assert!(!ctx.allows_interest); // inchangé
     }
 
@@ -453,9 +417,7 @@ mod tests {
     #[test]
     fn allows_joint_signers_set_on_joint() {
         let mut ctx = ctx_joint();
-        let warnings = ctx
-            .update_context(None, None, None, None, None, Some(false))
-            .unwrap();
+        let warnings = ctx.update_context(None, None, None, None, None, Some(false)).unwrap();
         assert!(warnings.is_empty());
         assert!(!ctx.allows_joint_signers);
     }
@@ -463,9 +425,7 @@ mod tests {
     #[test]
     fn allows_joint_signers_set_on_business() {
         let mut ctx = ctx_business();
-        let warnings = ctx
-            .update_context(None, None, None, None, None, Some(false))
-            .unwrap();
+        let warnings = ctx.update_context(None, None, None, None, None, Some(false)).unwrap();
         assert!(warnings.is_empty());
         assert!(!ctx.allows_joint_signers);
     }
@@ -473,14 +433,9 @@ mod tests {
     #[test]
     fn allows_joint_signers_ignored_on_student() {
         let mut ctx = ctx_student();
-        let warnings = ctx
-            .update_context(None, None, None, None, None, Some(true))
-            .unwrap();
+        let warnings = ctx.update_context(None, None, None, None, None, Some(true)).unwrap();
         assert_eq!(warnings.len(), 1);
-        assert!(matches!(
-            warnings[0].kind,
-            CoreWarningKind::ContextNotApplicable
-        ));
+        assert!(matches!(warnings[0].kind, CoreWarningKind::ContextNotApplicable));
         assert!(!ctx.allows_joint_signers); // inchangé
     }
 
@@ -500,15 +455,10 @@ mod tests {
     fn none_fields_change_nothing() {
         let mut ctx = ctx_current();
         let original = ctx.clone();
-        let warnings = ctx
-            .update_context(None, None, None, None, None, None)
-            .unwrap();
+        let warnings = ctx.update_context(None, None, None, None, None, None).unwrap();
         assert!(warnings.is_empty());
         assert_eq!(ctx.overdraft_limit, original.overdraft_limit);
         assert_eq!(ctx.min_balance, original.min_balance);
-        assert_eq!(
-            ctx.max_monthly_transactions,
-            original.max_monthly_transactions
-        );
+        assert_eq!(ctx.max_monthly_transactions, original.max_monthly_transactions);
     }
 }

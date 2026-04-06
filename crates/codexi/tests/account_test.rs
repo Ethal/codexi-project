@@ -47,8 +47,7 @@ fn setup_account_with_data() -> Account {
     // debit: 0 + 70.00 + 39.30 + 25.50 = 134.80
 
     // #0 Init (2025-01-01) : 200.00 => OP_ID = 0
-    cb.initialize(parse_date("2025-09-01").unwrap(), dec!(200.0))
-        .unwrap();
+    cb.initialize(parse_date("2025-09-01").unwrap(), dec!(200.0)).unwrap();
 
     // #5 Credit (2025-11-05) : 100.00 => OP_ID = 1
     cb.register_transaction(
@@ -197,11 +196,7 @@ fn test_default_account_is_empty() {
 #[test]
 fn test_account_nb_op() {
     let account = setup_account_with_data();
-    assert_eq!(
-        account.operations.len(),
-        11,
-        "The account should have 11 operations."
-    );
+    assert_eq!(account.operations.len(), 11, "The account should have 11 operations.");
 }
 
 #[test]
@@ -222,16 +217,8 @@ fn test_2025_10_account_balance() {
     // #4 Debit (2025-10-21) : 11.00 => OP_ID = 8
     // credit; 50.00, debit: 70.00 balance: -20.0
 
-    assert_eq!(
-        balance_result.credit,
-        dec!(50.00),
-        "The total credits are incorrect"
-    );
-    assert_eq!(
-        balance_result.debit,
-        dec!(70.00),
-        "The total debits are incorrect."
-    );
+    assert_eq!(balance_result.credit, dec!(50.00), "The total credits are incorrect");
+    assert_eq!(balance_result.debit, dec!(70.00), "The total debits are incorrect.");
     assert_eq!(
         balance_result.total(),
         dec!(-20.00),
@@ -256,16 +243,8 @@ fn test_2025_11_account_balance() {
     // #7 Debit (2025-11-20) : 23.60 => OP_ID = 10
     // credit: 100.00, debit: 39.30, balance: 60.70
 
-    assert_eq!(
-        balance_result.credit,
-        dec!(100.00),
-        "The total credits are incorrect"
-    );
-    assert_eq!(
-        balance_result.debit,
-        dec!(39.30),
-        "The total debits are incorrect."
-    );
+    assert_eq!(balance_result.credit, dec!(100.00), "The total credits are incorrect");
+    assert_eq!(balance_result.debit, dec!(39.30), "The total debits are incorrect.");
     assert_eq!(
         balance_result.total(),
         dec!(60.70),
@@ -290,16 +269,8 @@ fn test_2025_12_account_balance() {
     // #10 Credit (2025-12-15) : 150.00 => OP_ID = 6
     // credit: 160.00, debit: 25.50, balance: 134,50
 
-    assert_eq!(
-        balance_result.credit,
-        dec!(160.00),
-        "The total credits are incorrect"
-    );
-    assert_eq!(
-        balance_result.debit,
-        dec!(25.50),
-        "The total debits are incorrect."
-    );
+    assert_eq!(balance_result.credit, dec!(160.00), "The total credits are incorrect");
+    assert_eq!(balance_result.debit, dec!(25.50), "The total debits are incorrect.");
     assert_eq!(
         balance_result.total(),
         dec!(134.50),
@@ -321,16 +292,8 @@ fn test_full_account_balance() {
     // Expected total credit: 200 + 50.00 + 100.00 + 160 = 510.00
     // Expected total debit: 0 + 70.00 + 39.30 + 25.50 = 134.80
 
-    assert_eq!(
-        balance_result.credit,
-        dec!(510.00),
-        "The total credits are incorrect"
-    );
-    assert_eq!(
-        balance_result.debit,
-        dec!(134.80),
-        "The total debits are incorrect."
-    );
+    assert_eq!(balance_result.credit, dec!(510.00), "The total credits are incorrect");
+    assert_eq!(balance_result.debit, dec!(134.80), "The total debits are incorrect.");
     assert_eq!(
         balance_result.total(),
         dec!(375.20),
@@ -356,11 +319,7 @@ fn test_balance_with_range_filter() {
         Decimal::ZERO,
         "The total filtered credit must be 0.0."
     );
-    assert_eq!(
-        balance_result.debit,
-        dec!(25.50),
-        "The total debits are incorrect."
-    );
+    assert_eq!(balance_result.debit, dec!(25.50), "The total debits are incorrect.");
     assert_eq!(
         balance_result.total(),
         dec!(-25.50),
@@ -409,16 +368,8 @@ fn test_balance_with_filter_month() {
     let balance_items = search(&account, &params).unwrap();
     let balance_result = Balance::build(&balance_items);
 
-    assert_eq!(
-        balance_result.credit,
-        dec!(100.00),
-        "The total credits are incorrect."
-    );
-    assert_eq!(
-        balance_result.debit,
-        dec!(39.30),
-        "The total debits are incorrect"
-    );
+    assert_eq!(balance_result.credit, dec!(100.00), "The total credits are incorrect.");
+    assert_eq!(balance_result.debit, dec!(39.30), "The total debits are incorrect");
     assert_eq!(
         balance_result.total(),
         dec!(60.70),
@@ -555,47 +506,29 @@ fn balance_at_returns_correct_historical_balance() {
     let account = setup_account_with_data();
 
     // At 2025-09-30 — only init (200)
-    assert_eq!(
-        account.balance_at(parse_date("2025-09-30").unwrap()),
-        dec!(200.00)
-    );
+    assert_eq!(account.balance_at(parse_date("2025-09-30").unwrap()), dec!(200.00));
 
     // At 2025-10-31 — init + oct ops (200 + 50 - 14.20 - 44.80 - 11 = 180)
-    assert_eq!(
-        account.balance_at(parse_date("2025-10-31").unwrap()),
-        dec!(180.00)
-    );
+    assert_eq!(account.balance_at(parse_date("2025-10-31").unwrap()), dec!(180.00));
 
     // At 2025-11-30 — + nov ops (180 + 100 - 15.70 - 23.60 = 240.70)
-    assert_eq!(
-        account.balance_at(parse_date("2025-11-30").unwrap()),
-        dec!(240.70)
-    );
+    assert_eq!(account.balance_at(parse_date("2025-11-30").unwrap()), dec!(240.70));
 
     // At 2025-12-31 — full balance (240.70 - 25.50 + 10 + 150 = 375.20)
-    assert_eq!(
-        account.balance_at(parse_date("2025-12-31").unwrap()),
-        dec!(375.20)
-    );
+    assert_eq!(account.balance_at(parse_date("2025-12-31").unwrap()), dec!(375.20));
 }
 
 #[test]
 fn balance_at_empty_account_returns_zero() {
     let account = setup_empty_account();
-    assert_eq!(
-        account.balance_at(parse_date("2025-12-31").unwrap()),
-        Decimal::ZERO
-    );
+    assert_eq!(account.balance_at(parse_date("2025-12-31").unwrap()), Decimal::ZERO);
 }
 
 #[test]
 fn balance_at_before_first_op_returns_zero() {
     let account = setup_account_with_data();
     // Before init date 2025-09-01
-    assert_eq!(
-        account.balance_at(parse_date("2025-08-31").unwrap()),
-        Decimal::ZERO
-    );
+    assert_eq!(account.balance_at(parse_date("2025-08-31").unwrap()), Decimal::ZERO);
 }
 
 // ── compliance with past date ─────────────────────────────────
@@ -622,9 +555,7 @@ fn compliance_rejects_overdraft_on_past_date() {
         .unwrap();
 
     // Init with 50 on 2026-01-01
-    account
-        .initialize(parse_date("2026-01-01").unwrap(), dec!(50))
-        .unwrap();
+    account.initialize(parse_date("2026-01-01").unwrap(), dec!(50)).unwrap();
 
     // Debit 55 on 2026-01-01 → balance -5 (within overdraft -10) → OK
     account
@@ -694,10 +625,7 @@ fn void_allowed_for_op_after_adjust_same_day() {
 
     // Void OP3 must succeed
     let res = account.void_operation(op3_id);
-    assert!(
-        res.is_ok(),
-        "void of op after adjust same day should be allowed"
-    );
+    assert!(res.is_ok(), "void of op after adjust same day should be allowed");
 }
 
 #[test]
@@ -727,10 +655,7 @@ fn void_blocked_for_op_before_adjust_same_day() {
 
     // Void OP1 must fail — locked by adjust
     let res = account.void_operation(op1_id);
-    assert!(
-        res.is_err(),
-        "void of op before adjust same day should be locked"
-    );
+    assert!(res.is_err(), "void of op before adjust same day should be locked");
 }
 
 // ── Lifecycle — set_account_type ─────────────────────────────

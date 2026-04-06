@@ -9,9 +9,7 @@ use crate::logic::account::AccountType;
 /// Error type for temporal policy
 #[derive(Debug, Error)]
 pub enum TemporalViolation {
-    #[error(
-        "FIN_OP: Source: {0} Account have no operation, performed a command, init <DATE> <AMOUNT>"
-    )]
+    #[error("FIN_OP: Source: {0} Account have no operation, performed a command, init <DATE> <AMOUNT>")]
     HaveNoOperation(String),
     #[error("FIN_OP: Account have operation, Init not allowed")]
     HaveOperation,
@@ -35,10 +33,7 @@ pub enum ComplianceViolation {
     OverdraftExceeded { limit: Decimal, resulting: Decimal },
 
     #[error("Minimum balance violated: minimum {minimum}, resulting balance {resulting}")]
-    MinBalanceViolated {
-        minimum: Decimal,
-        resulting: Decimal,
-    },
+    MinBalanceViolated { minimum: Decimal, resulting: Decimal },
 
     #[error("Monthly transaction limit reached: {max} operations/month maximum")]
     MonthlyLimitExceeded { max: u32 },

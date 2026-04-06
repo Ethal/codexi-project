@@ -1,6 +1,6 @@
 // src/logic/category/list
 
-use chrono::Local;
+use chrono::{Local, NaiveDate};
 use nulid::Nulid;
 use serde::{Deserialize, Serialize};
 
@@ -23,12 +23,7 @@ impl CategoryList {
         id
     }
 
-    pub fn create(
-        &mut self,
-        name: &str,
-        parent_id: Option<Nulid>,
-        note: Option<&str>,
-    ) -> Result<Nulid, CategoryError> {
+    pub fn create(&mut self, name: &str, parent_id: Option<Nulid>, note: Option<&str>) -> Result<Nulid, CategoryError> {
         if let Some(v) = parent_id {
             let _ = self.get_by_id(&v)?;
         }
@@ -42,6 +37,7 @@ impl CategoryList {
         id: Nulid,
         name: &str,
         parent_id: Option<Nulid>,
+        terminated: Option<NaiveDate>,
         note: Option<&str>,
     ) -> Result<(), CategoryError> {
         if let Some(v) = parent_id {
@@ -50,11 +46,21 @@ impl CategoryList {
         let category = self.get_by_id_mut(&id)?;
         category.name = name.into();
         category.parent_id = parent_id;
+        category.terminated = terminated;
         category.note = note.map(str::to_owned);
         Ok(())
     }
 
+    pub fn has_active_children(&self, id: &Nulid) -> bool {
+        self.list
+            .iter()
+            .any(|c| c.parent_id.as_ref() == Some(id) && c.terminated.is_none())
+    }
+
     pub fn terminate(&mut self, id: &Nulid) -> Result<(), CategoryError> {
+        if self.has_active_children(id) {
+            return Err(CategoryError::HasActiveChildren(format_id(*id)));
+        }
         let today = Local::now().date_naive();
         let category = self.get_by_id_mut(id)?;
         category.terminated = Some(today);
@@ -75,11 +81,8 @@ impl CategoryList {
             .ok_or_else(|| CategoryError::CategoryNotFound(format_id(*id)))
     }
 
-    pub fn category_name_by_id(&self, id: &Nulid) -> Option<String> {
-        self.list
-            .iter()
-            .find(|c| &c.id == id)
-            .map(|c| c.name.clone())
+    pub fn get_name_by_id(&self, id: &Nulid) -> Option<String> {
+        self.list.iter().find(|c| &c.id == id).map(|c| c.name.clone())
     }
 
     pub fn count(&self) -> usize {

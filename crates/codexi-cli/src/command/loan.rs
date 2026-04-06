@@ -28,12 +28,7 @@ pub enum LoanCommand {
         )]
         capital: String,
 
-        #[arg(
-            long,
-            value_name = "DATE",
-            required = true,
-            help = "Loan start date (YYYY-MM-DD)"
-        )]
+        #[arg(long, value_name = "DATE", required = true, help = "Loan start date (YYYY-MM-DD)")]
         start: String,
 
         #[arg(

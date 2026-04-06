@@ -9,13 +9,10 @@ use std::path::PathBuf;
 
 use crate::core::{DataPaths, format_date, format_id, format_id_short};
 use crate::logic::{
-    account::{
-        Account, AccountArchive, AccountError, CheckpointRef, ComplianceAction, TemporalAction,
-    },
+    account::{Account, AccountArchive, AccountError, CheckpointRef, ComplianceAction, TemporalAction},
     balance::Balance,
     operation::{
-        OperationBuilder, OperationContext, OperationFlow, OperationKind, OperationLinks,
-        RegularKind, SystemKind,
+        OperationBuilder, OperationContext, OperationFlow, OperationKind, OperationLinks, RegularKind, SystemKind,
     },
     search::{SearchParamsBuilder, search},
 };
@@ -161,11 +158,7 @@ impl Account {
 
     /// This function adjusts the codexi to match a physical balance.
     /// It calculates the difference and creates an adjustment operation if needed.
-    pub fn adjust_balance(
-        &mut self,
-        date: NaiveDate,
-        physical_amount: Decimal,
-    ) -> Result<Nulid, AccountError> {
+    pub fn adjust_balance(&mut self, date: NaiveDate, physical_amount: Decimal) -> Result<Nulid, AccountError> {
         // Check temporal policy
         let kind = OperationKind::System(SystemKind::Adjust);
         self.temporal_policy(TemporalAction::Create(kind), date)?;
@@ -236,8 +229,7 @@ impl Account {
 
             if op_date <= checkpoint_date {
                 match op.kind {
-                    OperationKind::System(SystemKind::Init)
-                    | OperationKind::System(SystemKind::Checkpoint) => {
+                    OperationKind::System(SystemKind::Init) | OperationKind::System(SystemKind::Checkpoint) => {
                         archived_operations.push(op.clone());
                         match op.flow {
                             OperationFlow::Credit => checkpoint_balance = op.amount,
@@ -270,8 +262,7 @@ impl Account {
             && self.operations.iter().all(|op| {
                 !matches!(
                     op.kind,
-                    OperationKind::System(SystemKind::Init)
-                        | OperationKind::System(SystemKind::Checkpoint)
+                    OperationKind::System(SystemKind::Init) | OperationKind::System(SystemKind::Checkpoint)
                 )
             })
         {
@@ -286,8 +277,7 @@ impl Account {
         if !archived_operations.is_empty() {
             let mut archive_export = self.clone();
             archive_export.operations = archived_operations;
-            let codexi_archive =
-                AccountArchive::new(&archive_export, checkpoint_date, checkpoint_balance);
+            let codexi_archive = AccountArchive::new(&archive_export, checkpoint_date, checkpoint_balance);
             FileManagement::save_archive(&codexi_archive, paths)?;
         }
 
@@ -298,10 +288,7 @@ impl Account {
         let op_amount = checkpoint_balance.abs();
         let description = format!("BALANCE DEFERRED: {}: {:.2} {}", op_flow, op_amount, desc);
 
-        self.compliance_policy(
-            ComplianceAction::Create(kind, op_flow, op_amount),
-            checkpoint_date,
-        )?;
+        self.compliance_policy(ComplianceAction::Create(kind, op_flow, op_amount), checkpoint_date)?;
 
         let mut context = OperationContext::default();
         context.currency_id = self.currency_id;
@@ -325,8 +312,7 @@ impl Account {
         self.current_balance = checkpoint_balance;
         self.carry_forward_balance = checkpoint_balance;
 
-        let archive_file: PathBuf =
-            format!("{}_codexi_{}.cld", self.id, format_date(checkpoint_date)).into();
+        let archive_file: PathBuf = format!("{}_codexi_{}.cld", self.id, format_date(checkpoint_date)).into();
         let ck = CheckpointRef {
             checkpoint_date,
             checkpoint_balance,

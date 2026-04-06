@@ -6,10 +6,7 @@ use rust_decimal::Decimal;
 use std::path::Path;
 
 use codexi::{
-    core::{
-        CoreError, DataPaths, format_date, parse_date, parse_decimal, parse_optional_decimal,
-        parse_text,
-    },
+    core::{CoreError, DataPaths, format_date, parse_date, parse_decimal, parse_optional_decimal, parse_text},
     dto::{AccountCollection, SearchOperationCollection, StatementCollection},
     file_management::FileManagement,
     logic::{
@@ -30,9 +27,8 @@ use crate::{
     handler::{
         account::handle_account_command, admin::handle_admin_command, bank::handle_bank_command,
         category::handle_category_command, counterparty::handle_counterparty_command,
-        currency::handle_currency_command, data::handle_data_command,
-        history::handle_history_command, loan::handle_loan_command,
-        operation::handle_operation_command, report::handle_report_command,
+        currency::handle_currency_command, data::handle_data_command, history::handle_history_command,
+        loan::handle_loan_command, operation::handle_operation_command, report::handle_report_command,
     },
     msg_info, msg_warn,
     ui::overview_account,
@@ -44,10 +40,18 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
     let skip_confirm = cli.yes;
 
     match cli.command {
-        RootCommand::Overview {} => {
+        RootCommand::Overview => {
             let codexi = FileManagement::load_current_state(paths)?;
             let accounts = AccountCollection::build(&codexi);
             overview_account(&accounts);
+        }
+        RootCommand::Use { id } => {
+            let mut codexi = FileManagement::load_current_state(paths)?;
+            let id_n = resolve_by_id_or_name::<Account, CodexiError>(&id, &codexi.accounts)?;
+            codexi.set_current_account(&id_n)?;
+            FileManagement::save_current_state(&codexi, paths)?;
+            let account = codexi.get_account_by_id(&id_n)?;
+            msg_info!("Switched to account: {} ({})", account.name, id_n);
         }
 
         RootCommand::Debit {
@@ -62,16 +66,11 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
 
             let mut codexi = FileManagement::load_current_state(paths)?;
             let category_id = category
-                .map(|name| {
-                    resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list)
-                })
+                .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
                 .transpose()?;
             let counterparty_id = counterparty
                 .map(|name| {
-                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(
-                        &name,
-                        &codexi.counterparties.list,
-                    )
+                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(&name, &codexi.counterparties.list)
                 })
                 .transpose()?;
             let account = codexi.get_current_account_mut()?;
@@ -101,21 +100,15 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             counterparty,
             category,
         } => {
-            let (date_n, amount_n, desc_n) =
-                normalize_date_amount_desc(&date, &amount, description)?;
+            let (date_n, amount_n, desc_n) = normalize_date_amount_desc(&date, &amount, description)?;
 
             let mut codexi = FileManagement::load_current_state(paths)?;
             let category_id = category
-                .map(|name| {
-                    resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list)
-                })
+                .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
                 .transpose()?;
             let counterparty_id = counterparty
                 .map(|name| {
-                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(
-                        &name,
-                        &codexi.counterparties.list,
-                    )
+                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(&name, &codexi.counterparties.list)
                 })
                 .transpose()?;
             let account = codexi.get_current_account_mut()?;
@@ -141,21 +134,15 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             counterparty,
             category,
         } => {
-            let (date_n, amount_n, desc_n) =
-                normalize_date_amount_desc(&date, &amount, description)?;
+            let (date_n, amount_n, desc_n) = normalize_date_amount_desc(&date, &amount, description)?;
 
             let mut codexi = FileManagement::load_current_state(paths)?;
             let category_id = category
-                .map(|name| {
-                    resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list)
-                })
+                .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
                 .transpose()?;
             let counterparty_id = counterparty
                 .map(|name| {
-                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(
-                        &name,
-                        &codexi.counterparties.list,
-                    )
+                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(&name, &codexi.counterparties.list)
                 })
                 .transpose()?;
             let account = codexi.get_current_account_mut()?;
@@ -187,23 +174,13 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             let date = parse_date(&date)?;
             let amount_from_d = parse_decimal(&amount_from, "amount fom")?;
             let amount_to_d = parse_decimal(&amount_to, "amount to")?;
-            let acc_id_to =
-                resolve_by_id_or_name::<Account, CodexiError>(&account_id_to, &codexi.accounts)?;
+            let acc_id_to = resolve_by_id_or_name::<Account, CodexiError>(&account_id_to, &codexi.accounts)?;
             let desc = parse_text(description.clone());
             let category_id = category
-                .map(|name| {
-                    resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list)
-                })
+                .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
                 .transpose()?;
 
-            codexi.transfer(
-                date,
-                amount_from_d,
-                acc_id_to,
-                amount_to_d,
-                desc.clone(),
-                category_id,
-            )?;
+            codexi.transfer(date, amount_from_d, acc_id_to, amount_to_d, desc.clone(), category_id)?;
 
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!(

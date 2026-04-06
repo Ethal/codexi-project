@@ -12,9 +12,7 @@ impl FileManagement {
         ExchangeSerdeFormat::Toml.export(data, dir)
     }
 
-    pub fn import_toml<T: Exchangeable>(
-        dir: &Path,
-    ) -> Result<(T, Vec<T::Warning>), FileExchangeError> {
+    pub fn import_toml<T: Exchangeable>(dir: &Path) -> Result<(T, Vec<T::Warning>), FileExchangeError> {
         ExchangeSerdeFormat::Toml.import(dir)
     }
 }

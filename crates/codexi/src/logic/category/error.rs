@@ -21,6 +21,8 @@ pub enum CategoryError {
     InvalidShortId(String, usize),
     #[error("VAL_CATEGORY: Duplicate category name {0}")]
     DuplicateName(String),
+    #[error("VAL_CATEGORY: Has children {0}")]
+    HasActiveChildren(String),
 }
 
 impl ResolveError for CategoryError {

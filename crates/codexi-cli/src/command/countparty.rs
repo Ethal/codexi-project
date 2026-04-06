@@ -21,11 +21,7 @@ pub enum CounterpartyCommand {
         name: Vec<String>,
 
         /// Counterparty kind
-        #[arg(
-            value_name = "KIND",
-            required = true,
-            help = "Kind: 'personal' or 'organization'"
-        )]
+        #[arg(value_name = "KIND", required = true, help = "Kind: 'personal' or 'organization'")]
         kind: String,
 
         /// Counterparty note
@@ -35,11 +31,7 @@ pub enum CounterpartyCommand {
     /// Teminate a counterparty
     Terminate {
         /// Id of the counterparty
-        #[arg(
-            value_name = "ID",
-            required = true,
-            help = "id\name of the counterparty"
-        )]
+        #[arg(value_name = "ID", required = true, help = "id\name of the counterparty")]
         id: String,
     },
 }

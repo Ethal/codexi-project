@@ -9,10 +9,7 @@ use crate::logic::counterparty::{Counterparty, CounterpartyError, CounterpartyLi
 impl CounterpartyList {
     /// Merges an imported counterparties into self, respecting update rules.
     /// Validation is assumed to have been done upstream by validate_import().
-    pub fn merge_from_import(
-        &mut self,
-        imported: CounterpartyList,
-    ) -> Result<ImportSummary, CounterpartyError> {
+    pub fn merge_from_import(&mut self, imported: CounterpartyList) -> Result<ImportSummary, CounterpartyError> {
         let mut summary = self.merge_counterparties(imported.list)?;
         summary.name = "Counterparties".into();
         Ok(summary)
@@ -27,8 +24,7 @@ impl CounterpartyList {
         let mut to_update = Vec::new();
 
         {
-            let existing_by_id: HashMap<Nulid, &Counterparty> =
-                self.list.iter().map(|c| (c.id, c)).collect();
+            let existing_by_id: HashMap<Nulid, &Counterparty> = self.list.iter().map(|c| (c.id, c)).collect();
 
             for counterparty in imported_counterparty {
                 summary.total_processed += 1;

@@ -67,11 +67,7 @@ impl Account {
     /// Two actions are supported:
     ///   - Create: validates date ordering, period locking, init sequencing
     ///   - Void:   validates that the target operation can be voided
-    pub fn temporal_policy(
-        &self,
-        action: TemporalAction,
-        date: NaiveDate,
-    ) -> Result<(), TemporalViolation> {
+    pub fn temporal_policy(&self, action: TemporalAction, date: NaiveDate) -> Result<(), TemporalViolation> {
         let today = Local::now().date_naive();
 
         // Account must be open for any operation
@@ -117,9 +113,7 @@ impl Account {
                         if let Some(init) = last_init
                             && date < init.date
                         {
-                            return Err(TemporalViolation::InvalidData(
-                                "Close cannot be before Init".into(),
-                            ));
+                            return Err(TemporalViolation::InvalidData("Close cannot be before Init".into()));
                         }
                         self.has_only_init()?;
                     }
@@ -159,16 +153,11 @@ impl Account {
                         {
                             return Err(TemporalViolation::InvalidData("Period closed".into()));
                         }
-                        let anchor_date = last_adj
-                            .map(|a| a.date)
-                            .or_else(|| last_init.map(|a| a.date));
+                        let anchor_date = last_adj.map(|a| a.date).or_else(|| last_init.map(|a| a.date));
                         if let Some(a_dt) = anchor_date
                             && date < a_dt
                         {
-                            return Err(TemporalViolation::InvalidData(format!(
-                                "Must be >= {}",
-                                a_dt
-                            )));
+                            return Err(TemporalViolation::InvalidData(format!("Must be >= {}", a_dt)));
                         }
                     }
                 }
@@ -193,16 +182,12 @@ impl Account {
 
                 // An operation cannot be voided twice
                 if target_op.links.void_by.is_some() {
-                    return Err(TemporalViolation::OperationAlreadyVoided(
-                        target_id.to_string(),
-                    ))?;
+                    return Err(TemporalViolation::OperationAlreadyVoided(target_id.to_string()))?;
                 }
 
                 // System operations (Init, Adjust, Checkpoint) cannot be voided
                 if target_op.kind.is_system() {
-                    return Err(TemporalViolation::InvalidData(
-                        "System op cannot be voided".into(),
-                    ));
+                    return Err(TemporalViolation::InvalidData("System op cannot be voided".into()));
                 }
 
                 // --- Checkpoint lock ---

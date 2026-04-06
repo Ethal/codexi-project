@@ -5,9 +5,7 @@
 use rust_decimal::Decimal;
 
 use crate::{
-    core::{
-        format_date, format_id, format_optional_date, format_optional_id, format_optional_path,
-    },
+    core::{format_date, format_id, format_optional_date, format_optional_id, format_optional_path},
     logic::{
         account::Account,
         codexi::Codexi,
@@ -69,7 +67,7 @@ impl SearchOperationItem {
             .operation
             .context
             .category_id
-            .and_then(|id| codexi.categories.category_name_by_id(&id));
+            .and_then(|id| codexi.categories.get_name_by_id(&id));
 
         // can_be_void
         let can_be_void = account.can_void(s_op.operation.id);

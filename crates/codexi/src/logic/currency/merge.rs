@@ -9,26 +9,19 @@ use crate::logic::currency::{Currency, CurrencyError, CurrencyList};
 impl CurrencyList {
     /// Merges an imported currencies into self, respecting update rules.
     /// Validation is assumed to have been done upstream by validate_import().
-    pub fn merge_from_import(
-        &mut self,
-        imported: CurrencyList,
-    ) -> Result<ImportSummary, CurrencyError> {
+    pub fn merge_from_import(&mut self, imported: CurrencyList) -> Result<ImportSummary, CurrencyError> {
         let mut summary = self.merge_currencies(imported.currencies)?;
         summary.name = "Currencies".into();
         Ok(summary)
     }
 
-    fn merge_currencies(
-        &mut self,
-        imported_currency: Vec<Currency>,
-    ) -> Result<ImportSummary, CurrencyError> {
+    fn merge_currencies(&mut self, imported_currency: Vec<Currency>) -> Result<ImportSummary, CurrencyError> {
         let mut summary = ImportSummary::default();
         let mut to_add = Vec::new();
         let mut to_update = Vec::new();
 
         {
-            let existing_by_id: HashMap<Nulid, &Currency> =
-                self.currencies.iter().map(|c| (c.id, c)).collect();
+            let existing_by_id: HashMap<Nulid, &Currency> = self.currencies.iter().map(|c| (c.id, c)).collect();
 
             for currency in imported_currency {
                 summary.total_processed += 1;

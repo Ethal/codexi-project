@@ -72,8 +72,7 @@ pub fn default_banks() -> Vec<Bank> {
 
 /// Returns the default currency list (language-independent).
 pub fn default_currencies() -> Vec<Currency> {
-    let seeds: Vec<CurrencySeed> =
-        serde_json::from_str(CURRENCIES_JSON).expect("Invalid currencies seed JSON");
+    let seeds: Vec<CurrencySeed> = serde_json::from_str(CURRENCIES_JSON).expect("Invalid currencies seed JSON");
 
     seeds
         .into_iter()
@@ -95,8 +94,7 @@ pub fn default_categories(language: &str) -> Vec<Category> {
         _ => CATEGORIES_EN_JSON,
     };
 
-    let seeds: Vec<CategorySeed> =
-        serde_json::from_str(json).expect("Invalid categories seed JSON");
+    let seeds: Vec<CategorySeed> = serde_json::from_str(json).expect("Invalid categories seed JSON");
 
     seeds
         .into_iter()
@@ -118,8 +116,7 @@ pub fn default_counterparties(language: &str) -> Vec<Counterparty> {
         _ => COUNTERPARTIES_EN_JSON,
     };
 
-    let seeds: Vec<CounterpartySeed> =
-        serde_json::from_str(json).expect("Invalid counterparies seed JSON");
+    let seeds: Vec<CounterpartySeed> = serde_json::from_str(json).expect("Invalid counterparies seed JSON");
 
     seeds
         .into_iter()

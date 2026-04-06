@@ -14,30 +14,18 @@ pub enum HistoryCommand {
     /// Initializes the ledger(codexi) with a starting balance.
     Init {
         /// The start date of the initialization (YYYY-MM-DD).
-        #[arg(
-            index = 1,
-            value_name = "DATE",
-            help = "The date of the adjustment (YYYY-MM-DD)."
-        )]
+        #[arg(index = 1, value_name = "DATE", help = "The date of the adjustment (YYYY-MM-DD).")]
         date: String,
 
         /// The initial account balance.
-        #[arg(
-            index = 2,
-            value_name = "INITIAL_BALANCE",
-            allow_negative_numbers = true
-        )]
+        #[arg(index = 2, value_name = "INITIAL_BALANCE", allow_negative_numbers = true)]
         initial_amount: String,
     },
 
     /// Adjusts the balance to a given physical amount.
     Adjust {
         /// The start date of the initialization (YYYY-MM-DD).
-        #[arg(
-            index = 1,
-            value_name = "DATE",
-            help = "The date of the adjustment (YYYY-MM-DD)."
-        )]
+        #[arg(index = 1, value_name = "DATE", help = "The date of the adjustment (YYYY-MM-DD).")]
         date: String,
 
         /// The actual physical balance.
@@ -67,10 +55,7 @@ pub enum HistoryCommand {
         date: String,
 
         /// Description of the balance carried forward (ex: 'Closing Year 2025').
-        #[arg(
-            value_name = "DESCRIPTION...",
-            help = "Description of the closing operation"
-        )]
+        #[arg(value_name = "DESCRIPTION...", help = "Description of the closing operation")]
         description: Vec<String>,
     },
 
@@ -96,12 +81,7 @@ pub enum ArchiveCommand {
         #[arg(index = 1, value_name = "ID", required = true, help = "Account ID")]
         id: String,
         /// Close period date (Checkpoint)
-        #[arg(
-            index = 2,
-            value_name = "DATE",
-            required = true,
-            help = "The close period date"
-        )]
+        #[arg(index = 2, value_name = "DATE", required = true, help = "The close period date")]
         date: String,
     },
 }

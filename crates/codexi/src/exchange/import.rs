@@ -2,15 +2,11 @@
 
 use rust_decimal::Decimal;
 
-use crate::core::{
-    CoreWarning, parse_date, parse_id, parse_optional_date, parse_optional_id,
-    resolve_or_generate_id,
-};
+use crate::core::{CoreWarning, parse_date, parse_id, parse_optional_date, parse_optional_id, resolve_or_generate_id};
 use crate::exchange::{
-    ExchangeAccountHeader, ExchangeAccountOperations, ExchangeCategory, ExchangeCategoryList,
-    ExchangeCounterparty, ExchangeCounterpartyList, ExchangeCurrency, ExchangeCurrencyList,
-    ExchangeError, validate_import_account_header, validate_import_category,
-    validate_import_counterparty, validate_import_currency, validate_import_operations,
+    ExchangeAccountHeader, ExchangeAccountOperations, ExchangeCategory, ExchangeCategoryList, ExchangeCounterparty,
+    ExchangeCounterpartyList, ExchangeCurrency, ExchangeCurrencyList, ExchangeError, validate_import_account_header,
+    validate_import_category, validate_import_counterparty, validate_import_currency, validate_import_operations,
 };
 use crate::logic::{
     account::{Account, AccountAnchors, AccountContext, AccountMeta},
@@ -22,9 +18,7 @@ use crate::logic::{
 
 impl ExchangeAccountHeader {
     /// Single entry point for importing a account (JSON / TOML / CSV)
-    pub fn import_data(
-        data: &ExchangeAccountHeader,
-    ) -> Result<(Account, Vec<CoreWarning>), ExchangeError> {
+    pub fn import_data(data: &ExchangeAccountHeader) -> Result<(Account, Vec<CoreWarning>), ExchangeError> {
         let warnings = validate_import_account_header(data)?;
         let account = Self::build_from_export(data)?;
         Ok((account, warnings))
@@ -40,7 +34,7 @@ impl ExchangeAccountHeader {
             context: AccountContext::try_from(&import.context)?,
             bank_id: parse_optional_id(import.bank_id.as_deref())?, // Bank Id
             currency_id: parse_optional_id(import.currency_id.as_deref())?, // Currency id for the account
-            carry_forward_balance: Decimal::ZERO, // for internal calculation
+            carry_forward_balance: Decimal::ZERO,                   // for internal calculation
             open_date: parse_date(&import.open_date)?, // Open date of the account,typivcaly the date of the init.
             terminated_date: parse_optional_date(import.terminated_date.as_deref())?, // Close date of the account.
             operations: Vec::new(),
@@ -71,17 +65,10 @@ impl ExchangeAccountOperations {
 }
 
 impl ExchangeCurrencyList {
-    pub fn import_data(
-        data: &ExchangeCurrencyList,
-    ) -> Result<(CurrencyList, Vec<CoreWarning>), ExchangeError> {
+    pub fn import_data(data: &ExchangeCurrencyList) -> Result<(CurrencyList, Vec<CoreWarning>), ExchangeError> {
         let warnings = validate_import_currency(data)?;
 
-        let currencies: Vec<Currency> = data
-            .currencies
-            .iter()
-            .cloned()
-            .map(Self::map_currency)
-            .collect();
+        let currencies: Vec<Currency> = data.currencies.iter().cloned().map(Self::map_currency).collect();
 
         let currency_list = CurrencyList { currencies };
         Ok((currency_list, warnings))
@@ -100,9 +87,7 @@ impl ExchangeCurrencyList {
 }
 
 impl ExchangeCounterpartyList {
-    pub fn import_data(
-        data: &ExchangeCounterpartyList,
-    ) -> Result<(CounterpartyList, Vec<CoreWarning>), ExchangeError> {
+    pub fn import_data(data: &ExchangeCounterpartyList) -> Result<(CounterpartyList, Vec<CoreWarning>), ExchangeError> {
         let warnings = validate_import_counterparty(data)?;
 
         let counterparties: Vec<Counterparty> = data
@@ -112,9 +97,7 @@ impl ExchangeCounterpartyList {
             .map(Self::map_counterparty)
             .collect::<Result<Vec<_>, _>>()?;
 
-        let counterparty_list = CounterpartyList {
-            list: counterparties,
-        };
+        let counterparty_list = CounterpartyList { list: counterparties };
         Ok((counterparty_list, warnings))
     }
 
@@ -131,9 +114,7 @@ impl ExchangeCounterpartyList {
 }
 
 impl ExchangeCategoryList {
-    pub fn import_data(
-        data: &ExchangeCategoryList,
-    ) -> Result<(CategoryList, Vec<CoreWarning>), ExchangeError> {
+    pub fn import_data(data: &ExchangeCategoryList) -> Result<(CategoryList, Vec<CoreWarning>), ExchangeError> {
         let warnings = validate_import_category(data)?;
 
         let categories: Vec<Category> = data

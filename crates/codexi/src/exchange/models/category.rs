@@ -23,6 +23,7 @@ pub struct ExchangeCategory {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExchangeCategoryList {
     pub version: u16,
+    #[serde(rename = "categories")]
     pub list: Vec<ExchangeCategory>,
 }
 

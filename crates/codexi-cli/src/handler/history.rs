@@ -23,10 +23,7 @@ use crate::{
 pub fn handle_history_command(command: HistoryCommand, paths: &DataPaths) -> Result<()> {
     let mut codexi = FileManagement::load_current_state(paths)?;
     match command {
-        HistoryCommand::Init {
-            date,
-            initial_amount,
-        } => {
+        HistoryCommand::Init { date, initial_amount } => {
             let date = parse_date(&date)?;
             let initial_amount_d = parse_decimal(&initial_amount, "initial_amount")?;
             let account = codexi.get_current_account_mut()?;
@@ -38,10 +35,7 @@ pub fn handle_history_command(command: HistoryCommand, paths: &DataPaths) -> Res
                 date
             );
         }
-        HistoryCommand::Adjust {
-            date,
-            physical_amount,
-        } => {
+        HistoryCommand::Adjust { date, physical_amount } => {
             let physical_amount_d = parse_decimal(&physical_amount, "physical_amount")?;
             let date = parse_date(&date)?;
             let account = codexi.get_current_account_mut()?;

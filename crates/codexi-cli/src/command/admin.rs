@@ -28,20 +28,14 @@ pub enum AdminCommand {
 
     ///⚠️  Restore a ledger(codexi.dat) include the archive file from a backup file(Zip File).
     Restore {
-        #[arg(
-            value_name = "FILENAME",
-            help = "The backup ZIP filename to restore from"
-        )]
+        #[arg(value_name = "FILENAME", help = "The backup ZIP filename to restore from")]
         filename: String,
     },
 
     ///⚠️  Migration an old version of the loger(codexi.dat), including archived file if any.
     Migrate {
         /// Version to migrate.
-        #[arg(
-            value_name = "VERSION",
-            help = "Version of the file to migrate(1->2, 2->3)."
-        )]
+        #[arg(value_name = "VERSION", help = "Version of the file to migrate(1->2, 2->3).")]
         version: usize,
     },
 

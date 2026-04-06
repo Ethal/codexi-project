@@ -3,24 +3,36 @@
 use codexi::core::format_id_short;
 use codexi::dto::CategoryCollection;
 
-use crate::ui::TITLE_STYLE;
+use crate::ui::{STYLE_DANGER, STYLE_MUTED, TITLE_STYLE};
 
-/// view to list of the category
+/// view to list the category
 pub fn view_category(datas: &CategoryCollection) {
-    let title_text = TITLE_STYLE.apply_to("Categories - <id> <short id> <name> [note]");
+    let title_text = TITLE_STYLE.apply_to("Categories - <short id> <name> [parent] [note]");
     println!();
     println!("{}", title_text);
-    if datas.items.is_empty() {
-        println!(" No Category");
-    } else {
-        for c in &datas.items {
-            println!(
-                " {} {} {:<20} {}",
-                c.id,
-                format_id_short(&c.id),
-                c.name,
-                c.note.clone().unwrap_or_default()
-            );
-        }
+    for c in &datas.items {
+        let id_style = match &c.terminated {
+            Some(_) => STYLE_DANGER,
+            None => STYLE_MUTED,
+        };
+        let parent_style = match &c.parent_terminated {
+            Some(_) => STYLE_DANGER,
+            None => STYLE_MUTED,
+        };
+        let id = id_style.apply_to(format!("#{}", format_id_short(&c.id)));
+        let parent = match (&c.parent_name, &c.parent_id) {
+            (Some(name), Some(pid)) => {
+                let styled_pid = parent_style.apply_to(format!("({})", format_id_short(pid)));
+                format!("{}{}", name, styled_pid)
+            }
+            _ => "─(—)".to_string(),
+        };
+        println!(
+            " {} {:<20} {} {}",
+            id,
+            c.name,
+            parent,
+            c.note.clone().unwrap_or("─".to_string()),
+        );
     }
 }

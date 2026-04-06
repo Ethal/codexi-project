@@ -9,9 +9,7 @@ use crate::{
 };
 
 /// Exchange counterparty validation
-pub fn validate_import_category(
-    import: &ExchangeCategoryList,
-) -> Result<Vec<CoreWarning>, ExchangeError> {
+pub fn validate_import_category(import: &ExchangeCategoryList) -> Result<Vec<CoreWarning>, ExchangeError> {
     // Version
     if import.version != CODEXI_EXCHANGE_FORMAT_VERSION {
         return Err(ExchangeError::InvalidVersion(format!(
@@ -40,10 +38,7 @@ pub fn validate_import_category(
         let min = 3;
         let max = 20;
         if let Err(e) = validate_text_rules(&category.name, min, max) {
-            return Err(ExchangeError::InvalidData(format!(
-                "category name error: {}",
-                e,
-            )));
+            return Err(ExchangeError::InvalidData(format!("category name error: {}", e,)));
         }
     }
 

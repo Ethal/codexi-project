@@ -8,9 +8,7 @@ use crate::{
 };
 
 /// Exchange account validation (structural + Void + Transfer + Amount consistency)
-pub fn validate_import_account_header(
-    import: &ExchangeAccountHeader,
-) -> Result<Vec<CoreWarning>, ExchangeError> {
+pub fn validate_import_account_header(import: &ExchangeAccountHeader) -> Result<Vec<CoreWarning>, ExchangeError> {
     // Version
     if import.version != CODEXI_EXCHANGE_FORMAT_VERSION {
         return Err(ExchangeError::InvalidVersion(format!(
@@ -23,19 +21,12 @@ pub fn validate_import_account_header(
     let min = 3;
     let max = 50;
     if let Err(e) = validate_text_rules(&import.name, min, max) {
-        return Err(ExchangeError::InvalidData(format!(
-            "Account name error: {}",
-            e,
-        )));
+        return Err(ExchangeError::InvalidData(format!("Account name error: {}", e,)));
     }
 
     // account_type must be a known variant — avoids a cryptic error later in TryFrom
-    AccountType::try_from_str(&import.context.account_type).map_err(|_| {
-        ExchangeError::InvalidData(format!(
-            "Unknown account type '{}'",
-            import.context.account_type
-        ))
-    })?;
+    AccountType::try_from_str(&import.context.account_type)
+        .map_err(|_| ExchangeError::InvalidData(format!("Unknown account type '{}'", import.context.account_type)))?;
 
     let warnings = Vec::new();
 

@@ -41,7 +41,18 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 pub enum RootCommand {
     /// Show an overview of the accounts (id,name,type,currency,debit,credit,balance)
-    Overview {},
+    Overview,
+
+    /// Alias of 'account use'
+    Use {
+        /// Account id
+        #[arg(
+            value_name = "ID",
+            required = true,
+            help = "Account ID. Accept full ID, short ID or name of the account"
+        )]
+        id: String,
+    },
 
     /// Add a regular debit operation
     Debit {
@@ -244,28 +255,15 @@ pub enum RootCommand {
     #[command(alias = "view")]
     Search {
         /// Arbitrary date range
-        #[arg(
-            long,
-            help = "Start date for filtering operations",
-            value_name = "FROM_DATE"
-        )]
+        #[arg(long, help = "Start date for filtering operations", value_name = "FROM_DATE")]
         from: Option<String>,
 
         /// Arbitrary date range
-        #[arg(
-            long,
-            help = "End date for filtering operations",
-            value_name = "TO_DATE"
-        )]
+        #[arg(long, help = "End date for filtering operations", value_name = "TO_DATE")]
         to: Option<String>,
 
         /// Filter by text contained in description
-        #[arg(
-            short = 't',
-            long,
-            help = "Filter by text in description",
-            value_name = "TEXT"
-        )]
+        #[arg(short = 't', long, help = "Filter by text in description", value_name = "TEXT")]
         text: Option<String>,
 
         /// Filter by type of kind operation (Init, Adjust, Close, Transaction, ...)
@@ -278,12 +276,7 @@ pub enum RootCommand {
         kind: Option<String>,
 
         /// Filter by the flow of operation (debit, credit)
-        #[arg(
-            short = 'f',
-            long,
-            help = "Filter by flow: 'debit' or 'credit'",
-            value_name = "FLOW"
-        )]
+        #[arg(short = 'f', long, help = "Filter by flow: 'debit' or 'credit'", value_name = "FLOW")]
         flow: Option<String>,
 
         /// Minimum amount

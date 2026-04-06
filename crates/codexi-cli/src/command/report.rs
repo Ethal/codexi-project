@@ -15,18 +15,10 @@ pub enum ReportCommand {
     /// View balance and debit/credit. Available criteria, --from --to.
     Balance {
         // Filtres granulaire (Plage de dates arbitraire)
-        #[arg(
-            long,
-            value_name = "FROM_DATE",
-            help = "Start date for filtering operations"
-        )]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date for filtering operations")]
         from: Option<String>,
 
-        #[arg(
-            long,
-            value_name = "TO_DATE",
-            help = "End date for filtering operations"
-        )]
+        #[arg(long, value_name = "TO_DATE", help = "End date for filtering operations")]
         to: Option<String>,
     },
 
@@ -52,19 +44,11 @@ pub enum ReportCommand {
     /// export (html file) a statement of the current account. Available criteria, --from --to.  .
     Statement {
         /// Arbitrary date range
-        #[arg(
-            long,
-            help = "Start date for filtering operations",
-            value_name = "FROM_DATE"
-        )]
+        #[arg(long, help = "Start date for filtering operations", value_name = "FROM_DATE")]
         from: Option<String>,
 
         /// Arbitrary date range
-        #[arg(
-            long,
-            help = "End date for filtering operations",
-            value_name = "TO_DATE"
-        )]
+        #[arg(long, help = "End date for filtering operations", value_name = "TO_DATE")]
         to: Option<String>,
 
         /// open in the defaut browser

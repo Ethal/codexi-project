@@ -3,10 +3,7 @@
 use anyhow::Result;
 
 use codexi::{
-    core::{
-        DataPaths, parse_date, parse_optional_date, parse_optional_decimal, parse_optional_u32,
-        parse_text,
-    },
+    core::{DataPaths, parse_date, parse_optional_date, parse_optional_decimal, parse_optional_u32, parse_text},
     dto::{AccountCollection, AccountItem},
     file_management::FileManagement,
     logic::{
@@ -59,7 +56,8 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
             let id_n = resolve_by_id_or_name::<Account, CodexiError>(&id, &codexi.accounts)?;
             codexi.set_current_account(&id_n)?;
             FileManagement::save_current_state(&codexi, paths)?;
-            msg_info!("Switched to account {}", id_n);
+            let account = codexi.get_account_by_id(&id_n)?;
+            msg_info!("Switched to account: {} ({})", account.name, id_n);
         }
 
         AccountCommand::Close { id, date } => {
@@ -83,14 +81,8 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("Bank set.");
         }
-        AccountCommand::SetCurrency {
-            id,
-            update_operation,
-        } => {
-            let id_n = resolve_by_id_or_name::<Currency, CurrencyError>(
-                &id,
-                &codexi.currencies.currencies,
-            )?;
+        AccountCommand::SetCurrency { id, update_operation } => {
+            let id_n = resolve_by_id_or_name::<Currency, CurrencyError>(&id, &codexi.currencies.currencies)?;
             codexi.set_account_currency(&id_n, update_operation)?;
 
             FileManagement::save_current_state(&codexi, paths)?;
@@ -108,8 +100,7 @@ pub fn handle_account_command(command: AccountCommand, paths: &DataPaths) -> Res
 
             let limit = parse_optional_decimal(&overdraft, "over draft")?;
             let min = parse_optional_decimal(&balance_min, "balance min")?;
-            let max_monthly_transactions =
-                parse_optional_u32(&max_monthly_transactions, "max_monthly transaction")?;
+            let max_monthly_transactions = parse_optional_u32(&max_monthly_transactions, "max_monthly transaction")?;
             let deposit_locked_until = parse_optional_date(deposit_locked_until.as_deref())?;
             let warnings = current_account.set_context(
                 limit,

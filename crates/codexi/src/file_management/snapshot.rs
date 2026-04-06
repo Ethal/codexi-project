@@ -46,19 +46,14 @@ impl FileManagement {
         Ok(snapshot.filename)
     }
     /// Restore a snapshot file
-    pub fn restore_snapshot(
-        paths: &DataPaths,
-        filename: &str,
-    ) -> Result<Codexi, FileSnapshotError> {
+    pub fn restore_snapshot(paths: &DataPaths, filename: &str) -> Result<Codexi, FileSnapshotError> {
         let file_path = paths.snapshots_dir.join(filename);
 
         match Self::read_storage(&file_path)? {
             StoreEntity::Codexi(codexi) => Ok(codexi),
-            _ => Err(FileSnapshotError::Storage(
-                StorageError::InvalidStoreEntity {
-                    expected: "Codexi".to_string(),
-                },
-            )),
+            _ => Err(FileSnapshotError::Storage(StorageError::InvalidStoreEntity {
+                expected: "Codexi".to_string(),
+            })),
         }
     }
     /// Clean the snapshot, keep the latest 5 by default or as per a value provide

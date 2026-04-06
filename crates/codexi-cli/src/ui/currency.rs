@@ -7,8 +7,7 @@ use crate::ui::TITLE_STYLE;
 
 /// view to list the currency
 pub fn view_currency(datas: &CurrencyCollection) {
-    let title_text =
-        TITLE_STYLE.apply_to("Currencies - <id> <short id> <name> <code> <symbol> [note]");
+    let title_text = TITLE_STYLE.apply_to("Currencies - <id> <short id> <name> <code> <symbol> [note]");
     println!();
     println!("{}", title_text);
     if datas.items.is_empty() {

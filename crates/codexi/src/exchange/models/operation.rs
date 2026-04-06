@@ -3,13 +3,11 @@
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
-    format_date, format_decimal, format_id, format_optional_date, format_optional_id,
-    format_optional_path, parse_date, parse_decimal, parse_id, parse_optional_date,
-    parse_optional_id, parse_optional_path, resolve_or_generate_id,
+    format_date, format_decimal, format_id, format_optional_date, format_optional_id, format_optional_path, parse_date,
+    parse_decimal, parse_id, parse_optional_date, parse_optional_id, parse_optional_path, resolve_or_generate_id,
 };
 use crate::logic::operation::{
-    Operation, OperationContext, OperationError, OperationFlow, OperationKind, OperationLinks,
-    OperationMeta,
+    Operation, OperationContext, OperationError, OperationFlow, OperationKind, OperationLinks, OperationMeta,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

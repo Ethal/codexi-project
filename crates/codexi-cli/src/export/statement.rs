@@ -35,19 +35,13 @@ pub fn export_statement_html(entry: StatementCollection) -> Result<String> {
     ctx.insert("operation_count", &entry.counts.total());
     ctx.insert("account_name", &entry.account.name);
     ctx.insert("account_number", &entry.account.id);
-    ctx.insert(
-        "account_bank",
-        &format_optional_bank_item(&entry.account.bank),
-    );
+    ctx.insert("account_bank", &format_optional_bank_item(&entry.account.bank));
     ctx.insert(
         "account_currency",
         &format_optional_currency_item(&entry.account.currency),
     );
     ctx.insert("balance_debit", &entry.balance.debit.separate_with_commas());
-    ctx.insert(
-        "balance_credit",
-        &entry.balance.credit.separate_with_commas(),
-    );
+    ctx.insert("balance_credit", &entry.balance.credit.separate_with_commas());
     ctx.insert("balance_total", &entry.balance.total.separate_with_commas());
 
     let html = tera.render("statement.html", &ctx)?;

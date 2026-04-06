@@ -16,6 +16,7 @@ pub struct CodexiInfos {
     pub codexi_bank_count: usize,
     pub codexi_currency_count: usize,
     pub codexi_category_count: usize,
+    pub codexi_counterparty_count: usize,
     pub data_version: String,
     pub exchange_version: String,
     pub storage_format: StorageFormat,
@@ -164,14 +165,12 @@ impl FileManagement {
         Ok(())
     }
     /// Get Codexi infos
-    pub fn codexi_infos(
-        paths: &DataPaths,
-        data: &Codexi,
-    ) -> Result<CodexiInfos, FileMaintenanceError> {
+    pub fn codexi_infos(paths: &DataPaths, data: &Codexi) -> Result<CodexiInfos, FileMaintenanceError> {
         let codexi_account_count = data.accounts.len();
         let codexi_bank_count = data.banks.count();
         let codexi_currency_count = data.currencies.count();
         let codexi_category_count = data.categories.count();
+        let codexi_counterparty_count = data.counterparties.count();
 
         let codexi_path = &paths.main_file;
         let codexi_size = if codexi_path.exists() {
@@ -287,6 +286,7 @@ impl FileManagement {
             codexi_bank_count,
             codexi_currency_count,
             codexi_category_count,
+            codexi_counterparty_count,
             data_version: CODEXI_DATA_FORMAT_VERSION.to_string(),
             exchange_version: CODEXI_EXCHANGE_FORMAT_VERSION.to_string(),
             storage_format: StorageFormat::Cbor,

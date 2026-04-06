@@ -65,10 +65,7 @@ impl CounterpartyList {
     }
 
     pub fn counterparty_name_by_id(&self, id: &Nulid) -> Option<String> {
-        self.list
-            .iter()
-            .find(|b| &b.id == id)
-            .map(|b| b.name.clone())
+        self.list.iter().find(|b| &b.id == id).map(|b| b.name.clone())
     }
 
     pub fn terminate(&mut self, id: &Nulid) -> Result<(), CounterpartyError> {
@@ -103,8 +100,6 @@ impl Default for CounterpartyList {
 
 impl From<Vec<Counterparty>> for CounterpartyList {
     fn from(counterparties: Vec<Counterparty>) -> Self {
-        Self {
-            list: counterparties,
-        }
+        Self { list: counterparties }
     }
 }

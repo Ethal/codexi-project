@@ -87,8 +87,7 @@ pub fn handle_loan_command(command: LoanCommand, paths: &DataPaths) -> Result<()
 
             let loan = match type_interest_n {
                 LoanKind::Compound => {
-                    let compound =
-                        CompoundInterest::new(free_days_n, capital_d, rate_d, loan_policy)?;
+                    let compound = CompoundInterest::new(free_days_n, capital_d, rate_d, loan_policy)?;
                     Loan::Compound(compound)
                 }
                 LoanKind::Linear => {

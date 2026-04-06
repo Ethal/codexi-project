@@ -26,6 +26,7 @@
 .DS_Store
 
 # To be kept
+!.rustfmt.toml
 !Cargo.toml
 !categories_en.json
 !categories_fr.json

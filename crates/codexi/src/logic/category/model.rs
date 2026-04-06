@@ -18,11 +18,7 @@ pub struct Category {
 }
 
 impl Category {
-    pub fn new(
-        name: &str,
-        parent: Option<Nulid>,
-        note: Option<&str>,
-    ) -> Result<Self, CategoryError> {
+    pub fn new(name: &str, parent: Option<Nulid>, note: Option<&str>) -> Result<Self, CategoryError> {
         let id = Nulid::new()?;
         let min = 3;
         let max = 20;
