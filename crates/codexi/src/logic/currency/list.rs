@@ -13,9 +13,7 @@ pub struct CurrencyList {
 
 impl CurrencyList {
     pub fn new() -> Self {
-        Self {
-            currencies: Vec::new(),
-        }
+        Self { currencies: Vec::new() }
     }
 
     pub fn add(&mut self, currency: Currency) -> Nulid {
@@ -24,23 +22,13 @@ impl CurrencyList {
         id
     }
 
-    pub fn create(
-        &mut self,
-        code: &str,
-        symbol: &str,
-        note: Option<&str>,
-    ) -> Result<Nulid, CurrencyError> {
+    pub fn create(&mut self, code: &str, symbol: &str, note: Option<&str>) -> Result<Nulid, CurrencyError> {
         let currency = Currency::new(code, symbol, note)?;
         let id = self.add(currency);
         Ok(id)
     }
 
-    pub fn update(
-        &mut self,
-        id: Nulid,
-        symbol: &str,
-        note: Option<&str>,
-    ) -> Result<(), CurrencyError> {
+    pub fn update(&mut self, id: Nulid, symbol: &str, note: Option<&str>) -> Result<(), CurrencyError> {
         let currency = self.get_by_id_mut(&id)?;
         currency.symbol = symbol.into();
         currency.note = note.map(str::to_owned);
@@ -60,17 +48,11 @@ impl CurrencyList {
             .ok_or_else(|| CurrencyError::CurrencyNotFound(format_id(*id)))
     }
     pub fn currency_id_by_code(&self, code: &str) -> Option<Nulid> {
-        self.currencies
-            .iter()
-            .find(|c| c.code == code)
-            .map(|c| c.id)
+        self.currencies.iter().find(|c| c.code == code).map(|c| c.id)
     }
 
     pub fn currency_code_by_id(&self, id: &Nulid) -> Option<String> {
-        self.currencies
-            .iter()
-            .find(|c| &c.id == id)
-            .map(|c| c.code.clone())
+        self.currencies.iter().find(|c| &c.id == id).map(|c| c.code.clone())
     }
 
     pub fn count(&self) -> usize {

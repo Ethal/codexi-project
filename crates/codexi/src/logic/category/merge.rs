@@ -9,26 +9,19 @@ use crate::logic::category::{Category, CategoryError, CategoryList};
 impl CategoryList {
     /// Merges an imported categories into self, respecting update rules.
     /// Validation is assumed to have been done upstream by validate_import().
-    pub fn merge_from_import(
-        &mut self,
-        imported: CategoryList,
-    ) -> Result<ImportSummary, CategoryError> {
+    pub fn merge_from_import(&mut self, imported: CategoryList) -> Result<ImportSummary, CategoryError> {
         let mut summary = self.merge_categories(imported.list)?;
         summary.name = "Categories".into();
         Ok(summary)
     }
 
-    fn merge_categories(
-        &mut self,
-        imported_category: Vec<Category>,
-    ) -> Result<ImportSummary, CategoryError> {
+    fn merge_categories(&mut self, imported_category: Vec<Category>) -> Result<ImportSummary, CategoryError> {
         let mut summary = ImportSummary::default();
         let mut to_add = Vec::new();
         let mut to_update = Vec::new();
 
         {
-            let existing_by_id: HashMap<Nulid, &Category> =
-                self.list.iter().map(|c| (c.id, c)).collect();
+            let existing_by_id: HashMap<Nulid, &Category> = self.list.iter().map(|c| (c.id, c)).collect();
 
             for category in imported_category {
                 summary.total_processed += 1;

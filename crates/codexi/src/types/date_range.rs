@@ -13,20 +13,12 @@ pub struct DateRange {
 impl DateRange {
     pub fn parse(from: Option<&str>, to: Option<&str>) -> Result<Self, CoreError> {
         Ok(Self {
-            from: from
-                .map(|d| parse_flexible_date_range(d, true))
-                .transpose()?,
-            to: to
-                .map(|d| parse_flexible_date_range(d, false))
-                .transpose()?,
+            from: from.map(|d| parse_flexible_date_range(d, true)).transpose()?,
+            to: to.map(|d| parse_flexible_date_range(d, false)).transpose()?,
         })
     }
 
-    pub fn compute(
-        items: &SearchOperationList,
-        from: Option<NaiveDate>,
-        to: Option<NaiveDate>,
-    ) -> Self {
+    pub fn compute(items: &SearchOperationList, from: Option<NaiveDate>, to: Option<NaiveDate>) -> Self {
         let mut iter = items.iter().map(|i| i.operation.date);
         let range = iter
             .next()
@@ -73,10 +65,8 @@ fn parse_flexible_date_range(date_str: &str, is_start_date: bool) -> Result<Naiv
 }
 
 fn month_bounds(month_str: &str) -> Result<(NaiveDate, NaiveDate), CoreError> {
-    let start =
-        NaiveDate::parse_from_str(&format!("{}-01", month_str), "%Y-%m-%d").map_err(|_| {
-            CoreError::InvalidMonth("Invalid month format: expected YYYY-MM".to_string())
-        })?;
+    let start = NaiveDate::parse_from_str(&format!("{}-01", month_str), "%Y-%m-%d")
+        .map_err(|_| CoreError::InvalidMonth("Invalid month format: expected YYYY-MM".to_string()))?;
 
     let (next_year, next_month) = if start.month() == 12 {
         (start.year() + 1, 1)
@@ -84,13 +74,12 @@ fn month_bounds(month_str: &str) -> Result<(NaiveDate, NaiveDate), CoreError> {
         (start.year(), start.month() + 1)
     };
 
-    let first_next_month = NaiveDate::from_ymd_opt(next_year, next_month, 1).ok_or_else(|| {
-        CoreError::InvalidIntermediateDate("Invalid intermediate date".to_string())
-    })?;
+    let first_next_month = NaiveDate::from_ymd_opt(next_year, next_month, 1)
+        .ok_or_else(|| CoreError::InvalidIntermediateDate("Invalid intermediate date".to_string()))?;
 
-    let end = first_next_month.pred_opt().ok_or_else(|| {
-        CoreError::ErrorComputingEndOfMonth("Error computing end-of-month".to_string())
-    })?;
+    let end = first_next_month
+        .pred_opt()
+        .ok_or_else(|| CoreError::ErrorComputingEndOfMonth("Error computing end-of-month".to_string()))?;
 
     Ok((start, end))
 }

@@ -15,9 +15,7 @@ impl FileManagement {
         ExchangeSerdeFormat::Json.export(data, dir)
     }
     /// Imort from Json
-    pub fn import_json<T: Exchangeable>(
-        dir: &Path,
-    ) -> Result<(T, Vec<T::Warning>), FileExchangeError> {
+    pub fn import_json<T: Exchangeable>(dir: &Path) -> Result<(T, Vec<T::Warning>), FileExchangeError> {
         ExchangeSerdeFormat::Json.import(dir)
     }
 

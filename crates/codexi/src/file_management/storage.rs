@@ -4,9 +4,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::Path;
 
-use crate::file_management::{
-    FileEnvelope, FileManagement, StorageError, StorageFormat, StoreEntity, checksum,
-};
+use crate::file_management::{FileEnvelope, FileManagement, StorageError, StorageFormat, StoreEntity, checksum};
 use crate::{CODEXI_DATA_FORMAT_VERSION, CODEXI_MAGIC};
 
 impl FileManagement {
@@ -34,9 +32,8 @@ impl FileManagement {
         let bytes = fs::read(path)?;
 
         // Cbor en premier — anciens fichiers, fallback Ciborium pour nouveaux
-        let env: FileEnvelope = serde_cbor::from_slice(&bytes).or_else(|_| {
-            ciborium::from_reader(bytes.as_slice()).map_err(StorageError::CiboriumDe)
-        })?;
+        let env: FileEnvelope = serde_cbor::from_slice(&bytes)
+            .or_else(|_| ciborium::from_reader(bytes.as_slice()).map_err(StorageError::CiboriumDe))?;
 
         // Magic
         if env.magic != CODEXI_MAGIC {

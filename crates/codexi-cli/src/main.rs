@@ -27,11 +27,7 @@ use crate::handler::handle_root_command;
 
 fn init_logger(lvl: bool) {
     // Configuration of the logger
-    let log_level = if lvl {
-        LevelFilter::Debug
-    } else {
-        LevelFilter::Info
-    };
+    let log_level = if lvl { LevelFilter::Debug } else { LevelFilter::Info };
 
     env_logger::Builder::new()
         .filter_level(log_level)

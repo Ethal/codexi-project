@@ -22,11 +22,7 @@ pub struct Counterparty {
 }
 
 impl Counterparty {
-    pub fn new(
-        name: &str,
-        kind: CounterpartyKind,
-        note: Option<&str>,
-    ) -> Result<Self, CounterpartyError> {
+    pub fn new(name: &str, kind: CounterpartyKind, note: Option<&str>) -> Result<Self, CounterpartyError> {
         let id = Nulid::new()?;
 
         let min = 3;

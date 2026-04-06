@@ -17,10 +17,7 @@ impl Prompt {
 
     /// A confirmation with input texte requirement
     pub fn critical_confirm(action: &str, expected: &str) -> Result<bool> {
-        println!(
-            "{}",
-            style(format!("!!! DANGER: {} !!!", action)).red().bold()
-        );
+        println!("{}", style(format!("!!! DANGER: {} !!!", action)).red().bold());
 
         let input: String = Input::new()
             .with_prompt(format!(

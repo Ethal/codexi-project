@@ -4,10 +4,7 @@ use rust_decimal::Decimal;
 
 use crate::{
     core::format_date,
-    dto::{
-        AccountItem, BalanceItem, BankCollection, CategoryCollection, CurrencyCollection,
-        SearchOperationItem,
-    },
+    dto::{AccountItem, BalanceItem, BankCollection, CategoryCollection, CurrencyCollection, SearchOperationItem},
     logic::{
         account::Account,
         balance::Balance,

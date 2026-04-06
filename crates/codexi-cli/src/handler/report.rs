@@ -28,17 +28,11 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
     match command {
         ReportCommand::Balance { from, to } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
-            let params = SearchParamsBuilder::default()
-                .from(range.from)
-                .to(range.to)
-                .build()?;
+            let params = SearchParamsBuilder::default().from(range.from).to(range.to).build()?;
 
             let balance_items = search(account, &params)?;
             let balance = BalanceItem::from(Balance::build(&balance_items));
-            if balance.total == Decimal::ZERO
-                && balance.credit == Decimal::ZERO
-                && balance.debit == Decimal::ZERO
-            {
+            if balance.total == Decimal::ZERO && balance.credit == Decimal::ZERO && balance.debit == Decimal::ZERO {
                 msg_warn!("No data available");
             } else {
                 view_balance(&balance);
@@ -46,10 +40,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
         }
         ReportCommand::Stats { from, to, open } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
-            let params = SearchParamsBuilder::default()
-                .from(range.from)
-                .to(range.to)
-                .build()?;
+            let params = SearchParamsBuilder::default().from(range.from).to(range.to).build()?;
             let s_ops = search(account, &params)?;
             let stats = StatsCollection::build(&codexi, account, &s_ops);
             if s_ops.is_empty() {
@@ -73,10 +64,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
         }
         ReportCommand::Statement { from, to, open } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
-            let params = SearchParamsBuilder::default()
-                .from(range.from)
-                .to(range.to)
-                .build()?;
+            let params = SearchParamsBuilder::default().from(range.from).to(range.to).build()?;
 
             let s_ops = search(account, &params)?;
             let statement_results = StatementCollection::build(&codexi, account, &s_ops);

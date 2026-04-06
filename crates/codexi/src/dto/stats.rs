@@ -84,9 +84,7 @@ impl StatsCollection {
             // Check if the operation can be included
             let include_in_stats = if is_voided {
                 // Operation voided : include only if its void is present
-                void_map
-                    .get(&id)
-                    .is_some_and(|void_id| active_ids.contains(void_id))
+                void_map.get(&id).is_some_and(|void_id| active_ids.contains(void_id))
             } else if is_void {
                 // Opération void : include only if its voided is present
                 let target_id = op.links.void_of.unwrap();

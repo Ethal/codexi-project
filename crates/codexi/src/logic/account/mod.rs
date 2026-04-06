@@ -18,6 +18,6 @@ pub use container::OperationContainer;
 pub use error::{AccountError, AccountTypeError};
 pub use model::{Account, AccountMeta};
 pub use policy::{
-    AccountContext, ComplianceAction, CompliancePolicy, ComplianceViolation, LifecycleViolation,
-    TemporalAction, TemporalViolation,
+    AccountContext, ComplianceAction, CompliancePolicy, ComplianceViolation, LifecycleViolation, TemporalAction,
+    TemporalViolation,
 };

@@ -255,28 +255,15 @@ pub enum RootCommand {
     #[command(alias = "view")]
     Search {
         /// Arbitrary date range
-        #[arg(
-            long,
-            help = "Start date for filtering operations",
-            value_name = "FROM_DATE"
-        )]
+        #[arg(long, help = "Start date for filtering operations", value_name = "FROM_DATE")]
         from: Option<String>,
 
         /// Arbitrary date range
-        #[arg(
-            long,
-            help = "End date for filtering operations",
-            value_name = "TO_DATE"
-        )]
+        #[arg(long, help = "End date for filtering operations", value_name = "TO_DATE")]
         to: Option<String>,
 
         /// Filter by text contained in description
-        #[arg(
-            short = 't',
-            long,
-            help = "Filter by text in description",
-            value_name = "TEXT"
-        )]
+        #[arg(short = 't', long, help = "Filter by text in description", value_name = "TEXT")]
         text: Option<String>,
 
         /// Filter by type of kind operation (Init, Adjust, Close, Transaction, ...)
@@ -289,12 +276,7 @@ pub enum RootCommand {
         kind: Option<String>,
 
         /// Filter by the flow of operation (debit, credit)
-        #[arg(
-            short = 'f',
-            long,
-            help = "Filter by flow: 'debit' or 'credit'",
-            value_name = "FLOW"
-        )]
+        #[arg(short = 'f', long, help = "Filter by flow: 'debit' or 'credit'", value_name = "FLOW")]
         flow: Option<String>,
 
         /// Minimum amount

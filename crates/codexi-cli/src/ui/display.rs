@@ -10,7 +10,10 @@ use codexi::{
     file_management::CodexiInfos,
 };
 
-use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_DANGER, STYLE_MUTED, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, label, truncate_text};
+use crate::ui::{
+    CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_DANGER, STYLE_MUTED, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, label,
+    truncate_text,
+};
 
 pub fn view_warning(warnings: &[CoreWarning]) {
     let title_text = TITLE_STYLE.apply_to("Warning(s)");
@@ -99,7 +102,8 @@ pub fn view_snapshot(datas: &[String]) {
     }
     if datas.len() > 5 {
         println!();
-        let note_text = NOTE_STYLE.apply_to("Note: Considered to performe a `data clean`, snapshot file grether than 5.");
+        let note_text =
+            NOTE_STYLE.apply_to("Note: Considered to performe a `data clean`, snapshot file grether than 5.");
         println!("{}", note_text);
         println!();
     }
@@ -122,11 +126,19 @@ pub fn view_archive(datas: &[String]) {
 /// view of the search results
 pub fn view_search(datas: &SearchOperationCollection) {
     let title_text = TITLE_STYLE.apply_to("Operation(s)");
-    println!("┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
+    println!(
+        "┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐"
+    );
     println!("│ {:<115}│", title_text);
-    println!("├───────┬──────────┬───────┬──────────────────┬──────────────────┬───────────────────────────────────────────────────┤");
-    println!("│Id     │Date      │ Type  │            Amount│           Balance│Description                                        │");
-    println!("├───────┼──────────┼───────┼──────────────────┼──────────────────┼───────────────────────────────────────────────────┤");
+    println!(
+        "├───────┬──────────┬───────┬──────────────────┬──────────────────┬───────────────────────────────────────────────────┤"
+    );
+    println!(
+        "│Id     │Date      │ Type  │            Amount│           Balance│Description                                        │"
+    );
+    println!(
+        "├───────┼──────────┼───────┼──────────────────┼──────────────────┼───────────────────────────────────────────────────┤"
+    );
 
     for item in datas.items.iter() {
         let (id_style, row_style) = match item.void_by {
@@ -163,7 +175,9 @@ pub fn view_search(datas: &SearchOperationCollection) {
         );
     }
 
-    println!("└───────┴──────────┴───────┴──────────────────┴──────────────────┴───────────────────────────────────────────────────┘");
+    println!(
+        "└───────┴──────────┴───────┴──────────────────┴──────────────────┴───────────────────────────────────────────────────┘"
+    );
     println!();
     println!("Total operations found: {}", datas.counts.total());
     println!();
@@ -223,7 +237,13 @@ pub fn view_summary(summary: &SummaryCollection) {
         STYLE_NORMAL.apply_to("Closings count"),
         VALUE_STYLE.apply_to(summary.counts.checkpoint),
         STYLE_NORMAL.apply_to("Latest date closing:"),
-        VALUE_STYLE.apply_to(summary.anchors.last_checkpoint.clone().unwrap_or("..........".to_string())),
+        VALUE_STYLE.apply_to(
+            summary
+                .anchors
+                .last_checkpoint
+                .clone()
+                .unwrap_or("..........".to_string())
+        ),
     );
 
     println!(
@@ -261,7 +281,10 @@ pub fn view_stats(stats: &StatsCollection) {
     };
 
     println!("┌──────────────────────────────────────────────────────────────────────────────┐");
-    let title_text = format!("{:<77}", "Current account financial analytics (excl. init and checkpoint)");
+    let title_text = format!(
+        "{:<77}",
+        "Current account financial analytics (excl. init and checkpoint)"
+    );
     println!("│ {}│", TITLE_STYLE.apply_to(title_text));
     println!("├──────────────────────┬──────────────────┬────────────────────────────────────┤");
 
@@ -298,7 +321,13 @@ pub fn view_stats(stats: &StatsCollection) {
     let label = STYLE_NORMAL.apply_to("savings rate");
     let rate_val = format!("{:>12.2}%", stats.savings_rate);
     let bar = draw_savings_bar(stats.savings_rate, 32);
-    println!("│ {}   {}   {} {:<12} │", label, savings_style.apply_to(rate_val), bar, "");
+    println!(
+        "│ {}   {}   {} {:<12} │",
+        label,
+        savings_style.apply_to(rate_val),
+        bar,
+        ""
+    );
 
     println!("├──────────────────────────────────────────────────────────────────────────────┤");
     println!(
@@ -322,13 +351,19 @@ pub fn view_stats(stats: &StatsCollection) {
         STYLE_NORMAL.apply_to("max single expense:"),
         DEBIT_STYLE.apply_to(format!("{:.2}", stats.max_single_debit).separate_with_commas()),
         STYLE_NORMAL.apply_to("adjustments:"),
-        VALUE_STYLE.apply_to(format!("{} ({:.1}%)", stats.adjustment_count, stats.adjustment_percentage))
+        VALUE_STYLE.apply_to(format!(
+            "{} ({:.1}%)",
+            stats.adjustment_count, stats.adjustment_percentage
+        ))
     );
 
     println!("├────────────────────────────────────────┴─────────────────────────────────────┤");
 
     // Section Top Expenses
-    println!("│ {:<76} │", TITLE_STYLE.apply_to("top 5 expenses (excl. adjust, voided, void)"));
+    println!(
+        "│ {:<76} │",
+        TITLE_STYLE.apply_to("top 5 expenses (excl. adjust, voided, void)")
+    );
     println!("├────────┬──────────┬──────────────────┬───────┬───────────────────────────────┤");
 
     for exp in stats.top_expenses.iter() {
@@ -355,7 +390,11 @@ fn draw_savings_bar(rate: Decimal, width: usize) -> StyledObject<String> {
         let normalized = rate.max(Decimal::ZERO).min(Decimal::ONE_HUNDRED) / Decimal::ONE_HUNDRED;
         let filled = (normalized * Decimal::from(width)).to_usize().unwrap_or(0);
         let empty = width - filled;
-        style(format!("{}{}", style("█".repeat(filled)).green(), style("░".repeat(empty)).dim()))
+        style(format!(
+            "{}{}",
+            style("█".repeat(filled)).green(),
+            style("░".repeat(empty)).dim()
+        ))
     }
 }
 

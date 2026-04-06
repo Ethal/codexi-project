@@ -13,15 +13,12 @@ use crate::CODEXI_MAGIC;
 use crate::core::CoreWarning;
 use crate::core::{CoreError, DataPaths, parse_date};
 use crate::file_management::{
-    FileCodexiError, FileEnvelope, FileExchangeError, FileManagement, StorageError, StorageFormat,
-    checksum,
+    FileCodexiError, FileEnvelope, FileExchangeError, FileManagement, StorageError, StorageFormat, checksum,
 };
 use crate::logic::account::{Account, AccountError, AccountType}; // new structure
 use crate::logic::codexi::{Codexi, CodexiError, CodexiSettings}; // new structure
 use crate::logic::operation::{Operation, OperationContext}; // new structure
-use crate::logic::operation::{
-    OperationFlow, OperationKind, OperationLinks, OperationMeta, RegularKind, SystemKind,
-};
+use crate::logic::operation::{OperationFlow, OperationKind, OperationLinks, OperationMeta, RegularKind, SystemKind};
 
 #[derive(Debug, Error)]
 pub enum MigrationV2Error {
@@ -101,9 +98,7 @@ pub fn migrate_v2(paths: &DataPaths) -> Result<Vec<CoreWarning>, MigrationV2Erro
     for arch in &archives {
         let file_path = paths.archives_dir.join(arch);
         let old_codexi_arch = load_format_v2(&file_path)?;
-        old_codexi_full
-            .operations
-            .extend(old_codexi_arch.operations);
+        old_codexi_full.operations.extend(old_codexi_arch.operations);
     }
 
     // full new codexi(ledger) with all operations migrated
@@ -128,19 +123,11 @@ pub fn migrate_v2(paths: &DataPaths) -> Result<Vec<CoreWarning>, MigrationV2Erro
     let mut codexi = FileManagement::load_current_state(paths)?;
     let account = codexi.get_current_account_mut()?;
     let new_bal = balance_v3(&account.operations);
-    if old_bal.credit != new_bal.credit
-        || old_bal.debit != new_bal.debit
-        || old_bal.total != new_bal.total
-    {
+    if old_bal.credit != new_bal.credit || old_bal.debit != new_bal.debit || old_bal.total != new_bal.total {
         return Err(MigrationV2Error::InvalidData(format!(
             "Calculated New: debit:{},credit:{}, balance:{},
                expected: debit:{},credit:{},balance:{}",
-            new_bal.debit,
-            new_bal.credit,
-            new_bal.total,
-            old_bal.debit,
-            old_bal.credit,
-            old_bal.total,
+            new_bal.debit, new_bal.credit, new_bal.total, old_bal.debit, old_bal.credit, old_bal.total,
         )));
     }
 
@@ -148,10 +135,7 @@ pub fn migrate_v2(paths: &DataPaths) -> Result<Vec<CoreWarning>, MigrationV2Erro
 }
 
 /// Migrate structure from V2 to V3
-fn migrate_v2_to_v3(
-    mut old: CodexiV2,
-    cur_bal: &Balance,
-) -> Result<(Codexi, Vec<CoreWarning>), MigrationV2Error> {
+fn migrate_v2_to_v3(mut old: CodexiV2, cur_bal: &Balance) -> Result<(Codexi, Vec<CoreWarning>), MigrationV2Error> {
     old.operations.sort_by_key(|o| (o.date, o.id));
 
     // remove the close operation and validate the balance.
@@ -182,9 +166,7 @@ fn migrate_v2_to_v3(
         .ok_or_else(|| MigrationV2Error::InvalidData("Missing initial operation".into()))?;
 
     if init_iter.next().is_some() {
-        return Err(MigrationV2Error::InvalidData(
-            "More than one initial operation".into(),
-        ));
+        return Err(MigrationV2Error::InvalidData("More than one initial operation".into()));
     }
     let initial_balance = init_op.amount * init_op.flow.to_sign();
     let open_date = init_op.date;
@@ -238,27 +220,15 @@ fn migrate_op_to_v3(old_ops: &Vec<OperationV2>) -> Result<Vec<Operation>, Migrat
         id_map.insert(old.id, new_id);
 
         let kind = match old.kind {
-            OperationKindV2::System(SystemKindV2::Close) => {
-                OperationKind::System(SystemKind::Checkpoint)
-            }
+            OperationKindV2::System(SystemKindV2::Close) => OperationKind::System(SystemKind::Checkpoint),
             OperationKindV2::System(SystemKindV2::Init) => OperationKind::System(SystemKind::Init),
-            OperationKindV2::System(SystemKindV2::Adjust) => {
-                OperationKind::System(SystemKind::Adjust)
-            }
+            OperationKindV2::System(SystemKindV2::Adjust) => OperationKind::System(SystemKind::Adjust),
             OperationKindV2::System(SystemKindV2::Void) => OperationKind::System(SystemKind::Void),
-            OperationKindV2::Regular(RegularKind::Transaction) => {
-                OperationKind::Regular(RegularKind::Transaction)
-            }
-            OperationKindV2::Regular(RegularKind::Transfer) => {
-                OperationKind::Regular(RegularKind::Transfer)
-            }
+            OperationKindV2::Regular(RegularKind::Transaction) => OperationKind::Regular(RegularKind::Transaction),
+            OperationKindV2::Regular(RegularKind::Transfer) => OperationKind::Regular(RegularKind::Transfer),
             OperationKindV2::Regular(RegularKind::Fee) => OperationKind::Regular(RegularKind::Fee),
-            OperationKindV2::Regular(RegularKind::Refund) => {
-                OperationKind::Regular(RegularKind::Refund)
-            }
-            OperationKindV2::Regular(RegularKind::Interest) => {
-                OperationKind::Regular(RegularKind::Interest)
-            }
+            OperationKindV2::Regular(RegularKind::Refund) => OperationKind::Regular(RegularKind::Refund),
+            OperationKindV2::Regular(RegularKind::Interest) => OperationKind::Regular(RegularKind::Interest),
         };
 
         let new_op = Operation {
@@ -382,9 +352,9 @@ fn load_format_v2(file_path: &Path) -> Result<CodexiV2, MigrationV2Error> {
             let codexi: CodexiV2 = serde_cbor::from_slice(&env.payload)?;
             Ok(codexi)
         }
-        _ => Err(MigrationV2Error::Storage(
-            StorageError::InvalidStorageFormat { format: env.format },
-        )),
+        _ => Err(MigrationV2Error::Storage(StorageError::InvalidStorageFormat {
+            format: env.format,
+        })),
     }
 }
 

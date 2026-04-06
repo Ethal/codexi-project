@@ -5,9 +5,7 @@
 use rust_decimal::Decimal;
 
 use crate::{
-    core::{
-        format_date, format_id, format_optional_date, format_optional_id, format_optional_path,
-    },
+    core::{format_date, format_id, format_optional_date, format_optional_id, format_optional_path},
     logic::{
         account::Account,
         codexi::Codexi,

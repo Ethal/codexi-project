@@ -21,12 +21,7 @@ use crate::{
     ui::{view_codexi_infos, view_warning},
 };
 
-pub fn handle_admin_command(
-    command: AdminCommand,
-    cwd: &Path,
-    paths: &DataPaths,
-    skip_confirm: bool,
-) -> Result<()> {
+pub fn handle_admin_command(command: AdminCommand, cwd: &Path, paths: &DataPaths, skip_confirm: bool) -> Result<()> {
     match command {
         AdminCommand::Backup { target_dir } => {
             let backup_file = FileManagement::create_backup(paths, target_dir.as_deref())?;
@@ -74,19 +69,14 @@ pub fn handle_admin_command(
             }
 
             if !warnings.is_empty() {
-                msg_warn!(
-                    "Account: {} Audit completed, {} warnings",
-                    name,
-                    warnings.len()
-                );
+                msg_warn!("Account: {} Audit completed, {} warnings", name, warnings.len());
                 view_warning(&warnings);
             } else {
                 msg_info!("Account: {} Audit completed, no warnings", name);
             }
         }
         AdminCommand::ClearData => {
-            if !skip_confirm && !Prompt::critical_confirm("Clear all the current data ?", "CLEAR")?
-            {
+            if !skip_confirm && !Prompt::critical_confirm("Clear all the current data ?", "CLEAR")? {
                 msg_info!("Command cancelled.");
                 return Ok(());
             }
@@ -97,9 +87,7 @@ pub fn handle_admin_command(
         }
         AdminCommand::Trash(trash) => match trash.command {
             TrashCommand::Restore { date } => {
-                if !skip_confirm
-                    && !Prompt::critical_confirm("Restore all the current data ?", "RESTORE")?
-                {
+                if !skip_confirm && !Prompt::critical_confirm("Restore all the current data ?", "RESTORE")? {
                     msg_info!("Command cancelled.");
                     return Ok(());
                 }
@@ -218,10 +206,7 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
                     )
                 }
                 OperationKind::System(SystemKind::Checkpoint) => {
-                    format!(
-                        "# codexi-cli history checkpoint {} \"{}\"",
-                        op.date, op.description
-                    )
+                    format!("# codexi-cli history checkpoint {} \"{}\"", op.date, op.description)
                 }
                 OperationKind::System(SystemKind::Void) => {
                     "# VOID op — skip (handled by void_of link on target)".to_string()
@@ -246,10 +231,7 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
                     }
                 }
                 OperationKind::Regular(RegularKind::Fee) => {
-                    format!(
-                        "#FEE: codexi-cli fee {} {} \"{}\"",
-                        op.date, op.amount, op.description
-                    )
+                    format!("#FEE: codexi-cli fee {} {} \"{}\"", op.date, op.amount, op.description)
                 }
                 OperationKind::Regular(RegularKind::Refund) => {
                     format!(
@@ -258,10 +240,7 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
                     )
                 }
                 OperationKind::Regular(RegularKind::Interest) => {
-                    format!(
-                        "codexi-cli interest {} {} \"{}\"",
-                        op.date, op.amount, op.description
-                    )
+                    format!("codexi-cli interest {} {} \"{}\"", op.date, op.amount, op.description)
                 }
                 OperationKind::Regular(RegularKind::Transfer) => match op.flow {
                     OperationFlow::Debit => {

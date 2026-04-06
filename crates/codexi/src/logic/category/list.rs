@@ -23,12 +23,7 @@ impl CategoryList {
         id
     }
 
-    pub fn create(
-        &mut self,
-        name: &str,
-        parent_id: Option<Nulid>,
-        note: Option<&str>,
-    ) -> Result<Nulid, CategoryError> {
+    pub fn create(&mut self, name: &str, parent_id: Option<Nulid>, note: Option<&str>) -> Result<Nulid, CategoryError> {
         if let Some(v) = parent_id {
             let _ = self.get_by_id(&v)?;
         }
@@ -87,10 +82,7 @@ impl CategoryList {
     }
 
     pub fn get_name_by_id(&self, id: &Nulid) -> Option<String> {
-        self.list
-            .iter()
-            .find(|c| &c.id == id)
-            .map(|c| c.name.clone())
+        self.list.iter().find(|c| &c.id == id).map(|c| c.name.clone())
     }
 
     pub fn count(&self) -> usize {

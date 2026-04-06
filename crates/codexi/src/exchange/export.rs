@@ -1,20 +1,17 @@
 // src/exchange/export.rs
 
 use crate::CODEXI_EXCHANGE_FORMAT_VERSION;
-use crate::core::{
-    format_date, format_decimal, format_id, format_optional_date, format_optional_id,
-};
+use crate::core::{format_date, format_decimal, format_id, format_optional_date, format_optional_id};
 
 use crate::{
     exchange::{
         ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
-        ExchangeAccountOperations, ExchangeCategory, ExchangeCategoryList, ExchangeCheckpointRef,
-        ExchangeCounterparty, ExchangeCounterpartyList, ExchangeCurrency, ExchangeCurrencyList,
-        ExchangeOperation,
+        ExchangeAccountOperations, ExchangeCategory, ExchangeCategoryList, ExchangeCheckpointRef, ExchangeCounterparty,
+        ExchangeCounterpartyList, ExchangeCurrency, ExchangeCurrencyList, ExchangeOperation,
     },
     logic::{
-        account::Account, category::CategoryList, counterparty::CounterpartyList,
-        currency::CurrencyList, operation::AccountOperations,
+        account::Account, category::CategoryList, counterparty::CounterpartyList, currency::CurrencyList,
+        operation::AccountOperations,
     },
 };
 
@@ -32,11 +29,7 @@ impl ExchangeAccountHeader {
             open_date: format_date(export.open_date),
             terminated_date: format_optional_date(export.terminated_date),
             current_balance: format_decimal(export.current_balance),
-            checkpoints: export
-                .checkpoints
-                .iter()
-                .map(ExchangeCheckpointRef::from)
-                .collect(),
+            checkpoints: export.checkpoints.iter().map(ExchangeCheckpointRef::from).collect(),
             anchors: ExchangeAccountAnchors::from(&export.anchors),
             meta: ExchangeAccountMeta::from(&export.meta),
         }
@@ -49,11 +42,7 @@ impl ExchangeAccountOperations {
         ExchangeAccountOperations {
             version: CODEXI_EXCHANGE_FORMAT_VERSION,
             account_id: format_id(export.account_id),
-            operations: export
-                .operations
-                .iter()
-                .map(ExchangeOperation::from)
-                .collect(),
+            operations: export.operations.iter().map(ExchangeOperation::from).collect(),
         }
     }
 }
@@ -63,11 +52,7 @@ impl ExchangeCurrencyList {
     pub fn export_data(export: &CurrencyList) -> ExchangeCurrencyList {
         ExchangeCurrencyList {
             version: CODEXI_EXCHANGE_FORMAT_VERSION,
-            currencies: export
-                .currencies
-                .iter()
-                .map(ExchangeCurrency::from)
-                .collect(),
+            currencies: export.currencies.iter().map(ExchangeCurrency::from).collect(),
         }
     }
 }

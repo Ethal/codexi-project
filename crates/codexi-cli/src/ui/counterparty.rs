@@ -7,8 +7,7 @@ use crate::ui::TITLE_STYLE;
 
 /// view to list of the counterparties
 pub fn view_counterparty(datas: &CounterpartyCollection) {
-    let title_text =
-        TITLE_STYLE.apply_to("Counterparties - <id> <short id> <name> <kind> [terminated] [note]");
+    let title_text = TITLE_STYLE.apply_to("Counterparties - <id> <short id> <name> <kind> [terminated] [note]");
     println!();
     println!("{}", title_text);
     if datas.items.is_empty() {

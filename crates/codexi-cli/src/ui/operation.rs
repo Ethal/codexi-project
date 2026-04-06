@@ -20,11 +20,7 @@ pub fn view_operation(item: &SearchOperationItem) {
     println!("{}", "─".repeat(45));
 
     println!("  {} {}", l("Id"), VALUE_STYLE.apply_to(&item.id));
-    println!(
-        "  {} {}",
-        l("Short"),
-        VALUE_STYLE.apply_to(format_id_short(&item.id))
-    );
+    println!("  {} {}", l("Short"), VALUE_STYLE.apply_to(format_id_short(&item.id)));
     println!("  {} {}", l("Date"), &item.date);
     println!("  {} {}", l("Type"), &item.kind);
 
@@ -74,11 +70,7 @@ pub fn view_operation(item: &SearchOperationItem) {
     );
 
     let transfer_display = match (&item.transfer_id, &item.transfer_account_id) {
-        (Some(tid), Some(aid)) => format!(
-            "{} (account {})",
-            format_id_short(tid),
-            format_id_short(aid)
-        ),
+        (Some(tid), Some(aid)) => format!("{} (account {})", format_id_short(tid), format_id_short(aid)),
         (Some(tid), None) => format_id_short(tid),
         _ => "—".into(),
     };
@@ -89,26 +81,14 @@ pub fn view_operation(item: &SearchOperationItem) {
     println!("{}", TITLE_STYLE.apply_to("Context"));
     println!("{}", "─".repeat(45));
 
-    println!(
-        "  {} {}",
-        l("Currency"),
-        format_optional_text(item.currency.as_deref())
-    );
+    println!("  {} {}", l("Currency"), format_optional_text(item.currency.as_deref()));
     println!(
         "  {} {}",
         l("Rate"),
         format!("{:.2}", item.exchange_rate).separate_with_commas()
     );
-    println!(
-        "  {} {}",
-        l("Category"),
-        format_optional_text(item.category.as_deref())
-    );
-    println!(
-        "  {} {}",
-        l("Payee"),
-        format_optional_text(item.payee.as_deref())
-    );
+    println!("  {} {}", l("Category"), format_optional_text(item.category.as_deref()));
+    println!("  {} {}", l("Payee"), format_optional_text(item.payee.as_deref()));
     println!(
         "  {} {}",
         l("Reconciled"),
@@ -120,11 +100,7 @@ pub fn view_operation(item: &SearchOperationItem) {
     println!("{}", TITLE_STYLE.apply_to("Meta"));
     println!("{}", "─".repeat(45));
 
-    println!(
-        "  {} {}",
-        l("Tags"),
-        format_optional_text(item.tags.as_deref())
-    );
+    println!("  {} {}", l("Tags"), format_optional_text(item.tags.as_deref()));
     println!(
         "  {} {}",
         NOTE_STYLE.apply_to(format!("{:<14}", "Note")),

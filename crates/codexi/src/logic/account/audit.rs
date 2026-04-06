@@ -8,9 +8,7 @@ use std::collections::HashMap;
 use crate::{
     core::{CoreWarning, CoreWarningKind},
     logic::{
-        account::{
-            Account, AccountAnchors, AccountError, AccountMeta, ComplianceAction, TemporalAction,
-        },
+        account::{Account, AccountAnchors, AccountError, AccountMeta, ComplianceAction, TemporalAction},
         operation::{Operation, OperationFlow},
     },
 };
@@ -78,10 +76,7 @@ impl Account {
 
             // TEST 1 : policy on all operation except the first
             shadow_account.temporal_policy(TemporalAction::Create(op.kind), op.date)?;
-            shadow_account.compliance_policy(
-                ComplianceAction::Create(op.kind, op.flow, op.amount),
-                op.date,
-            )?;
+            shadow_account.compliance_policy(ComplianceAction::Create(op.kind, op.flow, op.amount), op.date)?;
 
             // TEST 2 : locked period
             // If the operation is a normal transaction, it is not allowed
@@ -120,10 +115,7 @@ impl Account {
             if op.is_legacy_account() {
                 warnings.push(CoreWarning {
                     kind: CoreWarningKind::InvalidData,
-                    message: format!(
-                        "TEST 9: Operation {} missing account_id (legacy data)",
-                        op.id
-                    ),
+                    message: format!("TEST 9: Operation {} missing account_id (legacy data)", op.id),
                 });
             }
         }
@@ -148,17 +140,10 @@ impl Account {
     pub fn audit_and_rebuild(&mut self) -> Result<Vec<CoreWarning>, AccountError> {
         let warnings = self.audit()?; // si Err → blocking, NO rebuild
 
-        let has_warnings = warnings
-            .iter()
-            .all(|w| matches!(w.kind, CoreWarningKind::InvalidData));
+        let has_warnings = warnings.iter().all(|w| matches!(w.kind, CoreWarningKind::InvalidData));
 
         if !warnings.is_empty() && has_warnings {
-            self.rebuild_balances_from(
-                self.operations
-                    .first()
-                    .map(|op| op.date)
-                    .unwrap_or_default(),
-            );
+            self.rebuild_balances_from(self.operations.first().map(|op| op.date).unwrap_or_default());
             for op in &mut self.operations {
                 if op.is_legacy_account() {
                     op.account_id = self.id;
@@ -171,8 +156,7 @@ impl Account {
 
     /// Audit of void links
     fn audit_void_links(&self, warnings: &mut Vec<CoreWarning>) {
-        let op_index: HashMap<Nulid, &Operation> =
-            self.operations.iter().map(|op| (op.id, op)).collect();
+        let op_index: HashMap<Nulid, &Operation> = self.operations.iter().map(|op| (op.id, op)).collect();
 
         for op in &self.operations {
             if let Some(void_by_id) = op.links.void_by {
@@ -187,12 +171,12 @@ impl Account {
                     Some(void_op) => {
                         if void_op.links.void_of != Some(op.id) {
                             warnings.push(CoreWarning {
-                                    kind: CoreWarningKind::InvalidData,
-                                    message: format!(
-                                        "TEST 5: Broken void link: op {} void_by {} but {} does not point back",
-                                        op.id, void_by_id, void_by_id
-                                    ),
-                                });
+                                kind: CoreWarningKind::InvalidData,
+                                message: format!(
+                                    "TEST 5: Broken void link: op {} void_by {} but {} does not point back",
+                                    op.id, void_by_id, void_by_id
+                                ),
+                            });
                         }
                     }
                 }
@@ -209,12 +193,12 @@ impl Account {
                     Some(target_op) => {
                         if target_op.links.void_by != Some(op.id) {
                             warnings.push(CoreWarning {
-                                    kind: CoreWarningKind::InvalidData,
-                                    message: format!(
-                                        "TEST 5: Broken void link: op {} void_of {} but {} does not point back",
-                                        op.id, void_of_id, void_of_id
-                                    ),
-                                });
+                                kind: CoreWarningKind::InvalidData,
+                                message: format!(
+                                    "TEST 5: Broken void link: op {} void_of {} but {} does not point back",
+                                    op.id, void_of_id, void_of_id
+                                ),
+                            });
                         }
                     }
                 }
@@ -242,31 +226,15 @@ impl Account {
     /// Audit of the anchors
     fn audit_anchors(&self, shadow: &Account, warnings: &mut Vec<CoreWarning>) {
         let checks = [
-            (
-                "last_init",
-                &shadow.anchors.last_init,
-                &self.anchors.last_init,
-            ),
+            ("last_init", &shadow.anchors.last_init, &self.anchors.last_init),
             (
                 "last_checkpoint",
                 &shadow.anchors.last_checkpoint,
                 &self.anchors.last_checkpoint,
             ),
-            (
-                "last_adjust",
-                &shadow.anchors.last_adjust,
-                &self.anchors.last_adjust,
-            ),
-            (
-                "last_void",
-                &shadow.anchors.last_void,
-                &self.anchors.last_void,
-            ),
-            (
-                "last_regular",
-                &shadow.anchors.last_regular,
-                &self.anchors.last_regular,
-            ),
+            ("last_adjust", &shadow.anchors.last_adjust, &self.anchors.last_adjust),
+            ("last_void", &shadow.anchors.last_void, &self.anchors.last_void),
+            ("last_regular", &shadow.anchors.last_regular, &self.anchors.last_regular),
         ];
         for (name, calculated, stored) in checks {
             if calculated != stored {
@@ -295,17 +263,11 @@ impl Account {
             match (has_transfer_id, has_transfer_acc) {
                 (true, false) => warnings.push(CoreWarning {
                     kind: CoreWarningKind::InvalidData,
-                    message: format!(
-                        "TEST 8: Operation {} has transfer_id but no transfer_account_id",
-                        op.id
-                    ),
+                    message: format!("TEST 8: Operation {} has transfer_id but no transfer_account_id", op.id),
                 }),
                 (false, true) => warnings.push(CoreWarning {
                     kind: CoreWarningKind::InvalidData,
-                    message: format!(
-                        "TEST 8: Operation {} has transfer_account_id but no transfer_id",
-                        op.id
-                    ),
+                    message: format!("TEST 8: Operation {} has transfer_account_id but no transfer_id", op.id),
                 }),
                 _ => {}
             }
@@ -314,9 +276,7 @@ impl Account {
             if has_transfer_id
                 && !matches!(
                     op.kind,
-                    crate::logic::operation::OperationKind::Regular(
-                        crate::logic::operation::RegularKind::Transfer
-                    )
+                    crate::logic::operation::OperationKind::Regular(crate::logic::operation::RegularKind::Transfer)
                 )
             {
                 warnings.push(CoreWarning {

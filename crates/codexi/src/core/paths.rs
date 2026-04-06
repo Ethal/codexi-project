@@ -101,7 +101,6 @@ impl DataPaths {
 
     /// trash/<timestamp>/
     pub fn trash_path(&self) -> PathBuf {
-        self.trash_dir
-            .join(format_date_time_short(Local::now().naive_local()))
+        self.trash_dir.join(format_date_time_short(Local::now().naive_local()))
     }
 }

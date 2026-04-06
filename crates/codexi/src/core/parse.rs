@@ -66,12 +66,8 @@ pub fn parse_optional_u32(opt_s: &Option<String>, field: &str) -> Result<Option<
 }
 
 pub fn parse_date(s: &str) -> Result<NaiveDate, CoreError> {
-    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|_| {
-        CoreError::InvalidDate(format!(
-            "Invalid date format: '{}', expected: YYYY-MM-DD",
-            s
-        ))
-    })
+    NaiveDate::parse_from_str(s, "%Y-%m-%d")
+        .map_err(|_| CoreError::InvalidDate(format!("Invalid date format: '{}', expected: YYYY-MM-DD", s)))
 }
 pub fn parse_optional_date(opt_s: Option<&str>) -> Result<Option<NaiveDate>, CoreError> {
     opt_s.map(parse_date).transpose()
@@ -83,12 +79,6 @@ pub fn parse_decimal(s: &str, field: &str) -> Result<Decimal, CoreError> {
         field: field.to_string(),
     })
 }
-pub fn parse_optional_decimal(
-    opt_s: &Option<String>,
-    field: &str,
-) -> Result<Option<Decimal>, CoreError> {
-    opt_s
-        .as_deref()
-        .map(|s| parse_decimal(s, field))
-        .transpose()
+pub fn parse_optional_decimal(opt_s: &Option<String>, field: &str) -> Result<Option<Decimal>, CoreError> {
+    opt_s.as_deref().map(|s| parse_decimal(s, field)).transpose()
 }

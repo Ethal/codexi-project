@@ -7,8 +7,7 @@ mod currency;
 mod operation;
 
 pub use account::{
-    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta,
-    ExchangeCheckpointRef,
+    ExchangeAccountAnchors, ExchangeAccountContext, ExchangeAccountHeader, ExchangeAccountMeta, ExchangeCheckpointRef,
 };
 pub use category::{ExchangeCategory, ExchangeCategoryList};
 pub use counterparty::{ExchangeCounterparty, ExchangeCounterpartyList};

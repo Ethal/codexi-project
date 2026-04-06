@@ -16,10 +16,7 @@ use crate::{
 impl Codexi {
     /// Import account header from json, toml, csv
     /// Return an import summary
-    pub fn import_account_header(
-        &mut self,
-        imported_account: Account,
-    ) -> Result<ImportSummary, CodexiError> {
+    pub fn import_account_header(&mut self, imported_account: Account) -> Result<ImportSummary, CodexiError> {
         let id = imported_account.id;
         let mut summary = ImportSummary::default();
 
@@ -68,10 +65,7 @@ impl Codexi {
 
     /// Import currencies from json, toml, csv
     /// Return an import summary
-    pub fn import_currencies(
-        &mut self,
-        imported_currencies: CurrencyList,
-    ) -> Result<ImportSummary, CodexiError> {
+    pub fn import_currencies(&mut self, imported_currencies: CurrencyList) -> Result<ImportSummary, CodexiError> {
         let summary = self.currencies.merge_from_import(imported_currencies)?;
         Ok(summary)
     }
@@ -82,18 +76,13 @@ impl Codexi {
         &mut self,
         imported_counterparties: CounterpartyList,
     ) -> Result<ImportSummary, CodexiError> {
-        let summary = self
-            .counterparties
-            .merge_from_import(imported_counterparties)?;
+        let summary = self.counterparties.merge_from_import(imported_counterparties)?;
         Ok(summary)
     }
 
     /// Import categories from json, toml, csv
     /// Return an import summary
-    pub fn import_categories(
-        &mut self,
-        imported_categories: CategoryList,
-    ) -> Result<ImportSummary, CodexiError> {
+    pub fn import_categories(&mut self, imported_categories: CategoryList) -> Result<ImportSummary, CodexiError> {
         let summary = self.categories.merge_from_import(imported_categories)?;
         Ok(summary)
     }

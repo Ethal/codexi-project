@@ -165,10 +165,7 @@ impl FileManagement {
         Ok(())
     }
     /// Get Codexi infos
-    pub fn codexi_infos(
-        paths: &DataPaths,
-        data: &Codexi,
-    ) -> Result<CodexiInfos, FileMaintenanceError> {
+    pub fn codexi_infos(paths: &DataPaths, data: &Codexi) -> Result<CodexiInfos, FileMaintenanceError> {
         let codexi_account_count = data.accounts.len();
         let codexi_bank_count = data.banks.count();
         let codexi_currency_count = data.currencies.count();

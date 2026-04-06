@@ -4,9 +4,7 @@ use thiserror::Error;
 
 use crate::{
     core::CoreError,
-    logic::{
-        account::AccountError, counterparty::CounterpartyKindError, operation::OperationError,
-    },
+    logic::{account::AccountError, counterparty::CounterpartyKindError, operation::OperationError},
 };
 
 #[derive(Debug, Error)]

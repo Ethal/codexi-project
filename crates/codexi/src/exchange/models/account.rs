@@ -4,12 +4,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
-        default_zero, format_date, format_decimal, format_id, format_optional_date, format_path,
-        parse_decimal, parse_optional_date,
+        default_zero, format_date, format_decimal, format_id, format_optional_date, format_path, parse_decimal,
+        parse_optional_date,
     },
     logic::account::{
-        AccountAnchors, AccountContext, AccountError, AccountMeta, AccountType, CheckpointRef,
-        LastAnchor,
+        AccountAnchors, AccountContext, AccountError, AccountMeta, AccountType, CheckpointRef, LastAnchor,
     },
 };
 
@@ -87,10 +86,7 @@ impl From<&AccountAnchors> for ExchangeAccountAnchors {
             last_init: anchor.last_init.as_ref().map(ExchangeLastAnchor::from),
             last_adjust: anchor.last_adjust.as_ref().map(ExchangeLastAnchor::from),
             last_void: anchor.last_void.as_ref().map(ExchangeLastAnchor::from),
-            last_checkpoint: anchor
-                .last_checkpoint
-                .as_ref()
-                .map(ExchangeLastAnchor::from),
+            last_checkpoint: anchor.last_checkpoint.as_ref().map(ExchangeLastAnchor::from),
         }
     }
 }

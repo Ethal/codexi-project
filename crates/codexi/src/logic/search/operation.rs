@@ -48,9 +48,7 @@ impl SearchOperationList {
     }
 
     pub fn active_items(&self) -> impl Iterator<Item = &SearchOperation> {
-        self.items
-            .iter()
-            .filter(|i| !i.operation.kind.is_structural()) // not the init and the checkpoint
+        self.items.iter().filter(|i| !i.operation.kind.is_structural()) // not the init and the checkpoint
     }
 
     pub fn is_empty_active(&self) -> bool {
@@ -102,10 +100,7 @@ impl SearchParamsBuilder {
 
 /// Search
 /// Returns SearchEntry
-pub fn search<T: OperationContainer>(
-    container: &T,
-    params: &SearchParams,
-) -> Result<SearchOperationList, SearchError> {
+pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Result<SearchOperationList, SearchError> {
     let ops_map = container.get_operations_with_balance();
     let from = params.from;
     let to = params.to;

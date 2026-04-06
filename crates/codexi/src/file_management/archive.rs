@@ -11,10 +11,7 @@ use crate::logic::account::AccountArchive;
 impl FileManagement {
     /// List archive files
     /// The archive files are stored in the "archives" subdirectory of the data directory.
-    pub fn list_archive(
-        paths: &DataPaths,
-        account_id: Nulid,
-    ) -> Result<Vec<String>, FileArchiveError> {
+    pub fn list_archive(paths: &DataPaths, account_id: Nulid) -> Result<Vec<String>, FileArchiveError> {
         let archive_dir = paths.archive_dir(&account_id);
 
         let mut files = Vec::new();
@@ -38,10 +35,7 @@ impl FileManagement {
         Ok(files)
     }
     /// Save an archive file
-    pub fn save_archive(
-        data: &AccountArchive,
-        paths: &DataPaths,
-    ) -> Result<String, FileArchiveError> {
+    pub fn save_archive(data: &AccountArchive, paths: &DataPaths) -> Result<String, FileArchiveError> {
         let account_id = data.account_id;
         let checkpoint_date = data.checkpoint_date;
 
@@ -62,11 +56,9 @@ impl FileManagement {
 
         match Self::read_storage(&archive.path)? {
             StoreEntity::AccountArchive(archive) => Ok(archive),
-            _ => Err(FileArchiveError::Storage(
-                StorageError::InvalidStoreEntity {
-                    expected: "AccountArchive".to_string(),
-                },
-            )),
+            _ => Err(FileArchiveError::Storage(StorageError::InvalidStoreEntity {
+                expected: "AccountArchive".to_string(),
+            })),
         }
     }
 }

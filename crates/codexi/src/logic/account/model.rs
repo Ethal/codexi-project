@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use crate::core::{CoreWarning, validate_text_rules};
 use crate::logic::{
     account::{
-        AccountAnchors, AccountError, AccountType, CheckpointRef, OperationContainer,
-        TemporalAction, policy::AccountContext,
+        AccountAnchors, AccountError, AccountType, CheckpointRef, OperationContainer, TemporalAction,
+        policy::AccountContext,
     },
     operation::{AccountOperations, Operation},
     utils::{HasName, HasNulid},
@@ -34,9 +34,9 @@ pub struct Account {
     pub bank_id: Option<Nulid>,             // Nulid of the Bank
     pub currency_id: Option<Nulid>,         // Main currency id for the account
     pub carry_forward_balance: Decimal,     // for internal calculation
-    pub open_date: NaiveDate, // Open date of the account,typivcaly the date of the init.
+    pub open_date: NaiveDate,               // Open date of the account,typivcaly the date of the init.
     pub terminated_date: Option<NaiveDate>, // Close date of the account.
-    pub operations: Vec<Operation>, // Operation list
+    pub operations: Vec<Operation>,         // Operation list
     pub(crate) current_balance: Decimal,
     pub(crate) checkpoints: Vec<CheckpointRef>,
     pub anchors: AccountAnchors,
@@ -182,11 +182,7 @@ impl Account {
             op.balance = running;
         }
 
-        self.current_balance = self
-            .operations
-            .last()
-            .map(|op| op.balance)
-            .unwrap_or(Decimal::ZERO);
+        self.current_balance = self.operations.last().map(|op| op.balance).unwrap_or(Decimal::ZERO);
     }
 
     /// Returns the running balance at the end of the given date.
@@ -202,8 +198,7 @@ impl Account {
     pub fn can_void(&self, op_id: Nulid) -> bool {
         // current date
         let today = chrono::Local::now().date_naive();
-        self.temporal_policy(TemporalAction::Void(op_id), today)
-            .is_ok()
+        self.temporal_policy(TemporalAction::Void(op_id), today).is_ok()
     }
 }
 
@@ -230,9 +225,7 @@ impl OperationContainer for Account {
 mod tests {
     use super::*;
     use crate::core::parse_date;
-    use crate::logic::operation::{
-        OperationBuilder, OperationFlow, OperationKind, RegularKind, SystemKind,
-    };
+    use crate::logic::operation::{OperationBuilder, OperationFlow, OperationKind, RegularKind, SystemKind};
     use rust_decimal_macros::dec;
 
     // Helper to create an empty account
@@ -336,10 +329,7 @@ mod tests {
 
         // 3. audit shall fail temporal_policy can not accept  a débit before the Init
         let result = account.audit();
-        assert!(
-            result.is_err(),
-            "The audit should detect an operation before init"
-        );
+        assert!(result.is_err(), "The audit should detect an operation before init");
     }
 
     #[test]

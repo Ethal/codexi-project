@@ -80,18 +80,12 @@ mod tests {
 
     #[test]
     fn too_short_returns_error() {
-        assert_eq!(
-            validate_text_rules("a", 3, 10),
-            Err("too short (min 3)".into())
-        );
+        assert_eq!(validate_text_rules("a", 3, 10), Err("too short (min 3)".into()));
     }
 
     #[test]
     fn too_long_returns_error() {
-        assert_eq!(
-            validate_text_rules("abcdef", 1, 5),
-            Err("too long (max 5)".into())
-        );
+        assert_eq!(validate_text_rules("abcdef", 1, 5), Err("too long (max 5)".into()));
     }
 
     #[test]
@@ -159,9 +153,6 @@ mod tests {
     #[test]
     fn newline_check_before_length_check() {
         // "a\n" is to short (min=5) AND contain a newline — shall return "newlines not allowed"
-        assert_eq!(
-            validate_text_rules("a\n", 5, 10),
-            Err("newlines not allowed".into())
-        );
+        assert_eq!(validate_text_rules("a\n", 5, 10), Err("newlines not allowed".into()));
     }
 }

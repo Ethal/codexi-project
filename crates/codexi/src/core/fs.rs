@@ -12,9 +12,8 @@ const fn project_dirs_args() -> (&'static str, &'static str, &'static str) {
 
 fn get_project_dirs() -> Result<ProjectDirs, CoreError> {
     let (q, o, a) = project_dirs_args();
-    ProjectDirs::from(q, o, a).ok_or_else(|| {
-        CoreError::NoDataDirectory("Could not determine project directories".to_string())
-    })
+    ProjectDirs::from(q, o, a)
+        .ok_or_else(|| CoreError::NoDataDirectory("Could not determine project directories".to_string()))
 }
 
 /// Returns the OS data directory for codexi.

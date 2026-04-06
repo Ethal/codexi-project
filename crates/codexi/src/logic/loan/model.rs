@@ -109,11 +109,7 @@ impl LoanBase {
         })
     }
 
-    fn compute_late_days(
-        &self,
-        start_date: NaiveDate,
-        refund_date: NaiveDate,
-    ) -> Result<i64, LoanError> {
+    fn compute_late_days(&self, start_date: NaiveDate, refund_date: NaiveDate) -> Result<i64, LoanError> {
         if refund_date < start_date {
             return Err(LoanError::RefundDateBelowStartDate);
         }
@@ -189,11 +185,7 @@ pub struct LoanSummary {
 }
 
 impl Loan {
-    pub fn amount_due(
-        &self,
-        start_date: NaiveDate,
-        refund_date: NaiveDate,
-    ) -> Result<LoanSummary, LoanError> {
+    pub fn amount_due(&self, start_date: NaiveDate, refund_date: NaiveDate) -> Result<LoanSummary, LoanError> {
         match self {
             Loan::Linear(l) => l.amount_due(start_date, refund_date),
             Loan::Compound(c) => c.amount_due(start_date, refund_date),
@@ -219,11 +211,7 @@ impl LinearInterest {
             base: LoanBase::new(free_period, capital, interest_rate, policy)?,
         })
     }
-    fn amount_due(
-        &self,
-        start_date: NaiveDate,
-        refund_date: NaiveDate,
-    ) -> Result<LoanSummary, LoanError> {
+    fn amount_due(&self, start_date: NaiveDate, refund_date: NaiveDate) -> Result<LoanSummary, LoanError> {
         let late_days = self.base.compute_late_days(start_date, refund_date)?;
 
         if late_days == 0 {
@@ -276,11 +264,7 @@ impl CompoundInterest {
         })
     }
     // +x% on the total every day
-    fn amount_due(
-        &self,
-        start_date: NaiveDate,
-        refund_date: NaiveDate,
-    ) -> Result<LoanSummary, LoanError> {
+    fn amount_due(&self, start_date: NaiveDate, refund_date: NaiveDate) -> Result<LoanSummary, LoanError> {
         let late_days = self.base.compute_late_days(start_date, refund_date)?;
         if late_days == 0 {
             return Ok(LoanSummary {
@@ -351,16 +335,14 @@ mod tests {
         /*-------------------------- Loan --------------------------*/
         let start = parse_date("2026-01-01").unwrap();
         let refund = parse_date("2026-01-10").unwrap();
-        let loan_to_bob =
-            LinearInterest::new(Duration::days(7), dec!(100), dec!(1), policy_standard).unwrap();
+        let loan_to_bob = LinearInterest::new(Duration::days(7), dec!(100), dec!(1), policy_standard).unwrap();
         let due = loan_to_bob.amount_due(start, refund).unwrap();
         assert_eq!(due.final_due, dec!(102));
         assert_eq!(due.cumulative_interest, [dec!(1), dec!(1)]);
 
         let start = parse_date("2026-01-01").unwrap();
         let refund = parse_date("2026-01-10").unwrap();
-        let loan_to_mike =
-            LinearInterest::new(Duration::days(7), dec!(600), dec!(4), policy_risky).unwrap();
+        let loan_to_mike = LinearInterest::new(Duration::days(7), dec!(600), dec!(4), policy_risky).unwrap();
 
         // capital: 600  interest: 24+24, max interest 420=>No interest cap, penality: 60
         // expexted 600 + 48 => 648+60 => 708
@@ -376,8 +358,7 @@ mod tests {
         let linear = LinearInterest::new(Duration::days(7), dec!(100), dec!(1), policy_linear);
         let mut policy_compound = LoanPolicy::default();
         policy_compound.max_interest_cap = Some(dec!(-1));
-        let compound =
-            CompoundInterest::new(Duration::days(7), dec!(100), dec!(1), policy_compound);
+        let compound = CompoundInterest::new(Duration::days(7), dec!(100), dec!(1), policy_compound);
         assert_eq!(linear.unwrap_err(), LoanError::InterestCapOutOfBounds);
         assert_eq!(compound.unwrap_err(), LoanError::InterestCapOutOfBounds);
     }
@@ -386,8 +367,7 @@ mod tests {
         let policy = LoanPolicy::default();
 
         let linear = LinearInterest::new(Duration::days(-1), dec!(100), dec!(1), policy.clone());
-        let compound =
-            CompoundInterest::new(Duration::days(-1), dec!(100), dec!(-1), policy.clone());
+        let compound = CompoundInterest::new(Duration::days(-1), dec!(100), dec!(-1), policy.clone());
         assert_eq!(linear.unwrap_err(), LoanError::FreeDaysPeriodBelowZero);
         assert_eq!(compound.unwrap_err(), LoanError::FreeDaysPeriodBelowZero);
     }
@@ -410,10 +390,7 @@ mod tests {
         let refund = parse_date("2026-01-05").unwrap();
         let due = loan.amount_due(start, refund).unwrap();
         assert_eq!(due.final_due, dec!(108));
-        assert_eq!(
-            due.cumulative_interest,
-            [dec!(2), dec!(2), dec!(2), dec!(2)]
-        );
+        assert_eq!(due.cumulative_interest, [dec!(2), dec!(2), dec!(2), dec!(2)]);
     }
     /*----------------- LINEAR -----------------*/
     #[test]
@@ -474,13 +451,7 @@ mod tests {
         assert_eq!(due.final_due, dec!(1_050_000));
         assert_eq!(
             due.cumulative_interest,
-            [
-                dec!(10_000),
-                dec!(10_000),
-                dec!(10_000),
-                dec!(10_000),
-                dec!(10_000)
-            ]
+            [dec!(10_000), dec!(10_000), dec!(10_000), dec!(10_000), dec!(10_000)]
         );
     }
 
@@ -616,8 +587,7 @@ mod tests {
         policy.max_penality = Some(dec!(10));
         policy.max_interest_cap = None;
 
-        let compound =
-            CompoundInterest::new(Duration::days(0), dec!(1_000), dec!(1), policy).unwrap();
+        let compound = CompoundInterest::new(Duration::days(0), dec!(1_000), dec!(1), policy).unwrap();
         let loan = Loan::Compound(compound);
 
         let start = parse_date("2026-01-01").unwrap();

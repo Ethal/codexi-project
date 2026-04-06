@@ -19,10 +19,7 @@ impl FileManagement {
     /// Creates a complete ZIP backup of the application's data directory.
     /// The `target_path` is the FULL path where the ZIP file should be written.
     /// It includes all files except internal snapshots, tmp, trash.
-    pub fn create_backup(
-        paths: &DataPaths,
-        target_dir_arg: Option<&str>,
-    ) -> Result<PathBuf, FileBackupError> {
+    pub fn create_backup(paths: &DataPaths, target_dir_arg: Option<&str>) -> Result<PathBuf, FileBackupError> {
         let target_path = get_final_backup_path(target_dir_arg)?;
 
         let codexi_file = &paths.main_file;
@@ -53,10 +50,7 @@ impl FileManagement {
         for entry in WalkDir::new(&paths.root).into_iter().filter_map(|e| e.ok()) {
             let path = entry.path();
 
-            if path.starts_with(snapshot_dir)
-                || path.starts_with(tmp_dir)
-                || path.starts_with(trash_dir)
-            {
+            if path.starts_with(snapshot_dir) || path.starts_with(tmp_dir) || path.starts_with(trash_dir) {
                 continue;
             }
 
@@ -64,18 +58,14 @@ impl FileManagement {
             let name_in_zip = path
                 .strip_prefix(&paths.root)
                 .map_err(|_| {
-                    FileBackupError::RelativePath(
-                        "Failure to calculate relative path for archive.".to_string(),
-                    )
+                    FileBackupError::RelativePath("Failure to calculate relative path for archive.".to_string())
                 })?
                 .to_path_buf();
 
             if path.is_file() {
                 let name_in_zip_str = name_in_zip
                     .to_str()
-                    .ok_or_else(|| {
-                        FileBackupError::InvalidPath("Path invalid (non-UTF8).".to_string())
-                    })?
+                    .ok_or_else(|| FileBackupError::InvalidPath("Path invalid (non-UTF8).".to_string()))?
                     .replace('\\', "/"); // normalize separators for Windows
 
                 // Avoid adding temporary or locked files
@@ -89,9 +79,7 @@ impl FileManagement {
                 // Add the directory (only if it is not the root directory itself)
                 let name_in_zip_str = name_in_zip
                     .to_str()
-                    .ok_or_else(|| {
-                        FileBackupError::InvalidPath("Path invalid (non-UTF8).".to_string())
-                    })?
+                    .ok_or_else(|| FileBackupError::InvalidPath("Path invalid (non-UTF8).".to_string()))?
                     .replace('\\', "/"); // normalize separators for Windows
 
                 zip.add_directory(&name_in_zip_str, options)?;
@@ -168,16 +156,11 @@ fn get_final_backup_path(target_dir_arg: Option<&str>) -> Result<PathBuf, FileBa
     if let Some(path_str) = target_dir_arg {
         let path = PathBuf::from(path_str);
 
-        if path
-            .extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("zip"))
-        {
+        if path.extension().is_some_and(|ext| ext.eq_ignore_ascii_case("zip")) {
             final_filename = path
                 .file_name()
                 .ok_or_else(|| {
-                    FileBackupError::InvalidBackupPath(
-                        "The path specified for the backup is invalid.".to_string(),
-                    )
+                    FileBackupError::InvalidBackupPath("The path specified for the backup is invalid.".to_string())
                 })?
                 .to_string_lossy()
                 .into_owned();
@@ -197,11 +180,8 @@ fn get_final_backup_path(target_dir_arg: Option<&str>) -> Result<PathBuf, FileBa
             final_filename = default_filename;
         }
     } else {
-        let user_dirs = UserDirs::new().ok_or_else(|| {
-            FileBackupError::NoUserDirectory(
-                "Unable to find user directory (UserDirs).".to_string(),
-            )
-        })?;
+        let user_dirs = UserDirs::new()
+            .ok_or_else(|| FileBackupError::NoUserDirectory("Unable to find user directory (UserDirs).".to_string()))?;
 
         target_dir = user_dirs
             .document_dir()

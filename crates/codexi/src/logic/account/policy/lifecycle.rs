@@ -10,10 +10,7 @@ use crate::logic::account::policy::LifecycleViolation;
 impl Account {
     /// Validates and applies the account type change.
     /// Not allowed if at least one transaction already exists.
-    pub fn set_account_type(
-        &mut self,
-        account_type: AccountType,
-    ) -> Result<(), LifecycleViolation> {
+    pub fn set_account_type(&mut self, account_type: AccountType) -> Result<(), LifecycleViolation> {
         if self.anchors.latest().is_some() {
             return Err(LifecycleViolation::AccountTypeImmutable);
         }
@@ -33,10 +30,7 @@ impl Account {
 
         // Not befor the open date
         if date < self.open_date {
-            return Err(LifecycleViolation::CloseDateBeforeOpenDate(
-                date,
-                self.open_date,
-            ));
+            return Err(LifecycleViolation::CloseDateBeforeOpenDate(date, self.open_date));
         }
 
         // Not before the last operation
@@ -120,10 +114,7 @@ mod tests {
         // open_date = 2025-01-01, on tente 2024-12-31
         let before_open = parse_date("2024-12-31").unwrap();
         let res = account.validate_close_date(before_open);
-        assert!(matches!(
-            res,
-            Err(LifecycleViolation::CloseDateBeforeOpenDate(_, _))
-        ));
+        assert!(matches!(res, Err(LifecycleViolation::CloseDateBeforeOpenDate(_, _))));
     }
 
     #[test]

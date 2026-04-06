@@ -8,8 +8,8 @@ use codexi::{
     exchange::Exchangeable,
     file_management::{ExchangeSerdeFormat, FileExchangeError, FileManagement},
     logic::{
-        account::Account, category::CategoryList, counterparty::CounterpartyList,
-        currency::CurrencyList, operation::AccountOperations,
+        account::Account, category::CategoryList, counterparty::CounterpartyList, currency::CurrencyList,
+        operation::AccountOperations,
     },
 };
 
@@ -20,12 +20,7 @@ use crate::{
     ui::{view_snapshot, view_warning},
 };
 
-pub fn handle_data_command(
-    command: DataCommand,
-    cwd: &Path,
-    paths: &DataPaths,
-    skip_confirm: bool,
-) -> Result<()> {
+pub fn handle_data_command(command: DataCommand, cwd: &Path, paths: &DataPaths, skip_confirm: bool) -> Result<()> {
     let mut codexi = FileManagement::load_current_state(paths)?;
     match command {
         DataCommand::Export(exchange_type) => match exchange_type.command {
@@ -69,24 +64,18 @@ pub fn handle_data_command(
                 );
                 if !warnings.is_empty() {
                     view_warning(&warnings);
-                    msg_warn!(
-                        "Import accounts header completed, {} warnings",
-                        warnings.len()
-                    );
+                    msg_warn!("Import accounts header completed, {} warnings", warnings.len());
                 } else {
                     msg_info!("Import accounts header completed");
                 }
-                msg_warn!(
-                    "It is recommended to run `admin audit --rebuild` to verify data integrity."
-                );
+                msg_warn!("It is recommended to run `admin audit --rebuild` to verify data integrity.");
             }
             ExchangeTypeCommand::Operation { format } => {
                 if !skip_confirm && !Prompt::confirm("Import the data?", false)? {
                     msg_info!("Command cancelled.");
                     return Ok(());
                 }
-                let (account_operations, mut warnings) =
-                    import_with_format::<AccountOperations>(format, cwd)?;
+                let (account_operations, mut warnings) = import_with_format::<AccountOperations>(format, cwd)?;
                 let (summary, merge_warnings) = codexi.import_operations(account_operations)?;
                 warnings.extend(merge_warnings);
                 FileManagement::save_current_state(&codexi, paths)?;
@@ -102,9 +91,7 @@ pub fn handle_data_command(
                 } else {
                     msg_info!("Import operations completed");
                 }
-                msg_warn!(
-                    "It is recommended to run `admin audit --rebuild` to verify data integrity."
-                );
+                msg_warn!("It is recommended to run `admin audit --rebuild` to verify data integrity.");
             }
             ExchangeTypeCommand::Currency { format } => {
                 if !skip_confirm && !Prompt::confirm("Import the data?", false)? {
@@ -153,8 +140,7 @@ pub fn handle_data_command(
                     msg_info!("Command cancelled.");
                     return Ok(());
                 }
-                let (counterparties, warnings) =
-                    import_with_format::<CounterpartyList>(format, cwd)?;
+                let (counterparties, warnings) = import_with_format::<CounterpartyList>(format, cwd)?;
                 let summary = codexi.import_counterparties(counterparties)?;
                 FileManagement::save_current_state(&codexi, paths)?;
                 msg_info!(
@@ -165,10 +151,7 @@ pub fn handle_data_command(
                 );
                 if !warnings.is_empty() {
                     view_warning(&warnings);
-                    msg_warn!(
-                        "Import counterparties completed, {} warnings",
-                        warnings.len()
-                    );
+                    msg_warn!("Import counterparties completed, {} warnings", warnings.len());
                 } else {
                     msg_info!("Import counterparties completed");
                 }
@@ -203,11 +186,7 @@ pub fn handle_data_command(
 }
 
 // export/import helper
-fn export_with_format<T: Exchangeable>(
-    data: &T,
-    format: ExchangeFormat,
-    cwd: &Path,
-) -> Result<(), FileExchangeError> {
+fn export_with_format<T: Exchangeable>(data: &T, format: ExchangeFormat, cwd: &Path) -> Result<(), FileExchangeError> {
     match format {
         ExchangeFormat::Json => ExchangeSerdeFormat::Json.export(data, cwd),
         ExchangeFormat::Toml => ExchangeSerdeFormat::Toml.export(data, cwd),

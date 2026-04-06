@@ -22,12 +22,7 @@ impl BankList {
         id
     }
 
-    pub fn create(
-        &mut self,
-        name: &str,
-        branch: Option<&str>,
-        note: Option<&str>,
-    ) -> Result<Nulid, BankError> {
+    pub fn create(&mut self, name: &str, branch: Option<&str>, note: Option<&str>) -> Result<Nulid, BankError> {
         let bank = Bank::new(name, branch, note)?;
         let id = self.add(bank);
         Ok(id)
@@ -54,10 +49,7 @@ impl BankList {
     }
 
     pub fn bank_name_by_id(&self, id: &Nulid) -> Option<String> {
-        self.banks
-            .iter()
-            .find(|b| &b.id == id)
-            .map(|b| b.name.clone())
+        self.banks.iter().find(|b| &b.id == id).map(|b| b.name.clone())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Bank> {

@@ -11,8 +11,7 @@ use crate::{
         bank::BankList,
         category::CategoryList,
         codexi::{
-            CodexiError, CodexiSettings, default_banks, default_categories, default_counterparties,
-            default_currencies,
+            CodexiError, CodexiSettings, default_banks, default_categories, default_counterparties, default_currencies,
         },
         counterparty::CounterpartyList,
         currency::CurrencyList,
@@ -108,21 +107,15 @@ impl Codexi {
     pub fn set_account_bank(&mut self, id: &Nulid) -> Result<(), CodexiError> {
         self.banks.get_by_id(id)?;
         let acc = self.get_current_account_mut()?;
-        acc.is_terminated()
-            .map_err(AccountError::TemporalViolation)?;
+        acc.is_terminated().map_err(AccountError::TemporalViolation)?;
         acc.bank_id = Some(*id);
         Ok(())
     }
     /// Set a currency id to the current account
-    pub fn set_account_currency(
-        &mut self,
-        id: &Nulid,
-        update_operation: bool,
-    ) -> Result<(), CodexiError> {
+    pub fn set_account_currency(&mut self, id: &Nulid, update_operation: bool) -> Result<(), CodexiError> {
         self.currencies.get_by_id(id)?;
         let acc = self.get_current_account_mut()?;
-        acc.is_terminated()
-            .map_err(AccountError::TemporalViolation)?;
+        acc.is_terminated().map_err(AccountError::TemporalViolation)?;
         acc.currency_id = Some(*id);
         if update_operation {
             for op in acc.operations.iter_mut() {

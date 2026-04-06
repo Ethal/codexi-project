@@ -9,9 +9,7 @@ use crate::{
 };
 
 /// Exchange currency validation
-pub fn validate_import_currency(
-    import: &ExchangeCurrencyList,
-) -> Result<Vec<CoreWarning>, ExchangeError> {
+pub fn validate_import_currency(import: &ExchangeCurrencyList) -> Result<Vec<CoreWarning>, ExchangeError> {
     // Version
     if import.version != CODEXI_EXCHANGE_FORMAT_VERSION {
         return Err(ExchangeError::InvalidVersion(format!(

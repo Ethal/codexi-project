@@ -12,9 +12,7 @@ use crate::{
 };
 
 /// Exchange operations validation (structural + Void + Transfer + Amount consistency)
-pub fn validate_import_operations(
-    import: &ExchangeAccountOperations,
-) -> Result<Vec<CoreWarning>, ExchangeError> {
+pub fn validate_import_operations(import: &ExchangeAccountOperations) -> Result<Vec<CoreWarning>, ExchangeError> {
     // Version
     if import.version != CODEXI_EXCHANGE_FORMAT_VERSION {
         return Err(ExchangeError::InvalidVersion(format!(
@@ -126,10 +124,7 @@ pub fn validate_import_operations(
         {
             warnings.push(CoreWarning {
                 kind: CoreWarningKind::VoidOfNotFound,
-                message: format!(
-                    "Operation {} references void_of {} not in current file",
-                    id, void_id
-                ),
+                message: format!("Operation {} references void_of {} not in current file", id, void_id),
             });
         }
 

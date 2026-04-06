@@ -33,9 +33,7 @@ where
         return Err(E::invalid(input.to_string(), ID_MIN_SHORT_LEN));
     }
     let short = input.to_uppercase();
-    let mut matches = items
-        .iter()
-        .filter(|item| item.id().to_string().ends_with(&short));
+    let mut matches = items.iter().filter(|item| item.id().to_string().ends_with(&short));
     let first = matches.next();
     match (first, matches.next()) {
         (None, _) => Err(E::not_found(short)),

@@ -33,11 +33,7 @@ impl From<&Currency> for CurrencyItem {
 
 impl CurrencyCollection {
     pub fn build(currencies: &CurrencyList) -> Self {
-        let items: Vec<CurrencyItem> = currencies
-            .currencies
-            .iter()
-            .map(CurrencyItem::from)
-            .collect();
+        let items: Vec<CurrencyItem> = currencies.currencies.iter().map(CurrencyItem::from).collect();
         Self { items }
     }
 }

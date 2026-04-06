@@ -5,8 +5,8 @@ use thiserror::Error;
 use crate::{
     core::CoreError,
     logic::{
-        account::AccountError, bank::BankError, category::CategoryError,
-        counterparty::CounterpartyError, currency::CurrencyError, utils::ResolveError,
+        account::AccountError, bank::BankError, category::CategoryError, counterparty::CounterpartyError,
+        currency::CurrencyError, utils::ResolveError,
     },
 };
 

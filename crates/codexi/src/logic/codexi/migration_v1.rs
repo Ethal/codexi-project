@@ -10,9 +10,7 @@ use thiserror::Error;
 
 use crate::CODEXI_MAGIC;
 use crate::core::DataPaths;
-use crate::file_management::{
-    FileCodexiError, FileEnvelope, StorageError, StorageFormat, checksum,
-};
+use crate::file_management::{FileCodexiError, FileEnvelope, StorageError, StorageFormat, checksum};
 use crate::logic::codexi::migration_v2::CodexiV2;
 use crate::logic::codexi::migration_v2::OperationKindV2;
 use crate::logic::codexi::migration_v2::OperationV2;
@@ -118,33 +116,17 @@ fn migrate_v1_to_v2(old: CodexiV1) -> CodexiV2 {
         .map(|(idx, op)| {
             let amount = Decimal::from_f64(op.amount).expect("Invalid f64 amount during migration");
             let kind = match op.kind {
-                OperationKindV1::System(SystemKindV1::Close) => {
-                    OperationKindV2::System(SystemKindV2::Close)
-                }
-                OperationKindV1::System(SystemKindV1::Init) => {
-                    OperationKindV2::System(SystemKindV2::Init)
-                }
-                OperationKindV1::System(SystemKindV1::Adjust) => {
-                    OperationKindV2::System(SystemKindV2::Adjust)
-                }
-                OperationKindV1::System(SystemKindV1::Void) => {
-                    OperationKindV2::System(SystemKindV2::Void)
-                }
+                OperationKindV1::System(SystemKindV1::Close) => OperationKindV2::System(SystemKindV2::Close),
+                OperationKindV1::System(SystemKindV1::Init) => OperationKindV2::System(SystemKindV2::Init),
+                OperationKindV1::System(SystemKindV1::Adjust) => OperationKindV2::System(SystemKindV2::Adjust),
+                OperationKindV1::System(SystemKindV1::Void) => OperationKindV2::System(SystemKindV2::Void),
                 OperationKindV1::Regular(RegularKind::Transaction) => {
                     OperationKindV2::Regular(RegularKind::Transaction)
                 }
-                OperationKindV1::Regular(RegularKind::Transfer) => {
-                    OperationKindV2::Regular(RegularKind::Transfer)
-                }
-                OperationKindV1::Regular(RegularKind::Fee) => {
-                    OperationKindV2::Regular(RegularKind::Fee)
-                }
-                OperationKindV1::Regular(RegularKind::Refund) => {
-                    OperationKindV2::Regular(RegularKind::Refund)
-                }
-                OperationKindV1::Regular(RegularKind::Interest) => {
-                    OperationKindV2::Regular(RegularKind::Interest)
-                }
+                OperationKindV1::Regular(RegularKind::Transfer) => OperationKindV2::Regular(RegularKind::Transfer),
+                OperationKindV1::Regular(RegularKind::Fee) => OperationKindV2::Regular(RegularKind::Fee),
+                OperationKindV1::Regular(RegularKind::Refund) => OperationKindV2::Regular(RegularKind::Refund),
+                OperationKindV1::Regular(RegularKind::Interest) => OperationKindV2::Regular(RegularKind::Interest),
             };
 
             OperationV2 {
@@ -159,17 +141,9 @@ fn migrate_v1_to_v2(old: CodexiV1) -> CodexiV2 {
         })
         .collect();
 
-    let next_op_id = operations
-        .iter()
-        .map(|op| op.id)
-        .max()
-        .map(|id| id + 1)
-        .unwrap_or(0);
+    let next_op_id = operations.iter().map(|op| op.id).max().map(|id| id + 1).unwrap_or(0);
 
-    CodexiV2 {
-        operations,
-        next_op_id,
-    }
+    CodexiV2 { operations, next_op_id }
 }
 
 /// Old function to get the archive list

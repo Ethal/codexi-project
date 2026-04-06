@@ -10,10 +10,7 @@ pub enum CoreError {
     #[error("SYS_ID: {0}")]
     Id(#[from] nulid::Error),
     #[error("VAL_DECIMAL: Decimal error in field, {field}: {source}")]
-    Decimal {
-        source: rust_decimal::Error,
-        field: String,
-    },
+    Decimal { source: rust_decimal::Error, field: String },
     #[error("VAL_INT: Number error in field, {field}: {source}")]
     Number {
         source: std::num::ParseIntError,
