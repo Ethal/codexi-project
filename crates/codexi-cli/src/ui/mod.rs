@@ -14,7 +14,7 @@ mod report;
 pub use account::*;
 pub use balance::*;
 pub use bank::view_bank;
-pub use category::view_category;
+pub use category::*;
 pub use counterparty::*;
 pub use currency::view_currency;
 pub use display::*;

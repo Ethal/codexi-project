@@ -15,7 +15,7 @@ mod summary;
 pub use account::{AccountCollection, AccountItem};
 pub use balance::BalanceItem;
 pub use bank::{BankCollection, BankItem};
-pub use category::{CategoryCollection, CategoryItem};
+pub use category::{CategoryCollection, CategoryItem, CategoryStatsCollection, CategoryStatsItem};
 pub use counterparty::{CounterpartyCollection, CounterpartyItem, CounterpartyStatsCollection, CounterpartyStatsItem};
 pub use currency::{CurrencyCollection, CurrencyItem};
 pub use monthly_report::MonthlyReport;

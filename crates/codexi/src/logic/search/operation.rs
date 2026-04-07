@@ -4,9 +4,12 @@ use chrono::NaiveDate;
 use derive_builder::Builder;
 use nulid::Nulid;
 use rust_decimal::Decimal;
+use std::collections::HashMap;
 
 use crate::logic::{
     account::OperationContainer,
+    category::CategoryList,
+    counterparty::CounterpartyList,
     operation::{Operation, OperationFlow, OperationKind},
     search::SearchError,
     utils::HasNulid,
@@ -19,6 +22,16 @@ pub struct CounterpartyGroup {
     pub id: Nulid,
     pub name: String,
     pub kind: String,
+    pub op_count: usize,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+    pub last_date: Option<NaiveDate>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CategoryGroup {
+    pub id: Nulid,
+    pub name: String,
     pub op_count: usize,
     pub total_debit: Decimal,
     pub total_credit: Decimal,
@@ -78,12 +91,7 @@ impl SearchOperationList {
         self.items.len()
     }
 
-    pub fn group_by_counterparty(
-        &self,
-        counterparties: &crate::logic::counterparty::CounterpartyList,
-    ) -> Vec<CounterpartyGroup> {
-        use std::collections::HashMap;
-
+    pub fn group_by_counterparty(&self, counterparties: &CounterpartyList) -> Vec<CounterpartyGroup> {
         let mut map: HashMap<Nulid, CounterpartyGroup> = HashMap::new();
 
         for item in self.active_items() {
@@ -120,6 +128,50 @@ impl SearchOperationList {
         }
 
         let mut groups: Vec<CounterpartyGroup> = map.into_values().collect();
+        groups.sort_by(|a, b| {
+            b.total_debit
+                .partial_cmp(&a.total_debit)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        groups
+    }
+
+    pub fn group_by_category(&self, categories: &CategoryList) -> Vec<CategoryGroup> {
+        let mut map: HashMap<Nulid, CategoryGroup> = HashMap::new();
+
+        for item in self.active_items() {
+            let op = &item.operation;
+            let cp_id = match op.context.category_id {
+                Some(id) => id,
+                None => continue,
+            };
+
+            let entry = map.entry(cp_id).or_insert_with(|| {
+                let cp = categories.get_by_id(&cp_id).ok();
+                CategoryGroup {
+                    id: cp_id,
+                    name: cp.map(|c| c.name.clone()).unwrap_or_default(),
+                    op_count: 0,
+                    total_debit: Decimal::ZERO,
+                    total_credit: Decimal::ZERO,
+                    last_date: None,
+                }
+            });
+
+            entry.op_count += 1;
+            if op.flow.is_debit() {
+                entry.total_debit += op.amount;
+            } else {
+                entry.total_credit += op.amount;
+            }
+            let d = op.date;
+            entry.last_date = Some(match entry.last_date {
+                Some(existing) if existing >= d => existing,
+                _ => d,
+            });
+        }
+
+        let mut groups: Vec<CategoryGroup> = map.into_values().collect();
         groups.sort_by(|a, b| {
             b.total_debit
                 .partial_cmp(&a.total_debit)

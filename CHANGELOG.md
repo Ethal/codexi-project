@@ -8,13 +8,16 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **CLI command `search`** — `--counterparty \ -c` and `--category \ -g` flags and wire them through to the search layer.
 - **CLI command `report counterparty`** — support `--from` and `--to`.
+- **CLI command `report category`** — support `--from` and `--to`.
 - **CLI command `report monthly`** — support `--from` and `--to`.
 - **CLI command `use`** — alias for the command `account use`.
 - **DTOs `CategoryItem::build`** — to resolve parent data.
 - **DTOs `MonthlyReport::build`** — used by the new command `report monthly`.
-- **DTOs `CounterpartyCollection::build`** — used by the new command `report counterpary`.
+- **DTOs `CounterpartyStatsCollection::build`** — used by the new command `report counterpary`.
+- **DTOs `CategoryStatsCollection::build`** — used by the new command `report category`.
 - **UI `view_montly`** — view for the new command `report monthly`.
-- **UI `view_counterparty_stats`** — view for the new command `report counterparty`.
+- **UI `view_counterparty_stats`** — stats view for the new command `report counterparty`.
+- **UI `view_category_stats`** — stats view for the new command `report category`.
 
 ### Changed
 - **CLI command `report stats`** — rename to `report financial` to to clarify purpose.

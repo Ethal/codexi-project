@@ -48,8 +48,16 @@ pub enum ReportCommand {
         open: bool,
     },
 
-    /// Counter report
+    /// Counterparty report
     Counterparty {
+        #[arg(long)]
+        from: Option<String>,
+        #[arg(long)]
+        to: Option<String>,
+    },
+
+    /// Category report
+    Category {
         #[arg(long)]
         from: Option<String>,
         #[arg(long)]

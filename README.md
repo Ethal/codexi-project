@@ -186,6 +186,7 @@ codexi-cli admin backup
 | `report monthly [--from] [--to] ` | Monthly report, resume of the analytics dashboard |
 | `report financial [--from] [--to] [--open]` | Full analytics dashboard |
 | `report counterparty [--from] [--to] ` | Counterparty statistics |
+| `report category [--from] [--to] ` | Category statistics |
 | `report statement [--from] [--to] [--open]` | Export an HTML statement |
 
 ### History

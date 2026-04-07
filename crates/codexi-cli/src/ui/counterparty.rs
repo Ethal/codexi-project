@@ -2,8 +2,10 @@
 
 use thousands::Separable;
 
-use codexi::core::format_id_short;
-use codexi::dto::{CounterpartyCollection, CounterpartyStatsCollection};
+use codexi::{
+    core::format_id_short,
+    dto::{CounterpartyCollection, CounterpartyStatsCollection},
+};
 
 use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, STYLE_MUTED, TITLE_STYLE, VALUE_STYLE, truncate_text};
 
