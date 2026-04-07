@@ -1,16 +1,19 @@
 // src/ui/account.rs
 
+use rust_decimal::Decimal;
 use thousands::Separable;
 
-use codexi::core::{format_id_short, format_optional_u32, format_text, yes_no};
-use codexi::dto::{AccountCollection, AccountItem};
+use codexi::{
+    core::{format_id_short, format_optional_u32, format_text, yes_no},
+    dto::{AccountCollection, AccountItem},
+};
 
 use crate::ui::{
     CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_CAUTION, STYLE_DANGER, STYLE_HIGHLIGHT, STYLE_MUTED, TITLE_STYLE,
     VALUE_STYLE, format_optional_bank_item, format_optional_currency_item, truncate_text,
 };
 
-/// view to list of account
+/// view to list the accounts
 pub fn view_account(items: &AccountCollection) {
     let title_text = TITLE_STYLE.apply_to("Accounts - <id> <short id> <name> <type> [currency] [bank]");
     println!();
@@ -76,16 +79,26 @@ pub fn view_account_context(item: &AccountItem) {
 /// Account overview
 pub fn overview_account(account: &AccountCollection) {
     println!(
-        "┌───────┬──────────────────┬──────────┬──────────┬──────────┬──────────────────┬──────────────────┬──────────────────┐"
+        "┌───────┬──────────────────┬──────────┬──────────┬──────────┬──────────────────┬──────────────────┬───────────────────┐"
     );
     println!(
-        "│Id     │Account           │Type      │Bank      │Currency  │             Debit│            Credit│           Balance│"
+        "│Id     │Account           │Type      │Bank      │Currency  │             Debit│            Credit│            Balance│"
     );
     println!(
-        "├───────┼──────────────────┼──────────┼──────────┼──────────┼──────────────────┼──────────────────┼──────────────────┤"
+        "├───────┼──────────────────┼──────────┼──────────┼──────────┼──────────────────┼──────────────────┼───────────────────┤"
     );
 
     for item in &account.items {
+        let balance_indicator = if item.is_zero_balance_expected {
+            if item.balance.total == Decimal::ZERO {
+                format!(" {}", CREDIT_STYLE.apply_to("✓"))
+            } else {
+                format!(" {}", STYLE_CAUTION.apply_to("!"))
+            }
+        } else {
+            "  ".to_string()
+        };
+
         let id_txt = format!("#{}", format_id_short(&item.id));
         let id_txt_fmt = match (item.current, item.close) {
             (false, false) => STYLE_MUTED.apply_to(id_txt),
@@ -98,7 +111,7 @@ pub fn overview_account(account: &AccountCollection) {
         let cre_txt = CREDIT_STYLE.apply_to(format!("{:.2}", item.balance.credit).separate_with_commas());
         let bal_txt = VALUE_STYLE.apply_to(format!("{:.2}", item.balance.total).separate_with_commas());
         println!(
-            "│{:<7}│{:<18}│{:<10}│{:<10}│{:<10}│{:>18}│{:>18}│{:>18}│",
+            "│{:<7}│{:<18}│{:<10}│{:<10}│{:<10}│{:>18}│{:>18}│{:>17}{}│",
             id_txt_fmt,
             truncate_text(&item.name, 17),
             format_text(&item.context.account_type),
@@ -107,10 +120,11 @@ pub fn overview_account(account: &AccountCollection) {
             deb_txt,
             cre_txt,
             bal_txt,
+            balance_indicator,
         );
     }
     println!(
-        "└───────┴──────────────────┴──────────┴──────────┴──────────┴──────────────────┴──────────────────┴──────────────────┘"
+        "└───────┴──────────────────┴──────────┴──────────┴──────────┴──────────────────┴──────────────────┴───────────────────┘"
     );
     println!();
     println!("{}", NOTE_STYLE.apply_to("Note:"));
@@ -120,6 +134,12 @@ pub fn overview_account(account: &AccountCollection) {
     println!(
         "{} Current account, {} Closed account, {} Current but closed",
         cu_acc, cl_acc, cu_cl_acc
+    );
+    let bal_ok = CREDIT_STYLE.apply_to("✓");
+    let bal_warn = STYLE_CAUTION.apply_to("!");
+    println!(
+        "{} Loan/Income balanced (balance = 0), {} Loan/Income has pending amount",
+        bal_ok, bal_warn
     );
     println!();
 }

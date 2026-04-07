@@ -50,7 +50,9 @@ impl AccountType {
             _ => Err(AccountTypeError::Unknown(s.to_string())),
         }
     }
-
+    pub fn is_zero_balance_expected(&self) -> bool {
+        matches!(self, AccountType::Loan | AccountType::Income)
+    }
     /// Returns true if this account type allows interest.
     /// Used as default setting in AccountContext::allows_interest.
     pub fn allows_interest(&self) -> bool {

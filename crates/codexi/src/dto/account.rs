@@ -47,6 +47,7 @@ pub struct AccountItem {
     pub currency: Option<CurrencyItem>,
     pub context: AccountContextItem,
     pub balance: BalanceItem,
+    pub is_zero_balance_expected: bool,
 }
 
 impl AccountItem {
@@ -70,6 +71,7 @@ impl AccountItem {
             currency,
             context: AccountContextItem::from(&account.context),
             balance: BalanceItem::from(Balance::for_account(account)),
+            is_zero_balance_expected: account.context.account_type.is_zero_balance_expected(),
         }
     }
 }

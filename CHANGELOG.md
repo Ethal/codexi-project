@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+
 ---
+
+
+Add a flag and UI indicator to mark accounts that are expected to have zero balance. Introduce AccountType::is_zero_balance_expected() (Loan/Income) and propagate it into AccountItem as is_zero_balance_expected. Update DTO mapping to set the flag and update the CLI view to display a ✓ when balance = 0 or a ! when a non-zero balance is unexpected; adjust table column widths/formatting and add a legend. Also import Decimal in the CLI module and tweak a comment text.
 
 ## [Unreleased] — 
 
@@ -21,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - **ExchangeCounterpartyList.list** — Add a serde rename, it serializes/deserializes as the JSON key "counterparties".
 - **Import to codexi** — refactoring import functionality out of the `Codexi model` to `Codexi import`, improve separation of concerns.
 - **UI `view_codexi_infos`** — add count of all operations of the ledger included the one in archive files.
+- **UI `overview_account`** — Add an UI indicator to mark accounts that are expected to have zero balance.
 
 ### Fixed
 
