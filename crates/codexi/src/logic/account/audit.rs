@@ -111,8 +111,8 @@ impl Account {
                     ),
                 });
             }
-            // TEST 9 : Operation with legacy account id
-            if op.is_legacy_account() {
+            // TEST 9 : Operation with legacy account id or account.id != op.account_id
+            if op.is_legacy_account() || op.account_id != self.id {
                 warnings.push(CoreWarning {
                     kind: CoreWarningKind::InvalidData,
                     message: format!("TEST 9: Operation {} missing account_id (legacy data)", op.id),
@@ -143,7 +143,9 @@ impl Account {
         let has_warnings = warnings.iter().all(|w| matches!(w.kind, CoreWarningKind::InvalidData));
 
         if !warnings.is_empty() && has_warnings {
+            // rebuild balance
             self.rebuild_balances_from(self.operations.first().map(|op| op.date).unwrap_or_default());
+            // rebuild account_id
             for op in &mut self.operations {
                 if op.is_legacy_account() {
                     op.account_id = self.id;

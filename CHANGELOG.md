@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - **UI `overview_account`** — Add an UI indicator to mark accounts that are expected to have zero balance.
 
 ### Fixed
+- **ExchangeOperation** — export the field alue of `account_id` with the `account.id` of the operation instead of the `operation.id`.
 
 ## [0.4.0] — 2026-04-05
 > ⚠️ Breaking: DTO modules have been moved from `logic/*` to `dto/*`

@@ -53,7 +53,7 @@ impl From<&Operation> for ExchangeOperation {
             description: op.description.clone(),
 
             balance: format_decimal(op.balance),
-            account_id: format_id(op.id),
+            account_id: format_id(op.account_id),
             links: ExchangeOperationLinks::from(&op.links),
             context: ExchangeOperationContext::from(&op.context),
             meta: ExchangeOperationMeta::from(&op.meta),
