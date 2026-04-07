@@ -11,9 +11,14 @@ use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, STYLE_DANGER, STYLE_MUTED, TITLE_STYL
 
 /// view to list the category
 pub fn view_category(datas: &CategoryCollection) {
-    let title_text = TITLE_STYLE.apply_to("Categories - <short id> <name> [parent] [note]");
+    let title_text = TITLE_STYLE.apply_to("Categories:");
+    let header_text = TITLE_STYLE.apply_to(format!(
+        " {:<26} {:<7} {:<17} {:<20} {}",
+        "<id>", "<sh id>", "<name>", "[Parent]", "[note]"
+    ));
     println!();
     println!("{}", title_text);
+    println!("{}", header_text);
     for c in &datas.items {
         let id_style = match &c.terminated {
             Some(_) => STYLE_DANGER,
@@ -23,18 +28,21 @@ pub fn view_category(datas: &CategoryCollection) {
             Some(_) => STYLE_DANGER,
             None => STYLE_MUTED,
         };
-        let id = id_style.apply_to(format!("#{}", format_id_short(&c.id)));
+        let id = id_style.apply_to(format!("{}", c.id));
+        let id_short = id_style.apply_to(format!("#{}", format_id_short(&c.id)));
         let parent = match (&c.parent_name, &c.parent_id) {
             (Some(name), Some(pid)) => {
                 let styled_pid = parent_style.apply_to(format!("({})", format_id_short(pid)));
-                format!("{}{}", name, styled_pid)
+                let name_tr = truncate_text(&name, 17);
+                format!("{}{}", name_tr, styled_pid)
             }
             _ => "─(—)".to_string(),
         };
         println!(
-            " {} {:<20} {} {}",
+            " {} {:<7} {:<17} {:<20} {}",
             id,
-            c.name,
+            id_short,
+            truncate_text(&c.name, 17),
             parent,
             c.note.clone().unwrap_or("─".to_string()),
         );

@@ -7,27 +7,33 @@ use codexi::{
     dto::{CounterpartyCollection, CounterpartyStatsCollection},
 };
 
-use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, STYLE_MUTED, TITLE_STYLE, VALUE_STYLE, truncate_text};
+use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, STYLE_DANGER, STYLE_MUTED, TITLE_STYLE, VALUE_STYLE, truncate_text};
 
 /// view to list of the counterparties
 pub fn view_counterparty(datas: &CounterpartyCollection) {
-    let title_text = TITLE_STYLE.apply_to("Counterparties - <id> <short id> <name> <kind> [terminated] [note]");
+    let title_text = TITLE_STYLE.apply_to("Counterparties:");
+    let header_text = TITLE_STYLE.apply_to(format!(
+        " {:<26} {:<7} {:<20} {:<15} {}",
+        "<id>", "<sh id>", "<name>", "<kind>", "[note]"
+    ));
     println!();
     println!("{}", title_text);
-    if datas.items.is_empty() {
-        println!(" No Counterparty");
-    } else {
-        for cp in &datas.items {
-            println!(
-                " {} {} {} {} {} {}",
-                cp.id,
-                format_id_short(&cp.id),
-                cp.name,
-                cp.kind,
-                cp.terminated.clone().unwrap_or_default(),
-                cp.note.clone().unwrap_or_default(),
-            );
-        }
+    println!("{}", header_text);
+    for cp in &datas.items {
+        let id_style = match &cp.terminated {
+            Some(_) => STYLE_DANGER,
+            None => STYLE_MUTED,
+        };
+        let id = id_style.apply_to(format!("{}", cp.id));
+        let id_short = id_style.apply_to(format!("#{}", format_id_short(&cp.id)));
+        println!(
+            " {} {:<7} {:<20} {:<15} {}",
+            id,
+            id_short,
+            cp.name,
+            cp.kind,
+            cp.note.clone().unwrap_or_default(),
+        );
     }
 }
 
