@@ -26,6 +26,7 @@ pub struct TopExpenseItem {
 
 #[derive(Debug, Default)]
 pub struct StatsCollection {
+    pub account_name: String,
     pub from: Option<String>,
     pub to: Option<String>,
     pub total_credit: Decimal,
@@ -182,6 +183,7 @@ impl StatsCollection {
         };
 
         Self {
+            account_name: account.name.clone(),
             from,
             to,
             total_credit,

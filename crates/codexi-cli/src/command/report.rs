@@ -22,6 +22,14 @@ pub enum ReportCommand {
         to: Option<String>,
     },
 
+    /// Monthly report
+    Monthly {
+        #[arg(long)]
+        from: Option<String>,
+        #[arg(long)]
+        to: Option<String>,
+    },
+
     /// View financial statistics and analytics for active operations
     /// NOTE:
     /// Stats are time-based.

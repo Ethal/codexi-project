@@ -5,21 +5,24 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] — 
 
 ### Added
+- **CLI command `report monthly`** — support `--from` and `--to`.
 - **CLI command `use`** — alias for the command `account use`.
 - **DTOs `CategoryItem::build`** — to resolve parent data.
+- **DTOs `MonthlyReport::build`** — used by the new command `report monthly.
+- **UI `view_montly`** — view of  the new command `report monthly`.
 
 ### Changed
 -**UI** — Introduce unified UI style constants and helpers.
 -**UI** — account switch messaging to include the account name and id ("Switched to account: <name> (<id>)").
 - **UI `Top Expense`** — tie-breaker added to compare op_date so items with equal amounts are ordered deterministically.
-- **UI `category list`** — Enhance category listing and logic to surface parent info and termination state.
+- **UI `view_category_list`** — Enhance category listing and logic to surface parent info and termination state.
 - **DTOs** — include parent_name and parent_terminated in CategoryItem, update CategoryCollection::build accordingly.
 - **ExchangeCCategoryList.list** — Add a serde rename, it serializes/deserializes as the JSON key "categories".
 - **ExchangeCounterpartyList.list** — Add a serde rename, it serializes/deserializes as the JSON key "counterparties".
 - **Import to codexi** — refactoring import functionality out of the `Codexi model` to `Codexi import`, improve separation of concerns.
+- **UI `view_codexi_infos`** — add count of all operations of the ledger included the one in archive files.
 
 ### Fixed
-
 
 ## [0.4.0] — 2026-04-05
 > ⚠️ Breaking: DTO modules have been moved from `logic/*` to `dto/*`

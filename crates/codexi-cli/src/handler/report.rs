@@ -1,12 +1,12 @@
 // src/handler/report.rs
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use rust_decimal::Decimal;
 use std::path::Path;
 
 use codexi::{
     core::DataPaths,
-    dto::{BalanceItem, StatementCollection, StatsCollection, SummaryCollection},
+    dto::{BalanceItem, MonthlyReport, StatementCollection, StatsCollection, SummaryCollection},
     file_management::FileManagement,
     logic::{
         balance::Balance,
@@ -19,7 +19,7 @@ use crate::{
     command::ReportCommand,
     export::{export_statement_html, export_stats_html},
     msg_info, msg_warn,
-    ui::{view_balance, view_stats, view_summary},
+    ui::{view_balance, view_monthly_report, view_stats, view_summary},
 };
 
 pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPaths) -> Result<()> {
@@ -37,6 +37,28 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
             } else {
                 view_balance(&balance);
             }
+        }
+        ReportCommand::Monthly { from, to } => {
+            // resolve from/to from the operations if not provide
+            let range = DateRange::parse(from.as_deref(), to.as_deref())?;
+            let all_ops = search(account, &SearchParamsBuilder::default().build()?)?;
+            let range = DateRange::compute(&all_ops, range.from, range.to);
+
+            let from_date = range.from.ok_or(anyhow!("from is required"))?;
+            let to_date = range.to.ok_or(anyhow!("to is required"))?;
+
+            let months = DateRange::month_periods(from_date, to_date);
+
+            let mut month_items = Vec::new();
+            for (start, end, label) in months {
+                let params = SearchParamsBuilder::default().from(Some(start)).to(Some(end)).build()?;
+                let s_ops = search(account, &params)?;
+                let stats = StatsCollection::build(&codexi, account, &s_ops);
+                month_items.push((label, stats));
+            }
+
+            let report = MonthlyReport::build(month_items);
+            view_monthly_report(&report);
         }
         ReportCommand::Stats { from, to, open } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
@@ -62,6 +84,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
             let summary = SummaryCollection::summary_entry(account, &s_ops);
             view_summary(&summary);
         }
+
         ReportCommand::Statement { from, to, open } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
             let params = SearchParamsBuilder::default().from(range.from).to(range.to).build()?;

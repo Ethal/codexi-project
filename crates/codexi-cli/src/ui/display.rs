@@ -1,12 +1,10 @@
 // src/ui.rs
-use console::{Style, style};
-use rust_decimal::Decimal;
-use rust_decimal::prelude::ToPrimitive;
+use console::Style;
 use thousands::Separable;
 
 use codexi::{
     core::{CoreWarning, format_id_short},
-    dto::{SearchOperationCollection, StatsCollection, SummaryCollection},
+    dto::{SearchOperationCollection, SummaryCollection},
     file_management::CodexiInfos,
 };
 
@@ -276,136 +274,6 @@ pub fn view_summary(summary: &SummaryCollection) {
         NOTE_STYLE.apply_to("Remember to regularly perform closing operations to maintain accurate financial records.")
     );
     println!();
-}
-
-pub fn view_stats(stats: &StatsCollection) {
-    let savings_style = if stats.savings_rate >= Decimal::ZERO {
-        Style::new().green().bold()
-    } else {
-        Style::new().red().bold()
-    };
-
-    println!("┌──────────────────────────────────────────────────────────────────────────────┐");
-    let title_text = format!(
-        "{:<77}",
-        "Current account financial analytics (excl. init and checkpoint)"
-    );
-    println!("│ {}│", TITLE_STYLE.apply_to(title_text));
-    println!("├──────────────────────┬──────────────────┬────────────────────────────────────┤");
-
-    // Line 1 related to total_credit/op count
-    let ops_count_val = format!("{}", stats.operation_count);
-    println!(
-        "│ {:<20} │ {:>16} │ {} {:<23} │",
-        STYLE_NORMAL.apply_to("total credit"),
-        CREDIT_STYLE.apply_to(format!("{:.2}", stats.total_credit).separate_with_commas()),
-        STYLE_NORMAL.apply_to("ops count:"),
-        VALUE_STYLE.apply_to(ops_count_val),
-    );
-
-    // Line 2 related to total_debit/ avg/op
-    let avg_op_val = format!("{:.2}", stats.average_operation);
-    println!(
-        "│ {:<20} │ {:>16} │ {} {:<26} │",
-        STYLE_NORMAL.apply_to("total debit"),
-        DEBIT_STYLE.apply_to(format!("{:.2}", stats.total_debit).separate_with_commas()),
-        STYLE_NORMAL.apply_to("avg/op:"),
-        VALUE_STYLE.apply_to(avg_op_val)
-    );
-
-    // Line 3 related to balance
-    println!(
-        "│ {:<20} │ {:>16} │ {:<26} │",
-        STYLE_NORMAL.apply_to("balance"),
-        VALUE_STYLE.apply_to(format!("{:.2}", stats.balance).separate_with_commas()),
-        " ".repeat(34)
-    );
-
-    println!("├──────────────────────┴──────────────────┴────────────────────────────────────┤");
-
-    let label = STYLE_NORMAL.apply_to("savings rate");
-    let rate_val = format!("{:>12.2}%", stats.savings_rate);
-    let bar = draw_savings_bar(stats.savings_rate, 32);
-    println!(
-        "│ {}   {}   {} {:<12} │",
-        label,
-        savings_style.apply_to(rate_val),
-        bar,
-        ""
-    );
-
-    println!("├──────────────────────────────────────────────────────────────────────────────┤");
-    println!(
-        "│ {:<76} │",
-        TITLE_STYLE.apply_to("behavioral insights & system health (excl. void, voided)")
-    );
-    println!("├────────────────────────────────────────┬─────────────────────────────────────┤");
-
-    // Spending Rate and Duration
-    println!(
-        "│ {:<20}{:>18} │ {:<21}{:>14} │",
-        STYLE_NORMAL.apply_to("daily burning rate:"),
-        DEBIT_STYLE.apply_to(format!("{:.2}", stats.daily_average).separate_with_commas()),
-        STYLE_NORMAL.apply_to("period length:"),
-        VALUE_STYLE.apply_to(format!("{} days", stats.days_count))
-    );
-
-    // Largest expense and account quality (adjustments)
-    println!(
-        "│ {:<20}{:>18} │ {:<21}{:>14} │",
-        STYLE_NORMAL.apply_to("max single expense:"),
-        DEBIT_STYLE.apply_to(format!("{:.2}", stats.max_single_debit).separate_with_commas()),
-        STYLE_NORMAL.apply_to("adjustments:"),
-        VALUE_STYLE.apply_to(format!(
-            "{} ({:.1}%)",
-            stats.adjustment_count, stats.adjustment_percentage
-        ))
-    );
-
-    println!("├────────────────────────────────────────┴─────────────────────────────────────┤");
-
-    // Section Top Expenses
-    println!(
-        "│ {:<76} │",
-        TITLE_STYLE.apply_to("top 5 expenses (excl. adjust, voided, void)")
-    );
-    println!("├────────┬──────────┬──────────────────┬───────┬───────────────────────────────┤");
-
-    for exp in stats.top_expenses.iter() {
-        let index_str = exp.op_id.to_string();
-        let index_str = format!("#{:<7}", &index_str[(index_str.len() - 5)..]);
-        let pct_str = format!("{:>6.1}%", exp.percentage);
-        println!(
-            "│{}│{}│{:>18}│{}│{}│",
-            STYLE_NORMAL.apply_to(index_str),
-            STYLE_NORMAL.apply_to(&exp.op_date),
-            DEBIT_STYLE.apply_to(format!("{:.2}", exp.amount).separate_with_commas()),
-            VALUE_STYLE.apply_to(pct_str),
-            STYLE_NORMAL.apply_to(truncate_text(&exp.description, 31))
-        );
-    }
-    println!("└────────┴──────────┴──────────────────┴───────┴───────────────────────────────┘");
-}
-
-/// Utility function for the visual toolbar
-fn draw_savings_bar(rate: Decimal, width: usize) -> String {
-    if rate <= Decimal::ZERO {
-        // red bar proportional to the deficit, max -100%
-        let normalized = rate.abs().min(Decimal::ONE_HUNDRED) / Decimal::ONE_HUNDRED;
-        let filled = (normalized * Decimal::from(width)).to_usize().unwrap_or(0);
-        let empty = width - filled;
-        format!("{}{}", style("█".repeat(filled)).red(), style("░".repeat(empty)).dim())
-    } else {
-        // green bar proportional to the profit, max -100%
-        let normalized = rate.min(Decimal::ONE_HUNDRED) / Decimal::ONE_HUNDRED;
-        let filled = (normalized * Decimal::from(width)).to_usize().unwrap_or(0);
-        let empty = width - filled;
-        format!(
-            "{}{}",
-            style("█".repeat(filled)).green(),
-            style("░".repeat(empty)).dim()
-        )
-    }
 }
 
 fn format_bytes(bytes: u64) -> String {

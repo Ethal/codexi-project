@@ -9,6 +9,7 @@ mod currency;
 mod display;
 mod loan;
 mod operation;
+mod report;
 
 pub use account::*;
 pub use balance::*;
@@ -19,6 +20,7 @@ pub use currency::view_currency;
 pub use display::*;
 pub use loan::*;
 pub use operation::*;
+pub use report::*;
 
 use console::Style;
 const TITLE_STYLE: Style = Style::new().cyan().bold();
