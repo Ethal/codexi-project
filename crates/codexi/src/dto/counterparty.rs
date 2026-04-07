@@ -1,8 +1,13 @@
 // src/dto/bank.rs
 
+use rust_decimal::Decimal;
+
 use crate::{
-    core::{format_id, format_optional_date},
-    logic::counterparty::{Counterparty, CounterpartyList},
+    core::{format_date, format_id, format_optional_date},
+    logic::{
+        counterparty::{Counterparty, CounterpartyList},
+        search::CounterpartyGroup,
+    },
 };
 
 #[derive(Debug)]
@@ -34,6 +39,68 @@ impl From<&Counterparty> for CounterpartyItem {
 impl CounterpartyCollection {
     pub fn build(cps: &CounterpartyList) -> Self {
         let items: Vec<CounterpartyItem> = cps.list.iter().map(CounterpartyItem::from).collect();
+        Self { items }
+    }
+}
+
+#[derive(Debug)]
+pub struct CounterpartyStatsItem {
+    pub id: String,
+    pub name: String,
+    pub kind: String,
+    pub op_count: usize,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+    pub average_amount: Decimal,
+    pub debit_percentage: Decimal,
+    pub credit_percentage: Decimal,
+    pub last_date: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct CounterpartyStatsCollection {
+    pub items: Vec<CounterpartyStatsItem>,
+}
+
+impl CounterpartyStatsCollection {
+    pub fn build(groups: Vec<CounterpartyGroup>) -> Self {
+        let grand_total_debit: Decimal = groups.iter().map(|g| g.total_debit).sum();
+        let grand_total_credit: Decimal = groups.iter().map(|g| g.total_credit).sum();
+
+        let items = groups
+            .into_iter()
+            .map(|g| {
+                let total = g.total_debit + g.total_credit;
+                let average_amount = if g.op_count > 0 {
+                    total / Decimal::from(g.op_count)
+                } else {
+                    Decimal::ZERO
+                };
+                let debit_percentage = if grand_total_debit > Decimal::ZERO {
+                    (g.total_debit / grand_total_debit) * Decimal::ONE_HUNDRED
+                } else {
+                    Decimal::ZERO
+                };
+                let credit_percentage = if grand_total_credit > Decimal::ZERO {
+                    (g.total_credit / grand_total_credit) * Decimal::ONE_HUNDRED
+                } else {
+                    Decimal::ZERO
+                };
+                CounterpartyStatsItem {
+                    id: format_id(g.id),
+                    name: g.name,
+                    kind: g.kind,
+                    op_count: g.op_count,
+                    total_debit: g.total_debit,
+                    total_credit: g.total_credit,
+                    average_amount,
+                    debit_percentage,
+                    credit_percentage,
+                    last_date: g.last_date.map(format_date),
+                }
+            })
+            .collect();
+
         Self { items }
     }
 }

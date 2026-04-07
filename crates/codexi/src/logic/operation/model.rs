@@ -83,6 +83,7 @@ impl Operation {
         self.context.category_id = context.category_id;
         self.context.payee = context.payee.clone();
         self.context.reconciled = context.reconciled;
+        self.context.counterparty_id = context.counterparty_id;
         self.meta = meta.clone();
     }
 

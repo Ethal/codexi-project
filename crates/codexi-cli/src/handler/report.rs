@@ -6,7 +6,10 @@ use std::path::Path;
 
 use codexi::{
     core::DataPaths,
-    dto::{BalanceItem, MonthlyReport, StatementCollection, StatsCollection, SummaryCollection},
+    dto::{
+        BalanceItem, CounterpartyStatsCollection, MonthlyReport, StatementCollection, StatsCollection,
+        SummaryCollection,
+    },
     file_management::FileManagement,
     logic::{
         balance::Balance,
@@ -19,7 +22,7 @@ use crate::{
     command::ReportCommand,
     export::{export_statement_html, export_stats_html},
     msg_info, msg_warn,
-    ui::{view_balance, view_monthly_report, view_stats, view_summary},
+    ui::{view_balance, view_counterparty_stats, view_monthly_report, view_stats, view_summary},
 };
 
 pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPaths) -> Result<()> {
@@ -37,6 +40,14 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
             } else {
                 view_balance(&balance);
             }
+        }
+        ReportCommand::Counterparty { from, to } => {
+            let range = DateRange::parse(from.as_deref(), to.as_deref())?;
+            let params = SearchParamsBuilder::default().from(range.from).to(range.to).build()?;
+            let s_ops = search(account, &params)?;
+            let groups = s_ops.group_by_counterparty(&codexi.counterparties);
+            let stats = CounterpartyStatsCollection::build(groups);
+            view_counterparty_stats(&stats);
         }
         ReportCommand::Monthly { from, to } => {
             // resolve from/to from the operations if not provide
@@ -60,7 +71,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
             let report = MonthlyReport::build(month_items);
             view_monthly_report(&report);
         }
-        ReportCommand::Stats { from, to, open } => {
+        ReportCommand::Financial { from, to, open } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
             let params = SearchParamsBuilder::default().from(range.from).to(range.to).build()?;
             let s_ops = search(account, &params)?;

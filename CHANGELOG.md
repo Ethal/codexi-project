@@ -3,19 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-
-Add a flag and UI indicator to mark accounts that are expected to have zero balance. Introduce AccountType::is_zero_balance_expected() (Loan/Income) and propagate it into AccountItem as is_zero_balance_expected. Update DTO mapping to set the flag and update the CLI view to display a ✓ when balance = 0 or a ! when a non-zero balance is unexpected; adjust table column widths/formatting and add a legend. Also import Decimal in the CLI module and tweak a comment text.
-
 ## [Unreleased] — 
 
 ### Added
+- **CLI command `report counterparty`** — support `--from` and `--to`.
 - **CLI command `report monthly`** — support `--from` and `--to`.
 - **CLI command `use`** — alias for the command `account use`.
 - **DTOs `CategoryItem::build`** — to resolve parent data.
-- **DTOs `MonthlyReport::build`** — used by the new command `report monthly.
-- **UI `view_montly`** — view of  the new command `report monthly`.
+- **DTOs `MonthlyReport::build`** — used by the new command `report monthly`.
+- **DTOs `CounterpartyCollection::build`** — used by the new command `report counterpary`.
+- **UI `view_montly`** — view for the new command `report monthly`.
+- **UI `view_counterparty_stats`** — view for the new command `report counterparty`.
 
 ### Changed
+- **CLI command `report stats`** — rename to `report financial` to to clarify purpose.
 -**UI** — Introduce unified UI style constants and helpers.
 -**UI** — account switch messaging to include the account name and id ("Switched to account: <name> (<id>)").
 - **UI `Top Expense`** — tie-breaker added to compare op_date so items with equal amounts are ordered deterministically.

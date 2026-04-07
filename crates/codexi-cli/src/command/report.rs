@@ -12,6 +12,9 @@ pub struct ReportArgs {
 /// Generate financial reports, statistics, and statements
 #[derive(Subcommand, Debug)]
 pub enum ReportCommand {
+    /// View a summary of the current account.
+    Summary {},
+
     /// View balance and debit/credit. Available criteria, --from --to.
     Balance {
         // Filtres granulaire (Plage de dates arbitraire)
@@ -34,8 +37,7 @@ pub enum ReportCommand {
     /// NOTE:
     /// Stats are time-based.
     /// By default, voided operations are excluded, even if voided outside the period.
-    /// Use --net to compute the net impact of all flows within the selected period.
-    Stats {
+    Financial {
         #[arg(long, value_name = "YYYY-MM-DD", help = "Start date for stats")]
         from: Option<String>,
 
@@ -46,8 +48,13 @@ pub enum ReportCommand {
         open: bool,
     },
 
-    /// View a summary of the current account.
-    Summary {},
+    /// Counter report
+    Counterparty {
+        #[arg(long)]
+        from: Option<String>,
+        #[arg(long)]
+        to: Option<String>,
+    },
 
     /// export (html file) a statement of the current account. Available criteria, --from --to.  .
     Statement {

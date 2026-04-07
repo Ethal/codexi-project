@@ -181,11 +181,12 @@ codexi-cli admin backup
 ### Report
 | Command | Description |
 | :--- | :--- |
-| `report balance [--from] [--to]` | Debit / credit / balance summary |
-| `report stats [--from] [--to] [--open]` | Full analytics dashboard |
 | `report summary` | Quick overview of the current account |
-| `report statement [--from] [--to] [--open]` | Export an HTML statement |
+| `report balance [--from] [--to]` | Debit / credit / balance summary |
 | `report monthly [--from] [--to] ` | Monthly report, resume of the analytics dashboard |
+| `report financial [--from] [--to] [--open]` | Full analytics dashboard |
+| `report counterparty [--from] [--to] ` | Counterparty statistics |
+| `report statement [--from] [--to] [--open]` | Export an HTML statement |
 
 ### History
 | Command | Description |

@@ -12,6 +12,19 @@ use crate::logic::{
     utils::HasNulid,
 };
 
+// dans operation.rs
+
+#[derive(Debug, Clone)]
+pub struct CounterpartyGroup {
+    pub id: Nulid,
+    pub name: String,
+    pub kind: String,
+    pub op_count: usize,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+    pub last_date: Option<NaiveDate>,
+}
+
 /// Struct for search operation
 #[derive(Debug, Clone)]
 pub struct SearchOperation {
@@ -63,6 +76,56 @@ impl SearchOperationList {
 
     pub fn len(&self) -> usize {
         self.items.len()
+    }
+
+    pub fn group_by_counterparty(
+        &self,
+        counterparties: &crate::logic::counterparty::CounterpartyList,
+    ) -> Vec<CounterpartyGroup> {
+        use std::collections::HashMap;
+
+        let mut map: HashMap<Nulid, CounterpartyGroup> = HashMap::new();
+
+        for item in self.active_items() {
+            let op = &item.operation;
+            let cp_id = match op.context.counterparty_id {
+                Some(id) => id,
+                None => continue,
+            };
+
+            let entry = map.entry(cp_id).or_insert_with(|| {
+                let cp = counterparties.get_by_id(&cp_id).ok();
+                CounterpartyGroup {
+                    id: cp_id,
+                    name: cp.map(|c| c.name.clone()).unwrap_or_default(),
+                    kind: cp.map(|c| c.kind.as_str().to_string()).unwrap_or_default(),
+                    op_count: 0,
+                    total_debit: Decimal::ZERO,
+                    total_credit: Decimal::ZERO,
+                    last_date: None,
+                }
+            });
+
+            entry.op_count += 1;
+            if op.flow.is_debit() {
+                entry.total_debit += op.amount;
+            } else {
+                entry.total_credit += op.amount;
+            }
+            let d = op.date;
+            entry.last_date = Some(match entry.last_date {
+                Some(existing) if existing >= d => existing,
+                _ => d,
+            });
+        }
+
+        let mut groups: Vec<CounterpartyGroup> = map.into_values().collect();
+        groups.sort_by(|a, b| {
+            b.total_debit
+                .partial_cmp(&a.total_debit)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        groups
     }
 }
 
