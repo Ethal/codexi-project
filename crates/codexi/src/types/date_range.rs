@@ -35,6 +35,30 @@ impl DateRange {
     pub fn formatted(&self) -> (Option<String>, Option<String>) {
         (self.from.map(format_date), self.to.map(format_date))
     }
+
+    /// Generate month periods between from and to
+    pub fn month_periods(from: NaiveDate, to: NaiveDate) -> Vec<(NaiveDate, NaiveDate, String)> {
+        let mut result = Vec::new();
+        let mut current = NaiveDate::from_ymd_opt(from.year(), from.month(), 1).unwrap();
+        loop {
+            let (next_year, next_month) = if current.month() == 12 {
+                (current.year() + 1, 1)
+            } else {
+                (current.year(), current.month() + 1)
+            };
+            let month_end = NaiveDate::from_ymd_opt(next_year, next_month, 1)
+                .unwrap()
+                .pred_opt()
+                .unwrap();
+            let label = format!("{}-{:02}", current.year(), current.month());
+            result.push((current, month_end, label));
+            if current.year() == to.year() && current.month() == to.month() {
+                break;
+            }
+            current = NaiveDate::from_ymd_opt(next_year, next_month, 1).unwrap();
+        }
+        result
+    }
 }
 
 fn parse_flexible_date_range(date_str: &str, is_start_date: bool) -> Result<NaiveDate, CoreError> {

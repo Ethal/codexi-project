@@ -185,6 +185,7 @@ codexi-cli admin backup
 | `report stats [--from] [--to] [--open]` | Full analytics dashboard |
 | `report summary` | Quick overview of the current account |
 | `report statement [--from] [--to] [--open]` | Export an HTML statement |
+| `report monthly [--from] [--to] ` | Monthly report, resume of the analytics dashboard |
 
 ### History
 | Command | Description |
