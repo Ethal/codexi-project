@@ -149,6 +149,8 @@ pub struct SearchParams {
     pub text: Option<String>,
     pub kind: Option<String>,
     pub flow: Option<String>,
+    pub counterparty: Option<Nulid>,
+    pub category: Option<Nulid>,
     pub amount_min: Option<Decimal>,
     pub amount_max: Option<Decimal>,
     pub latest: Option<usize>,
@@ -170,6 +172,8 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
     let text = params.text.as_deref();
     let kind = params.kind.as_deref();
     let flow = params.flow.as_deref();
+    let counterparty = params.counterparty;
+    let category = params.category;
     let amount_min = params.amount_min;
     let amount_max = params.amount_max;
     let latest = params.latest;
@@ -220,6 +224,18 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
         // text
         if let Some(ref needle) = text
             && !op.description.to_lowercase().contains(needle)
+        {
+            continue;
+        }
+        // counterparty
+        if let Some(c) = counterparty
+            && op.context.counterparty_id != Some(c)
+        {
+            continue;
+        }
+        // category
+        if let Some(g) = category
+            && op.context.category_id != Some(g)
         {
             continue;
         }

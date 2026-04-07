@@ -126,7 +126,7 @@ codexi-cli admin backup
 | `debit <date> <amount> [desc] [-c counterparty] [-g category]` | Record an outgoing flow |
 | `interest <date> <amount> [desc] [-c counterparty] [-g category]` | Record an interest accrual (Loan/Saving/Deposit/Income accounts) |
 | `transfer <date> <amount_from> <amount_to> <account_id\|name> [desc] [-g category]` | Transfer from current account to another |
-| `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--a-min] [--a-max] [--last] [--today] [--open]` | Search and filter operations |
+| `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--counterparty] [--category] [--a-min] [--a-max] [--last] [--today] [--open]` | Search and filter operations |
 
 ### Operation
 | Command | Description |

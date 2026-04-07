@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] — 
 
 ### Added
+- **CLI command `search`** — `--counterparty \ -c` and `--category \ -g` flags and wire them through to the search layer.
 - **CLI command `report counterparty`** — support `--from` and `--to`.
 - **CLI command `report monthly`** — support `--from` and `--to`.
 - **CLI command `use`** — alias for the command `account use`.

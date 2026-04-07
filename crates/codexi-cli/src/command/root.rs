@@ -279,6 +279,14 @@ pub enum RootCommand {
         #[arg(short = 'f', long, help = "Filter by flow: 'debit' or 'credit'", value_name = "FLOW")]
         flow: Option<String>,
 
+        /// Filter by counterparty
+        #[arg(short = 'c', long, help = "Filter by counterprty.", value_name = "COUNTERPARTY")]
+        counterparty: Option<String>,
+
+        /// Filter by counterparty
+        #[arg(short = 'g', long, help = "Filter by category.", value_name = "CATEGORY")]
+        category: Option<String>,
+
         /// Minimum amount
         #[arg(
             long = "a-min",

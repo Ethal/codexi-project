@@ -199,12 +199,23 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             text,
             kind,
             flow,
+            counterparty,
+            category,
             amount_min,
             amount_max,
             last,
             today,
             open,
         } => {
+            let codexi = FileManagement::load_current_state(paths)?;
+            let category_id = category
+                .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
+                .transpose()?;
+            let counterparty_id = counterparty
+                .map(|name| {
+                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(&name, &codexi.counterparties.list)
+                })
+                .transpose()?;
             let amount_min_d = parse_optional_decimal(&amount_min, "amount_min")?;
             let amount_max_d = parse_optional_decimal(&amount_max, "amount_max")?;
             let mut range = DateRange::parse(from.as_deref(), to.as_deref())?;
@@ -223,6 +234,8 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 .text(text)
                 .kind(kind)
                 .flow(flow)
+                .counterparty(counterparty_id)
+                .category(category_id)
                 .amount_min(amount_min_d)
                 .amount_max(amount_max_d)
                 .latest(last)
