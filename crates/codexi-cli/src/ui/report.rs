@@ -1,13 +1,13 @@
 // src/ui/report.rs
 
-use console::style;
 use rust_decimal::Decimal;
-use rust_decimal::prelude::ToPrimitive;
 use thousands::Separable;
 
 use codexi::dto::{MonthlyReport, StatsCollection};
 
-use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, truncate_text};
+use crate::ui::{
+    CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, draw_savings_bar, truncate_text,
+};
 
 pub fn view_monthly_report(report: &MonthlyReport) {
     println!();
@@ -44,7 +44,7 @@ pub fn view_monthly_report(report: &MonthlyReport) {
         };
 
         let period_txt = if s.ignored.is_empty() {
-            format!("{}", item.period)
+            item.period.to_string()
         } else {
             has_ignored = true;
             format!("{}({})", item.period, s.ignored.len())
@@ -91,8 +91,8 @@ pub fn view_monthly_report(report: &MonthlyReport) {
     }
 }
 
-/// View Stats
-pub fn view_stats(stats: &StatsCollection) {
+/// View Financial
+pub fn view_financial(stats: &StatsCollection) {
     let savings_style = if stats.savings_rate < Decimal::ZERO {
         DEBIT_STYLE
     } else {
@@ -212,32 +212,5 @@ pub fn view_stats(stats: &StatsCollection) {
         ));
         println!("{}", ignore_txt);
         println!();
-    }
-}
-
-/// Utility function for the visual toolbar — centered on 0
-/// [-100%  ░░░░████|░░░░░░░░  +100%]
-fn draw_savings_bar(rate: Decimal, width: usize) -> String {
-    let half = width / 2;
-    let normalized = rate.abs().min(Decimal::ONE_HUNDRED) / Decimal::ONE_HUNDRED;
-    let filled = (normalized * Decimal::from(half)).to_usize().unwrap_or(0);
-    let empty = half - filled;
-
-    if rate <= Decimal::ZERO {
-        // negative: fill grows left from center
-        format!(
-            "{}{}|{}",
-            style("░".repeat(empty)).dim(),
-            style("█".repeat(filled)).red(),
-            style("░".repeat(half)).dim(),
-        )
-    } else {
-        // positive: fill grows right from center
-        format!(
-            "{}|{}{}",
-            style("░".repeat(half)).dim(),
-            style("█".repeat(filled)).green(),
-            style("░".repeat(empty)).dim(),
-        )
     }
 }

@@ -43,7 +43,7 @@ impl CounterpartyCollection {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CounterpartyStatsItem {
     pub id: Option<String>,
     pub name: String,
@@ -60,6 +60,7 @@ pub struct CounterpartyStatsItem {
 #[derive(Debug)]
 pub struct CounterpartyStatsCollection {
     pub items: Vec<CounterpartyStatsItem>,
+    pub top_debit: Vec<CounterpartyStatsItem>,
 }
 
 impl CounterpartyStatsCollection {
@@ -67,7 +68,7 @@ impl CounterpartyStatsCollection {
         let grand_total_debit: Decimal = groups.iter().map(|g| g.total_debit).sum();
         let grand_total_credit: Decimal = groups.iter().map(|g| g.total_credit).sum();
 
-        let items = groups
+        let items: Vec<CounterpartyStatsItem> = groups
             .into_iter()
             .map(|g| {
                 let total = g.total_debit + g.total_credit;
@@ -101,6 +102,15 @@ impl CounterpartyStatsCollection {
             })
             .collect();
 
-        Self { items }
+        let mut top_debit: Vec<CounterpartyStatsItem>;
+        top_debit = items.clone();
+        top_debit.sort_by(|a, b| {
+            b.total_debit
+                .partial_cmp(&a.total_debit)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        top_debit.truncate(5);
+
+        Self { items, top_debit }
     }
 }

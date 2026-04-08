@@ -24,7 +24,7 @@ pub fn view_counterparty(datas: &CounterpartyCollection) {
             Some(_) => STYLE_DANGER,
             None => STYLE_MUTED,
         };
-        let id = id_style.apply_to(format!("{}", cp.id));
+        let id = id_style.apply_to(cp.id.to_string());
         let id_short = id_style.apply_to(format!("#{}", format_id_short(&cp.id)));
         println!(
             " {} {:<7} {:<20} {:<15} {}",

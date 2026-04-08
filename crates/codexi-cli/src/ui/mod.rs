@@ -53,17 +53,48 @@ pub(crate) fn label(text: &str, width: usize) -> impl std::fmt::Display {
     STYLE_MUTED.apply_to(format!("{:<width$}", text, width = width))
 }
 
+/// Utility function for the visual toolbar — centered on 0
+/// [-100%  ░░░░████|░░░░░░░░  +100%]
+use console::style;
+use rust_decimal::Decimal;
+use rust_decimal::prelude::ToPrimitive;
+
+pub(crate) fn draw_savings_bar(rate: Decimal, width: usize) -> String {
+    let half = width / 2;
+    let normalized = rate.abs().min(Decimal::ONE_HUNDRED) / Decimal::ONE_HUNDRED;
+    let filled = (normalized * Decimal::from(half)).to_usize().unwrap_or(0);
+    let empty = half - filled;
+
+    if rate <= Decimal::ZERO {
+        // negative: fill grows left from center
+        format!(
+            "{}{}|{}",
+            style("░".repeat(empty)).dim(),
+            style("█".repeat(filled)).red(),
+            style("░".repeat(half)).dim(),
+        )
+    } else {
+        // positive: fill grows right from center
+        format!(
+            "{}|{}{}",
+            style("░".repeat(half)).dim(),
+            style("█".repeat(filled)).green(),
+            style("░".repeat(empty)).dim(),
+        )
+    }
+}
+
 use codexi::dto::{BankItem, CurrencyItem};
 pub fn format_optional_currency_item(currency: &Option<CurrencyItem>) -> String {
     match currency {
         Some(c) => c.code.to_string(),
-        None => "—".to_string(),
+        None => "─".to_string(),
     }
 }
 
 pub fn format_optional_bank_item(bank: &Option<BankItem>) -> String {
     match bank {
         Some(b) => b.name.to_string(),
-        None => "—".to_string(),
+        None => "─".to_string(),
     }
 }

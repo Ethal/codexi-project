@@ -7,8 +7,8 @@ use std::path::Path;
 use codexi::{
     core::DataPaths,
     dto::{
-        BalanceItem, CategoryStatsCollection, CounterpartyStatsCollection, MonthlyReport, StatementCollection,
-        StatsCollection, SummaryCollection,
+        BalanceItem, CategoryStatsCollection, CounterpartyStatsCollection, DashboardCollection, MonthlyReport,
+        StatementCollection, StatsCollection, SummaryCollection,
     },
     file_management::FileManagement,
     logic::{
@@ -22,7 +22,10 @@ use crate::{
     command::ReportCommand,
     export::{export_statement_html, export_stats_html},
     msg_info, msg_warn,
-    ui::{view_balance, view_category_stats, view_counterparty_stats, view_monthly_report, view_stats, view_summary},
+    ui::{
+        view_balance, view_category_stats, view_counterparty_stats, view_dashboard, view_financial,
+        view_monthly_report, view_summary,
+    },
 };
 
 pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPaths) -> Result<()> {
@@ -40,6 +43,20 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
             } else {
                 view_balance(&balance);
             }
+        }
+        ReportCommand::Dashboard { from, to } => {
+            let range = DateRange::parse(from.as_deref(), to.as_deref())?;
+            let params = SearchParamsBuilder::default().from(range.from).to(range.to).build()?;
+            let s_ops = search(account, &params)?;
+
+            let cp_groups = s_ops.group_by_counterparty(&codexi.counterparties);
+            let cat_groups = s_ops.group_by_category(&codexi.categories);
+
+            let stats = StatsCollection::build(&codexi, account, &s_ops);
+            let cp_stats = CounterpartyStatsCollection::build(cp_groups);
+            let cat_stats = CategoryStatsCollection::build(cat_groups);
+            let dashboard = DashboardCollection::build(stats, cp_stats, cat_stats);
+            view_dashboard(&dashboard);
         }
         ReportCommand::Counterparty { from, to } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;
@@ -94,7 +111,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 msg_info!("stats completed (report.html)");
                 opener::open_browser(file_path)?;
             } else {
-                view_stats(&stats);
+                view_financial(&stats);
             }
         }
         ReportCommand::Summary {} => {

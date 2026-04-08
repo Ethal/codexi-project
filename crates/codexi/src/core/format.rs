@@ -34,7 +34,7 @@ pub fn yes_no(b: bool) -> String {
 
 pub fn format_text(txt: &str) -> String {
     if txt.is_empty() {
-        "—".to_string()
+        "─".to_string()
     } else {
         txt.to_string()
     }
@@ -43,7 +43,7 @@ pub fn format_text(txt: &str) -> String {
 pub fn format_optional_text(txt: Option<&str>) -> String {
     match txt {
         Some(v) => format_text(v),
-        None => "—".into(),
+        None => "─".into(),
     }
 }
 
@@ -53,7 +53,7 @@ pub fn format_id(id: Nulid) -> String {
 
 pub fn format_id_short(id: &str) -> String {
     if id.is_empty() {
-        "—".into()
+        "─".into()
     } else {
         let len = id.len();
         let start = len.saturating_sub(ID_MIN_SHORT_LEN);
@@ -64,7 +64,7 @@ pub fn format_id_short(id: &str) -> String {
 pub fn format_optional_id_short(id: Option<&str>) -> String {
     match id {
         Some(v) => format_id_short(v),
-        None => "—".into(),
+        None => "─".into(),
     }
 }
 

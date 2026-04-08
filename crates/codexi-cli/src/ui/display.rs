@@ -1,16 +1,17 @@
 // src/ui.rs
 use console::Style;
+use rust_decimal::Decimal;
 use thousands::Separable;
 
 use codexi::{
-    core::{CoreWarning, format_id_short},
-    dto::{SearchOperationCollection, SummaryCollection},
+    core::{CoreWarning, format_id_short, format_optional_text},
+    dto::{DashboardCollection, SearchOperationCollection, SummaryCollection},
     file_management::CodexiInfos,
 };
 
 use crate::ui::{
-    CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_DANGER, STYLE_MUTED, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, label,
-    truncate_text,
+    CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_DANGER, STYLE_MUTED, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE,
+    draw_savings_bar, label, truncate_text,
 };
 
 pub fn view_warning(warnings: &[CoreWarning]) {
@@ -274,6 +275,137 @@ pub fn view_summary(summary: &SummaryCollection) {
         NOTE_STYLE.apply_to("Remember to regularly perform closing operations to maintain accurate financial records.")
     );
     println!();
+}
+
+pub fn view_dashboard(d: &DashboardCollection) {
+    println!();
+    println!(
+        "{}",
+        TITLE_STYLE.apply_to(format!(
+            "Dashboard — {} — {} to {}",
+            d.account_name,
+            format_optional_text(d.from.as_deref()),
+            format_optional_text(d.to.as_deref())
+        ))
+    );
+    println!();
+
+    // ── Section 1 : Financial (gauche) + Top expenses (droite) ──
+    let sep = "  │  ";
+
+    // Header
+    let h_left = format!("{:<45}", TITLE_STYLE.apply_to("Financial summary"));
+    let h_right = format!("{}", TITLE_STYLE.apply_to("Top 5 expenses"));
+    println!("{}{}{}", h_left, sep, h_right);
+    println!("{}──┼──{}", "─".repeat(45), "─".repeat(52));
+
+    // Lignes financial + top expenses côte à côte
+    let fin_lines: Vec<String> = vec![
+        format!(
+            "  {:<16} {:<26}",
+            STYLE_MUTED.apply_to("Credit"),
+            CREDIT_STYLE.apply_to(format_ui_left_decimal(d.total_credit, 2)),
+        ),
+        format!(
+            "  {:<16} {:<26}",
+            STYLE_MUTED.apply_to("Debit"),
+            DEBIT_STYLE.apply_to(format_ui_left_decimal(d.total_debit, 2)),
+        ),
+        format!(
+            "  {:<16} {:<26}",
+            STYLE_MUTED.apply_to("Balance"),
+            VALUE_STYLE.apply_to(format_ui_left_decimal(d.balance, 2)),
+        ),
+        format!(
+            "  {:<16} ops: {:<21}",
+            STYLE_MUTED.apply_to("Operations"),
+            VALUE_STYLE.apply_to(format_ui_left_decimal(d.op_count.into(), 0)),
+        ),
+        format!(
+            "  {:<16} avg: {:<21}",
+            "",
+            VALUE_STYLE.apply_to(format_ui_left_decimal(d.average_operation, 2)),
+        ),
+        format!(
+            "  {:<16} {:<26}",
+            STYLE_MUTED.apply_to("Savings rate"),
+            if d.savings_rate < Decimal::ZERO {
+                DEBIT_STYLE.apply_to(format_ui_left_decimal(d.savings_rate, 2))
+            } else {
+                CREDIT_STYLE.apply_to(format_ui_left_decimal(d.savings_rate, 2))
+            },
+        ),
+        format!("  {}  ", draw_savings_bar(d.savings_rate, 40)),
+    ];
+
+    let mut exp_lines: Vec<String> = d
+        .top_expenses
+        .iter()
+        .map(|e| {
+            format!(
+                "  {} {}  {:>14}  {}",
+                STYLE_MUTED.apply_to(format!("{:<7}", format_id_short(&e.op_id))),
+                STYLE_MUTED.apply_to(&e.op_date),
+                DEBIT_STYLE.apply_to(format!("{:.2}", e.amount).separate_with_commas()),
+                truncate_text(&e.description, 22),
+            )
+        })
+        .collect();
+    exp_lines.push(String::new());
+
+    let max = fin_lines.len().max(exp_lines.len());
+    for i in 0..max {
+        let left = fin_lines.get(i).map(|s| s.as_str()).unwrap_or("");
+        let right = exp_lines.get(i).map(|s| s.as_str()).unwrap_or("");
+        println!("{:<45}{}{}", left, sep, right);
+    }
+
+    println!();
+
+    // ── Section 2 : Top categories (gauche) + Top counterparties (droite) ──
+    let h_left = format!("{:<45}", TITLE_STYLE.apply_to("Top 5 categories"));
+    let h_right = format!("{}", TITLE_STYLE.apply_to("Top 5 counterparties"));
+    println!("{}{}{}", h_left, sep, h_right);
+    println!("{}──┼──{}", "─".repeat(45), "─".repeat(52));
+
+    let cat_lines: Vec<String> = d
+        .top_categories
+        .iter()
+        .map(|c| {
+            format!(
+                "  {:<18}  {:>14}  {:>6.1}%",
+                truncate_text(&c.name, 17),
+                DEBIT_STYLE.apply_to(format!("{:.2}", c.total_debit).separate_with_commas()),
+                c.debit_percentage,
+            )
+        })
+        .collect();
+
+    let cp_lines: Vec<String> = d
+        .top_counterparties
+        .iter()
+        .map(|c| {
+            format!(
+                "  {:<18}  {:>14}  {:>6.1}%",
+                truncate_text(&c.name, 17),
+                DEBIT_STYLE.apply_to(format!("{:.2}", c.total_debit).separate_with_commas()),
+                c.debit_percentage,
+            )
+        })
+        .collect();
+
+    let max = cat_lines.len().max(cp_lines.len());
+    for i in 0..max {
+        let left = cat_lines.get(i).map(|s| s.as_str()).unwrap_or("");
+        let right = cp_lines.get(i).map(|s| s.as_str()).unwrap_or("");
+        println!("{:<45}{}{}", left, sep, right);
+    }
+
+    println!();
+}
+
+fn format_ui_left_decimal(value: Decimal, dec_place: usize) -> String {
+    format!("{:.dec_place$}", value).separate_with_commas()
 }
 
 fn format_bytes(bytes: u64) -> String {

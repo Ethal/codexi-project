@@ -28,12 +28,12 @@ pub fn view_category(datas: &CategoryCollection) {
             Some(_) => STYLE_DANGER,
             None => STYLE_MUTED,
         };
-        let id = id_style.apply_to(format!("{}", c.id));
+        let id = id_style.apply_to(c.id.to_string());
         let id_short = id_style.apply_to(format!("#{}", format_id_short(&c.id)));
         let parent = match (&c.parent_name, &c.parent_id) {
             (Some(name), Some(pid)) => {
                 let styled_pid = parent_style.apply_to(format!("({})", format_id_short(pid)));
-                let name_tr = truncate_text(&name, 17);
+                let name_tr = truncate_text(name, 17);
                 format!("{}{}", name_tr, styled_pid)
             }
             _ => "─(—)".to_string(),

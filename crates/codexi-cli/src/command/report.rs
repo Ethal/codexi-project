@@ -12,24 +12,31 @@ pub struct ReportArgs {
 /// Generate financial reports, statistics, and statements
 #[derive(Subcommand, Debug)]
 pub enum ReportCommand {
-    /// View a summary of the current account.
-    Summary {},
-
-    /// View balance and debit/credit. Available criteria, --from --to.
-    Balance {
-        // Filtres granulaire (Plage de dates arbitraire)
-        #[arg(long, value_name = "FROM_DATE", help = "Start date for filtering operations")]
+    /// Dashboard report.
+    Dashboard {
+        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
         from: Option<String>,
-
-        #[arg(long, value_name = "TO_DATE", help = "End date for filtering operations")]
+        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
         to: Option<String>,
     },
 
-    /// Monthly report
-    Monthly {
-        #[arg(long)]
+    /// View a summary of the current account.
+    Summary {},
+
+    /// View balance and debit/credit.
+    Balance {
+        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
         from: Option<String>,
-        #[arg(long)]
+
+        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
+        to: Option<String>,
+    },
+
+    /// Monthly report.
+    Monthly {
+        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
+        from: Option<String>,
+        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
         to: Option<String>,
     },
 
@@ -38,40 +45,40 @@ pub enum ReportCommand {
     /// Stats are time-based.
     /// By default, voided operations are excluded, even if voided outside the period.
     Financial {
-        #[arg(long, value_name = "YYYY-MM-DD", help = "Start date for stats")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
         from: Option<String>,
 
-        #[arg(long, value_name = "YYYY-MM-DD", help = "End date for stats")]
+        #[arg(long, value_name = "TO_DATE", help = "End date of report(YYYY-MM-DD)")]
         to: Option<String>,
 
         #[arg(long, help = "open the stats with defaut browser")]
         open: bool,
     },
 
-    /// Counterparty report
+    /// Counterparty report.
     Counterparty {
-        #[arg(long)]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
         from: Option<String>,
-        #[arg(long)]
+        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
         to: Option<String>,
     },
 
-    /// Category report
+    /// Category report.
     Category {
-        #[arg(long)]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
         from: Option<String>,
-        #[arg(long)]
+        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
         to: Option<String>,
     },
 
     /// export (html file) a statement of the current account. Available criteria, --from --to.  .
     Statement {
         /// Arbitrary date range
-        #[arg(long, help = "Start date for filtering operations", value_name = "FROM_DATE")]
+        #[arg(long, help = "Start date of the report(YYYY-MM-DD)", value_name = "FROM_DATE")]
         from: Option<String>,
 
         /// Arbitrary date range
-        #[arg(long, help = "End date for filtering operations", value_name = "TO_DATE")]
+        #[arg(long, help = "End date of the report(YYYY-MM-DD)", value_name = "TO_DATE")]
         to: Option<String>,
 
         /// open in the defaut browser
