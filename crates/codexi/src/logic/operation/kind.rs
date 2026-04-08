@@ -19,6 +19,9 @@ impl OperationKind {
     pub fn is_system(&self) -> bool {
         matches!(self, OperationKind::System(_))
     }
+    pub fn is_transfer(&self) -> bool {
+        matches!(self, OperationKind::Regular(RegularKind::Transfer))
+    }
     /// Check if the OperationKind is a Regular kind
     pub fn is_regular(&self) -> bool {
         matches!(self, OperationKind::Regular(_))

@@ -66,7 +66,7 @@ pub fn view_category_stats(data: &CategoryStatsCollection) {
     for item in &data.items {
         println!(
             "│{:<7}│{:<18}│{:>5}│{:>18}│{:>7}│{:>18}│{:>7}│{:>18}│{:<10}│",
-            STYLE_MUTED.apply_to(format!("#{}", format_id_short(&item.id))),
+            STYLE_MUTED.apply_to(format!("#{}", format_id_short(&item.id.clone().unwrap_or_default()))),
             truncate_text(&item.name, 17),
             VALUE_STYLE.apply_to(item.op_count),
             DEBIT_STYLE.apply_to(format!("{:.2}", item.total_debit).separate_with_commas()),

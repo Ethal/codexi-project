@@ -54,7 +54,7 @@ pub fn view_counterparty_stats(data: &CounterpartyStatsCollection) {
     for item in &data.items {
         println!(
             "│{:<7}│{:<18}│{:<14}│{:>5}│{:>18}│{:>7}│{:>18}│{:>7}│{:>18}│{:<10}│",
-            STYLE_MUTED.apply_to(format!("#{}", format_id_short(&item.id))),
+            STYLE_MUTED.apply_to(format!("#{}", format_id_short(&item.id.clone().unwrap_or_default()))),
             truncate_text(&item.name, 17),
             item.kind,
             VALUE_STYLE.apply_to(item.op_count),

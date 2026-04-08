@@ -3,7 +3,7 @@
 use rust_decimal::Decimal;
 
 use crate::{
-    core::{format_date, format_id, format_optional_date},
+    core::{format_date, format_id, format_optional_date, format_optional_id},
     logic::{
         counterparty::{Counterparty, CounterpartyList},
         search::CounterpartyGroup,
@@ -45,7 +45,7 @@ impl CounterpartyCollection {
 
 #[derive(Debug)]
 pub struct CounterpartyStatsItem {
-    pub id: String,
+    pub id: Option<String>,
     pub name: String,
     pub kind: String,
     pub op_count: usize,
@@ -87,7 +87,7 @@ impl CounterpartyStatsCollection {
                     Decimal::ZERO
                 };
                 CounterpartyStatsItem {
-                    id: format_id(g.id),
+                    id: format_optional_id(g.id),
                     name: g.name,
                     kind: g.kind,
                     op_count: g.op_count,

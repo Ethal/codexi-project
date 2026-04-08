@@ -15,11 +15,9 @@ use crate::logic::{
     utils::HasNulid,
 };
 
-// dans operation.rs
-
 #[derive(Debug, Clone)]
 pub struct CounterpartyGroup {
-    pub id: Nulid,
+    pub id: Option<Nulid>,
     pub name: String,
     pub kind: String,
     pub op_count: usize,
@@ -30,7 +28,7 @@ pub struct CounterpartyGroup {
 
 #[derive(Debug, Clone)]
 pub struct CategoryGroup {
-    pub id: Nulid,
+    pub id: Option<Nulid>,
     pub name: String,
     pub op_count: usize,
     pub total_debit: Decimal,
@@ -92,21 +90,29 @@ impl SearchOperationList {
     }
 
     pub fn group_by_counterparty(&self, counterparties: &CounterpartyList) -> Vec<CounterpartyGroup> {
-        let mut map: HashMap<Nulid, CounterpartyGroup> = HashMap::new();
+        let mut map: HashMap<Option<Nulid>, CounterpartyGroup> = HashMap::new();
 
         for item in self.active_items() {
             let op = &item.operation;
-            let cp_id = match op.context.counterparty_id {
-                Some(id) => id,
-                None => continue,
-            };
-
+            if op.kind.is_transfer() {
+                continue;
+            }
+            let cp_id = op.context.counterparty_id;
             let entry = map.entry(cp_id).or_insert_with(|| {
-                let cp = counterparties.get_by_id(&cp_id).ok();
+                let (name, kind) = match cp_id {
+                    Some(id) => {
+                        let cp = counterparties.get_by_id(&id).ok();
+                        (
+                            cp.map(|c| c.name.clone()).unwrap_or_default(),
+                            cp.map(|c| c.kind.as_str().to_string()).unwrap_or_default(),
+                        )
+                    }
+                    None => ("[No Counterparty]".to_string(), "Unknown".to_string()),
+                };
                 CounterpartyGroup {
                     id: cp_id,
-                    name: cp.map(|c| c.name.clone()).unwrap_or_default(),
-                    kind: cp.map(|c| c.kind.as_str().to_string()).unwrap_or_default(),
+                    name,
+                    kind,
                     op_count: 0,
                     total_debit: Decimal::ZERO,
                     total_credit: Decimal::ZERO,
@@ -137,20 +143,23 @@ impl SearchOperationList {
     }
 
     pub fn group_by_category(&self, categories: &CategoryList) -> Vec<CategoryGroup> {
-        let mut map: HashMap<Nulid, CategoryGroup> = HashMap::new();
+        let mut map: HashMap<Option<Nulid>, CategoryGroup> = HashMap::new();
 
         for item in self.active_items() {
             let op = &item.operation;
-            let cp_id = match op.context.category_id {
-                Some(id) => id,
-                None => continue,
-            };
+            let cg_id = op.context.category_id;
+            let entry = map.entry(cg_id).or_insert_with(|| {
+                let name = match cg_id {
+                    Some(id) => {
+                        let cg = categories.get_by_id(&id).ok();
+                        cg.map(|c| c.name.clone()).unwrap_or_default()
+                    }
+                    None => "[No Category]".to_string(),
+                };
 
-            let entry = map.entry(cp_id).or_insert_with(|| {
-                let cp = categories.get_by_id(&cp_id).ok();
                 CategoryGroup {
-                    id: cp_id,
-                    name: cp.map(|c| c.name.clone()).unwrap_or_default(),
+                    id: cg_id,
+                    name,
                     op_count: 0,
                     total_debit: Decimal::ZERO,
                     total_credit: Decimal::ZERO,

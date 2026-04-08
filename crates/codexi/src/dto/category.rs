@@ -57,7 +57,7 @@ impl CategoryCollection {
 
 #[derive(Debug)]
 pub struct CategoryStatsItem {
-    pub id: String,
+    pub id: Option<String>,
     pub name: String,
     pub op_count: usize,
     pub total_debit: Decimal,
@@ -98,7 +98,7 @@ impl CategoryStatsCollection {
                     Decimal::ZERO
                 };
                 CategoryStatsItem {
-                    id: format_id(g.id),
+                    id: format_optional_id(g.id),
                     name: g.name,
                     op_count: g.op_count,
                     total_debit: g.total_debit,
