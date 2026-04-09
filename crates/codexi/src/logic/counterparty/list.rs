@@ -22,6 +22,7 @@ impl CounterpartyList {
     pub fn add(&mut self, counterparty: Counterparty) -> Nulid {
         let id = counterparty.id;
         self.list.push(counterparty);
+        self.sort();
         id
     }
 
@@ -47,6 +48,7 @@ impl CounterpartyList {
         counterparty.name = name.to_string();
         counterparty.kind = kind;
         counterparty.note = note.map(str::to_owned);
+        self.sort();
         Ok(())
     }
 
@@ -89,6 +91,9 @@ impl CounterpartyList {
 
     pub fn is_empty(&self) -> bool {
         self.list.is_empty()
+    }
+    fn sort(&mut self) {
+        self.list.sort_by(|a, b| a.name.cmp(&b.name));
     }
 }
 

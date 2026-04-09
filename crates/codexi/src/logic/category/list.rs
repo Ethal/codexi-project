@@ -20,6 +20,7 @@ impl CategoryList {
     pub fn add(&mut self, category: Category) -> Nulid {
         let id = category.id;
         self.list.push(category);
+        self.sort();
         id
     }
 
@@ -48,6 +49,7 @@ impl CategoryList {
         category.parent_id = parent_id;
         category.terminated = terminated;
         category.note = note.map(str::to_owned);
+        self.sort();
         Ok(())
     }
 
@@ -95,6 +97,9 @@ impl CategoryList {
 
     pub fn is_exist(&self, id: &Nulid) -> bool {
         self.list.iter().any(|c| &c.id == id)
+    }
+    fn sort(&mut self) {
+        self.list.sort_by(|a, b| a.name.cmp(&b.name));
     }
 }
 
