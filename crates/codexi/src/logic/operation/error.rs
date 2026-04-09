@@ -2,7 +2,7 @@
 
 use thiserror::Error;
 
-use crate::core::CoreError;
+use crate::{core::CoreError, logic::utils::ResolveError};
 
 /// Error type for Operation
 #[derive(Debug, Error)]
@@ -23,6 +23,12 @@ pub enum OperationError {
     OperationBuilder(String),
     #[error("OP_AMOUNT: Operation amount below zero or negative: {0}")]
     InvalidAmount(String),
+    #[error("VAL_OP: No Operation with id: {0}")]
+    OperationNotFound(String),
+    #[error("OP_ACCOUNT: Multiple operatin match '{0}', use more characters")]
+    AmbiguousShortId(String),
+    #[error("OP_ACCOUNT: Invalid short id {0}, expected {1} characters minimum")]
+    InvalidShortId(String, usize),
 }
 
 /// Error type for OperationFlow
@@ -51,4 +57,16 @@ pub enum RegularKindError {
 pub enum SystemKindError {
     #[error("OP_INVALID_SYSTEM_KIND: Unknown System Kind: {0}")]
     Unknown(String),
+}
+
+impl ResolveError for OperationError {
+    fn not_found(input: String) -> Self {
+        OperationError::OperationNotFound(input)
+    }
+    fn ambiguous(input: String) -> Self {
+        OperationError::AmbiguousShortId(input)
+    }
+    fn invalid(input: String, min: usize) -> Self {
+        OperationError::InvalidShortId(input, min)
+    }
 }

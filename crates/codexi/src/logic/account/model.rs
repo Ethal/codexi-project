@@ -101,9 +101,11 @@ impl Account {
         self.meta = meta;
     }
 
+    /// update context of the account
     pub fn update_context(&mut self, ctx: AccountContext) {
         self.context = ctx;
     }
+    /// update meta of the account
     pub fn update_meta(&mut self, meta: AccountMeta) {
         self.meta = meta;
     }

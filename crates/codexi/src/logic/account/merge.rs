@@ -63,7 +63,10 @@ impl Account {
 
         for op_update in to_update {
             if let Some(op) = self.get_operation_by_id_mut(op_update.id) {
-                op.update(&op_update.description, &op_update.context, &op_update.meta);
+                op.update_description(&op_update.description);
+                op.update_context(&op_update.context);
+                op.update_meta(&op_update.meta);
+
                 summary.updated += 1;
             }
         }

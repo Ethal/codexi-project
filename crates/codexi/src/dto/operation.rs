@@ -11,7 +11,7 @@ use crate::{
         codexi::Codexi,
         counts::Counts,
         operation::OperationFlow,
-        search::{SearchOperation, SearchOperationList, SearchParams},
+        search::{CounterpartyCategoryGroup, SearchOperation, SearchOperationList, SearchParams},
     },
 };
 
@@ -133,5 +133,85 @@ impl SearchOperationCollection {
             params: s_ops.params.clone(),
             items,
         }
+    }
+}
+
+/*------------------------------------------------------------------------------*/
+/*--------------------TREE COUNTERPART / CATEGORY / OPERATION ------------------*/
+/*------------------------------------------------------------------------------*/
+
+#[derive(Debug)]
+pub struct OperationLeaf {
+    pub id: String,
+    pub date: String,
+    pub flow: String,
+    pub amount: Decimal,
+    pub description: String,
+}
+
+#[derive(Debug)]
+pub struct CategoryNode {
+    pub id: Option<String>,
+    pub name: String,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+    pub operations: Vec<OperationLeaf>,
+}
+
+#[derive(Debug)]
+pub struct CounterpartyNode {
+    pub id: Option<String>,
+    pub name: String,
+    pub kind: String,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+    pub categories: Vec<CategoryNode>,
+}
+
+#[derive(Debug)]
+pub struct CounterpartyTreeCollection {
+    pub nodes: Vec<CounterpartyNode>,
+}
+
+impl CounterpartyTreeCollection {
+    pub fn build(groups: Vec<CounterpartyCategoryGroup>) -> Self {
+        let nodes = groups
+            .into_iter()
+            .map(|cp| {
+                let categories = cp
+                    .categories
+                    .into_iter()
+                    .map(|cg| {
+                        let operations = cg
+                            .operations
+                            .into_iter()
+                            .map(|so| OperationLeaf {
+                                id: format_id(so.operation.id),
+                                date: format_date(so.operation.date),
+                                flow: so.operation.flow.as_str().to_string(),
+                                amount: so.operation.amount,
+                                description: so.operation.description.clone(),
+                            })
+                            .collect();
+                        CategoryNode {
+                            id: format_optional_id(cg.id),
+                            name: cg.name,
+                            total_debit: cg.total_debit,
+                            total_credit: cg.total_credit,
+                            operations,
+                        }
+                    })
+                    .collect();
+                CounterpartyNode {
+                    id: format_optional_id(cp.id),
+                    name: cp.name,
+                    kind: cp.kind,
+                    total_debit: cp.total_debit,
+                    total_credit: cp.total_credit,
+                    categories,
+                }
+            })
+            .collect();
+        Self { nodes }
     }
 }

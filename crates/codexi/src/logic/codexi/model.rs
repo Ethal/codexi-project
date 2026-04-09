@@ -157,4 +157,27 @@ impl Codexi {
     pub fn account_count(&self) -> usize {
         self.accounts.len()
     }
+
+    pub fn update_operation(
+        &mut self,
+        op_id: Nulid,
+        desc: Option<&str>,
+        counterparty: Option<Nulid>,
+        category: Option<Nulid>,
+    ) -> Result<(), CodexiError> {
+        let acc = self.get_current_account_mut()?;
+        let op = acc
+            .get_operation_by_id_mut(op_id)
+            .ok_or(CodexiError::NoOperation(format_id(op_id)))?;
+        if let Some(d) = desc {
+            op.update_description(&d);
+        }
+        if let Some(c) = counterparty {
+            op.update_counterparty(c);
+        }
+        if let Some(g) = category {
+            op.update_category(g);
+        }
+        Ok(())
+    }
 }

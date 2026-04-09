@@ -6,13 +6,13 @@ use nulid::Nulid;
 use rust_decimal::Decimal;
 use std::collections::HashMap;
 
-use crate::{logic::{
+use crate::logic::{
     account::OperationContainer,
     category::CategoryList,
     counterparty::CounterpartyList,
     operation::{Operation, OperationFlow, OperationKind},
     search::SearchError,
-    utils::HasNulid,},
+    utils::HasNulid,
 };
 
 #[derive(Debug, Clone)]
@@ -54,7 +54,7 @@ impl SearchOperationList {
     pub fn new(params: &SearchParams) -> Self {
         Self {
             items: Vec::new(),
-            params:params.clone(),
+            params: params.clone(),
         }
     }
 
@@ -202,12 +202,12 @@ impl HasNulid for SearchOperation {
     }
 }
 
-#[derive(Debug, Default,Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub enum NulidSearchFilter {
     #[default]
-    Any,            // no filtre
-    NoneOnly,       // None
-    One(Nulid),     // <id|name>
+    Any, // no filtre
+    NoneOnly,   // None
+    One(Nulid), // <id|name>
 }
 
 #[derive(Debug, Default, Clone, Builder)]
@@ -260,7 +260,6 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
         Some(s) => match OperationFlow::try_from(s) {
             Ok(v) => Some(v),
             Err(e) => return Err(SearchError::InvalidData(e.to_string())),
-
         },
         None => None,
     };
@@ -367,4 +366,125 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
     };
 
     Ok(result)
+}
+
+/*------------------------------------------------------------------------------*/
+/*--------------------TREE COUNTERPART / CATEGORY / OPERATION ------------------*/
+/*------------------------------------------------------------------------------*/
+
+// --- Nouvelles structs ---
+
+#[derive(Debug, Clone)]
+pub struct CategorySubGroup {
+    pub id: Option<Nulid>,
+    pub name: String,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+    pub operations: Vec<SearchOperation>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CounterpartyCategoryGroup {
+    pub id: Option<Nulid>,
+    pub name: String,
+    pub kind: String,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+    pub categories: Vec<CategorySubGroup>,
+}
+
+// --- Nouvelle méthode sur SearchOperationList ---
+
+impl SearchOperationList {
+    pub fn group_by_counterparty_category(
+        &self,
+        counterparties: &CounterpartyList,
+        categories: &CategoryList,
+    ) -> Vec<CounterpartyCategoryGroup> {
+        // Outer map: counterparty_id -> (CounterpartyCategoryGroup shell, inner map: category_id -> CategorySubGroup)
+        let mut outer: HashMap<Option<Nulid>, (CounterpartyCategoryGroup, HashMap<Option<Nulid>, CategorySubGroup>)> =
+            HashMap::new();
+
+        for item in self.active_items() {
+            let op = &item.operation;
+            let cp_id = op.context.counterparty_id;
+            let cg_id = op.context.category_id;
+
+            let (cp_group, inner_map) = outer.entry(cp_id).or_insert_with(|| {
+                let (name, kind) = match cp_id {
+                    Some(id) => {
+                        let cp = counterparties.get_by_id(&id).ok();
+                        (
+                            cp.map(|c| c.name.clone()).unwrap_or_default(),
+                            cp.map(|c| c.kind.as_str().to_string()).unwrap_or_default(),
+                        )
+                    }
+                    None => ("[No Counterparty]".to_string(), String::new()),
+                };
+                (
+                    CounterpartyCategoryGroup {
+                        id: cp_id,
+                        name,
+                        kind,
+                        total_debit: Decimal::ZERO,
+                        total_credit: Decimal::ZERO,
+                        categories: Vec::new(), // filled later
+                    },
+                    HashMap::new(),
+                )
+            });
+
+            // Accumulate totals on counterparty
+            if op.flow.is_debit() {
+                cp_group.total_debit += op.amount;
+            } else {
+                cp_group.total_credit += op.amount;
+            }
+
+            // Inner: category subgroup
+            let sub = inner_map.entry(cg_id).or_insert_with(|| {
+                let name = match cg_id {
+                    Some(id) => {
+                        let cg = categories.get_by_id(&id).ok();
+                        cg.map(|c| c.name.clone()).unwrap_or_default()
+                    }
+                    None => "[No Category]".to_string(),
+                };
+                CategorySubGroup {
+                    id: cg_id,
+                    name,
+                    total_debit: Decimal::ZERO,
+                    total_credit: Decimal::ZERO,
+                    operations: Vec::new(),
+                }
+            });
+
+            if op.flow.is_debit() {
+                sub.total_debit += op.amount;
+            } else {
+                sub.total_credit += op.amount;
+            }
+            sub.operations.push(item.clone());
+        }
+
+        // Assemble: sort operations by date, sort categories alphabetically, sort counterparties alphabetically
+        let mut result: Vec<CounterpartyCategoryGroup> = outer
+            .into_values()
+            .map(|(mut cp_group, inner_map)| {
+                let mut categories: Vec<CategorySubGroup> = inner_map
+                    .into_values()
+                    .map(|mut sub| {
+                        sub.operations.sort_by_key(|so| so.operation.date);
+                        sub
+                    })
+                    .collect();
+                categories.sort_by(|a, b| a.name.cmp(&b.name));
+                cp_group.categories = categories;
+                cp_group
+            })
+            .collect();
+
+        result.sort_by(|a, b| a.name.cmp(&b.name));
+        result
+    }
 }

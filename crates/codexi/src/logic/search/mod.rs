@@ -5,5 +5,6 @@ mod operation;
 
 pub use error::SearchError;
 pub use operation::{
-    CategoryGroup, CounterpartyGroup, SearchOperation, SearchOperationList, SearchParams, SearchParamsBuilder, search,NulidSearchFilter,
+    CategoryGroup, CategorySubGroup, CounterpartyCategoryGroup, CounterpartyGroup, NulidSearchFilter, SearchOperation,
+    SearchOperationList, SearchParams, SearchParamsBuilder, search,
 };

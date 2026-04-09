@@ -10,6 +10,7 @@ mod display;
 mod loan;
 mod operation;
 mod report;
+mod tree;
 
 pub use account::*;
 pub use balance::*;
@@ -21,6 +22,7 @@ pub use display::*;
 pub use loan::*;
 pub use operation::*;
 pub use report::*;
+pub use tree::*;
 
 use console::Style;
 const TITLE_STYLE: Style = Style::new().cyan().bold();

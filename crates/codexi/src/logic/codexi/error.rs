@@ -48,6 +48,9 @@ pub enum CodexiError {
     TransferTwinArchived,
     #[error("VAL_TRANSFER: Operation {0} is not a transfer")]
     NotATransfer(String),
+    #[error("VAL_OPERATION: No Operation {0} in the current account")]
+    NoOperation(String),
+
 }
 
 impl ResolveError for CodexiError {

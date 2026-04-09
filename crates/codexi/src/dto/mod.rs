@@ -21,7 +21,7 @@ pub use counterparty::{CounterpartyCollection, CounterpartyItem, CounterpartySta
 pub use currency::{CurrencyCollection, CurrencyItem};
 pub use dashboard::DashboardCollection;
 pub use monthly_report::MonthlyReport;
-pub use operation::{SearchOperationCollection, SearchOperationItem};
+pub use operation::{CounterpartyTreeCollection, SearchOperationCollection, SearchOperationItem};
 pub use statement::{CodexiContext, StatementCollection, StatementItem};
 pub use stats::{StatsCollection, TopExpenseItem};
 pub use summary::{AccountAnchorsItem, SummaryCollection};

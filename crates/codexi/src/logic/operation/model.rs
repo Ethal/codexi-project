@@ -78,12 +78,20 @@ pub struct Operation {
 
 /// Methods for Operation
 impl Operation {
-    pub fn update(&mut self, description: &str, context: &OperationContext, meta: &OperationMeta) {
+    pub fn update_description(&mut self, description: &str) {
         self.description = description.into();
-        self.context.category_id = context.category_id;
-        self.context.payee = context.payee.clone();
-        self.context.reconciled = context.reconciled;
-        self.context.counterparty_id = context.counterparty_id;
+    }
+    pub fn update_category(&mut self, category_id: Nulid) {
+        self.context.category_id = Some(category_id);
+    }
+    pub fn update_counterparty(&mut self, counterparty_id: Nulid) {
+        self.context.counterparty_id = Some(counterparty_id);
+    }
+    pub fn update_context(&mut self, context: &OperationContext) {
+        self.context = context.clone();
+    }
+
+    pub fn update_meta(&mut self,meta: &OperationMeta) {
         self.meta = meta.clone();
     }
 
