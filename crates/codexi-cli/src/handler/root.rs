@@ -15,7 +15,7 @@ use codexi::{
         codexi::CodexiError,
         counterparty::{Counterparty, CounterpartyError},
         operation::{OperationFlow, OperationKind, RegularKind},
-        search::{SearchParamsBuilder, search},
+        search::{SearchParamsBuilder, search, NulidSearchFilter},
         utils::resolve_by_id_or_name,
     },
     types::DateRange,
@@ -208,14 +208,26 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             open,
         } => {
             let codexi = FileManagement::load_current_state(paths)?;
-            let category_id = category
-                .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
-                .transpose()?;
-            let counterparty_id = counterparty
-                .map(|name| {
-                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(&name, &codexi.counterparties.list)
-                })
-                .transpose()?;
+            let g_filter = match category.as_deref() {
+                None => NulidSearchFilter::Any,
+                Some("None") => NulidSearchFilter::NoneOnly,
+                Some(v) => NulidSearchFilter::One(
+                    resolve_by_id_or_name::<Category, CategoryError>(
+                        v,
+                        &codexi.categories.list,
+                    )?
+                ),
+            };
+            let c_filter = match counterparty.as_deref() {
+                None => NulidSearchFilter::Any,
+                Some("None") => NulidSearchFilter::NoneOnly,
+                Some(v) => NulidSearchFilter::One(
+                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(
+                        v,
+                        &codexi.counterparties.list,
+                    )?
+                ),
+            };
             let amount_min_d = parse_optional_decimal(&amount_min, "amount_min")?;
             let amount_max_d = parse_optional_decimal(&amount_max, "amount_max")?;
             let mut range = DateRange::parse(from.as_deref(), to.as_deref())?;
@@ -225,17 +237,15 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 range = DateRange::parse(Some(from.as_ref()), Some(to.as_ref()))?;
             }
 
-            let codexi = FileManagement::load_current_state(paths)?;
             let account = codexi.get_current_account()?;
-
             let params = SearchParamsBuilder::default()
                 .from(range.from)
                 .to(range.to)
                 .text(text)
                 .kind(kind)
                 .flow(flow)
-                .counterparty(counterparty_id)
-                .category(category_id)
+                .counterparty(c_filter)
+                .category(g_filter)
                 .amount_min(amount_min_d)
                 .amount_max(amount_max_d)
                 .latest(last)
@@ -243,12 +253,12 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
 
             let s_ops = search(account, &params)?;
             let search_items = SearchOperationCollection::build(&codexi, account, &s_ops);
-            let statement_results = StatementCollection::build(&codexi, account, &s_ops);
             if search_items.items.is_empty() {
                 msg_warn!("No data available as per criteria.");
                 return Ok(());
             }
             if open {
+                let statement_results = StatementCollection::build(&codexi, account, &s_ops);
                 let html = export_statement_html(statement_results)?;
                 let file_path = FileManagement::export_html(&html, cwd)?;
                 msg_info!("search completed (report.html)");

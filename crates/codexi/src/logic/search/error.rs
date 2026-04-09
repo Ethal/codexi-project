@@ -10,6 +10,8 @@ use crate::logic::utils::ResolveError;
 pub enum SearchError {
     #[error("SRCH_INVALID_DATE: {0}")]
     InvalidDate(String),
+    #[error("SRCH_INVALID_DATA: {0}")]
+    InvalidData(String),
     #[error("SYS_COMMON: {0}")]
     Common(#[from] CoreError),
     #[error("SRCH_BUILD: search parameters build: {0}")]

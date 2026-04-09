@@ -6,13 +6,13 @@ use nulid::Nulid;
 use rust_decimal::Decimal;
 use std::collections::HashMap;
 
-use crate::logic::{
+use crate::{logic::{
     account::OperationContainer,
     category::CategoryList,
     counterparty::CounterpartyList,
     operation::{Operation, OperationFlow, OperationKind},
     search::SearchError,
-    utils::HasNulid,
+    utils::HasNulid,},
 };
 
 #[derive(Debug, Clone)]
@@ -51,10 +51,10 @@ pub struct SearchOperationList {
 }
 
 impl SearchOperationList {
-    pub fn new(params: SearchParams) -> Self {
+    pub fn new(params: &SearchParams) -> Self {
         Self {
             items: Vec::new(),
-            params,
+            params:params.clone(),
         }
     }
 
@@ -192,7 +192,7 @@ impl SearchOperationList {
 
 impl Default for SearchOperationList {
     fn default() -> Self {
-        Self::new(SearchParams::default())
+        Self::new(&SearchParams::default())
     }
 }
 
@@ -200,6 +200,14 @@ impl HasNulid for SearchOperation {
     fn id(&self) -> Nulid {
         self.operation.id
     }
+}
+
+#[derive(Debug, Default,Copy, Clone)]
+pub enum NulidSearchFilter {
+    #[default]
+    Any,            // no filtre
+    NoneOnly,       // None
+    One(Nulid),     // <id|name>
 }
 
 #[derive(Debug, Default, Clone, Builder)]
@@ -210,8 +218,8 @@ pub struct SearchParams {
     pub text: Option<String>,
     pub kind: Option<String>,
     pub flow: Option<String>,
-    pub counterparty: Option<Nulid>,
-    pub category: Option<Nulid>,
+    pub counterparty: NulidSearchFilter,
+    pub category: NulidSearchFilter,
     pub amount_min: Option<Decimal>,
     pub amount_max: Option<Decimal>,
     pub latest: Option<usize>,
@@ -251,7 +259,8 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
     let o_flow_filter = match flow {
         Some(s) => match OperationFlow::try_from(s) {
             Ok(v) => Some(v),
-            Err(_) => return Ok(SearchOperationList::new(params.clone())),
+            Err(e) => return Err(SearchError::InvalidData(e.to_string())),
+
         },
         None => None,
     };
@@ -259,12 +268,12 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
     let o_kind_filter = match kind {
         Some(s) => match OperationKind::try_from(s) {
             Ok(v) => Some(v),
-            Err(_) => return Ok(SearchOperationList::new(params.clone())),
+            Err(e) => return Err(SearchError::InvalidData(e.to_string())),
         },
         None => None,
     };
 
-    let mut matched = SearchOperationList::new(params.clone());
+    let mut matched = SearchOperationList::new(&params);
 
     for item in ops_map {
         let op = &item.operation;
@@ -289,16 +298,32 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
             continue;
         }
         // counterparty
-        if let Some(c) = counterparty
-            && op.context.counterparty_id != Some(c)
-        {
-            continue;
+        match &counterparty {
+            NulidSearchFilter::Any => {}
+            NulidSearchFilter::NoneOnly => {
+                if op.context.counterparty_id.is_some() {
+                    continue;
+                }
+            }
+            NulidSearchFilter::One(id) => {
+                if op.context.counterparty_id != Some(*id) {
+                    continue;
+                }
+            }
         }
         // category
-        if let Some(g) = category
-            && op.context.category_id != Some(g)
-        {
-            continue;
+        match &category {
+            NulidSearchFilter::Any => {}
+            NulidSearchFilter::NoneOnly => {
+                if op.context.category_id.is_some() {
+                    continue;
+                }
+            }
+            NulidSearchFilter::One(id) => {
+                if op.context.category_id != Some(*id) {
+                    continue;
+                }
+            }
         }
         // debit/credit
         if let Some(f_op) = o_flow_filter
