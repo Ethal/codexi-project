@@ -12,18 +12,18 @@
 
 ## Regular operations
 
-| Kind | Flow | Current | Joint | Business | Student | Saving | Deposit | Loan | Income |
-| :--- | :--- | :-----: | :---: | :------: | :-----: | :----: | :-----: | :--: | :----: |
-| **Transaction** | Credit | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ |
-| | Debit | ~ ¹ | ~ ¹ | ~ ¹ | ~ ¹ | ✗ | ✗ | ✗ | ✗ |
-| **Transfer** | Credit | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| | Debit | ~ ¹ | ~ ¹ | ~ ¹ | ~ ¹ | ~ ² | ~ ³ | ✓ | ~ ² |
-| **Interest** | Credit | ✗ | ✗ | ✗ | ✗ | ~ ⁴ | ~ ⁴ | ~ ⁴ | ✗ |
-| | Debit | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| **Fee** | Credit | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
-| | Debit | ✓ | ✓ | ✓ | ✓ | ~ ² | ~ ³ | ~ ² | ✗ |
-| **Refund** | Credit | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ |
-| | Debit | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Kind | Flow | Current | Cash | Joint | Business | Student | Saving | Deposit | Loan | Income |
+| :--- | :--- | :-----: | :---:| :---: | :------: | :-----: | :----: | :-----: | :--: | :----: |
+| **Transaction** | Credit | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ |
+| | Debit | ~ ¹ | ~ ¹ | ~ ¹ | ~ ¹ | ~ ¹ | ✗ | ✗ | ✗ | ✗ |
+| **Transfer** | Credit | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| | Debit | ~ ¹ | ~ ¹ | ~ ¹ | ~ ¹ | ~ ¹ | ~ ² | ~ ³ | ✓ | ~ ² |
+| **Interest** | Credit | ~ ⁴ | ✗ | ✗ | ✗ | ✗ | ~ ⁴ | ~ ⁴ | ~ ⁴ | ✗ |
+| | Debit | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| **Fee** | Credit | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
+| | Debit | ✓ | ✓ | ✓ | ✓ | ✓ | ~ ² | ~ ³ | ~ ² | ✗ |
+| **Refund** | Credit | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ |
+| | Debit | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 
 **Notes:**
 

@@ -170,7 +170,7 @@ impl Codexi {
             .get_operation_by_id_mut(op_id)
             .ok_or(CodexiError::NoOperation(format_id(op_id)))?;
         if let Some(d) = desc {
-            op.update_description(&d);
+            op.update_description(d);
         }
         if let Some(c) = counterparty {
             op.update_counterparty(c);

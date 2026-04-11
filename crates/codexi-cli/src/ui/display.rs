@@ -278,6 +278,28 @@ pub fn view_summary(summary: &SummaryCollection) {
 }
 
 pub fn view_dashboard(d: &DashboardCollection) {
+    let savings_line = match d.savings_rate {
+        Some(rate) => {
+            let rate_str = format!("{:>12.2}%", rate);
+            let rate_styled = if rate < Decimal::ZERO {
+                DEBIT_STYLE.apply_to(rate_str)
+            } else {
+                CREDIT_STYLE.apply_to(rate_str)
+            };
+            format!("  {:<16} {:<26}", STYLE_MUTED.apply_to("Savings rate"), rate_styled,)
+        }
+        None => format!(
+            "  {:<16} {:<26}",
+            STYLE_MUTED.apply_to("Savings rate"),
+            STYLE_MUTED.apply_to("N/A"),
+        ),
+    };
+
+    let savings_bar_line = match d.savings_rate {
+        Some(rate) => format!("  {:<43}  ", draw_savings_bar(rate, 40)),
+        None => format!("  {:<43}", STYLE_MUTED.apply_to("(not supported by account type)"),),
+    };
+
     println!();
     println!(
         "{}",
@@ -326,16 +348,8 @@ pub fn view_dashboard(d: &DashboardCollection) {
             "",
             VALUE_STYLE.apply_to(format_ui_left_decimal(d.average_operation, 2)),
         ),
-        format!(
-            "  {:<16} {:<26}",
-            STYLE_MUTED.apply_to("Savings rate"),
-            if d.savings_rate < Decimal::ZERO {
-                DEBIT_STYLE.apply_to(format_ui_left_decimal(d.savings_rate, 2))
-            } else {
-                CREDIT_STYLE.apply_to(format_ui_left_decimal(d.savings_rate, 2))
-            },
-        ),
-        format!("  {}  ", draw_savings_bar(d.savings_rate, 40)),
+        savings_line,
+        savings_bar_line,
     ];
 
     let mut exp_lines: Vec<String> = d

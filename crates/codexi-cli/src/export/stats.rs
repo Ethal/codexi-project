@@ -14,12 +14,21 @@ pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
     tera.add_raw_template("stats.html", STATS_TEMPLATE)?;
 
     // Savings bar : clamp 0–100 for the bar width, flag negative for color
-    let savings_rate_negative = entry.savings_rate < Decimal::ZERO;
+
+    let savings_rate_negative = match entry.savings_rate {
+        Some(v) => v < Decimal::ZERO,
+        None => false,
+    };
+
     let savings_bar_pct = entry
         .savings_rate
-        .max(Decimal::ZERO)
-        .min(Decimal::ONE_HUNDRED)
-        .to_string();
+        .map(|v| v.max(Decimal::ZERO).min(Decimal::ONE_HUNDRED).to_string())
+        .unwrap_or("0".to_string());
+
+    let savings_value = entry
+        .savings_rate
+        .map(|v| format!("{:.2}", v))
+        .unwrap_or("N/A".to_string());
 
     let top_expenses: Vec<serde_json::Value> = entry
         .top_expenses
@@ -74,7 +83,7 @@ pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
     );
 
     // Savings bar
-    ctx.insert("savings_rate", &format!("{:.2}", entry.savings_rate));
+    ctx.insert("savings_rate", &savings_value);
     ctx.insert("savings_rate_negative", &savings_rate_negative);
     ctx.insert("savings_bar_pct", &savings_bar_pct);
 

@@ -202,6 +202,14 @@ impl Account {
         let today = chrono::Local::now().date_naive();
         self.temporal_policy(TemporalAction::Void(op_id), today).is_ok()
     }
+
+    pub fn is_cash(&self) -> bool {
+        matches!(self.context.account_type, AccountType::Cash)
+    }
+
+    pub fn has_saving_rate(&self) -> bool {
+        self.context.has_saving_rate()
+    }
 }
 
 impl HasNulid for Account {

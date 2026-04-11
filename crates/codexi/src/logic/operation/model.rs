@@ -91,18 +91,23 @@ impl Operation {
         self.context = context.clone();
     }
 
-    pub fn update_meta(&mut self,meta: &OperationMeta) {
+    pub fn update_meta(&mut self, meta: &OperationMeta) {
         self.meta = meta.clone();
     }
 
     pub fn is_void(&self) -> bool {
         self.kind.is_void()
     }
+
     pub fn is_voided(&self) -> bool {
         self.links.void_by.is_some()
     }
     pub fn is_adjust(&self) -> bool {
         self.kind.is_adjust()
+    }
+
+    pub fn is_transfer(&self) -> bool {
+        self.kind.is_transfer()
     }
 
     pub fn is_legacy_account(&self) -> bool {

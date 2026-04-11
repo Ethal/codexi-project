@@ -49,6 +49,15 @@ impl AccountContext {
                 allows_interest: account_type.allows_interest(),
                 allows_joint_signers: account_type.allows_joint_signers(),
             },
+            AccountType::Cash => Self {
+                account_type,
+                overdraft_limit: dec!(500),
+                min_balance: dec!(0),
+                max_monthly_transactions: None,
+                deposit_locked_until: None,
+                allows_interest: account_type.allows_interest(),
+                allows_joint_signers: account_type.allows_joint_signers(),
+            },
             AccountType::Income => Self {
                 account_type,
                 overdraft_limit: dec!(0),
@@ -193,9 +202,11 @@ impl AccountContext {
         // allows_interest — only applicable to Saving, Deposit, Loan, Income accounts
         if let Some(value) = allows_interest {
             match self.account_type {
-                AccountType::Saving | AccountType::Deposit | AccountType::Loan | AccountType::Income => {
-                    self.allows_interest = value
-                }
+                AccountType::Current
+                | AccountType::Saving
+                | AccountType::Deposit
+                | AccountType::Loan
+                | AccountType::Income => self.allows_interest = value,
                 _ => {
                     warnings.push(CoreWarning {
                         kind: CoreWarningKind::ContextNotApplicable,
@@ -225,6 +236,13 @@ impl AccountContext {
         }
 
         Ok(warnings)
+    }
+
+    pub fn has_saving_rate(&self) -> bool {
+        matches!(
+            self.account_type,
+            AccountType::Current | AccountType::Joint | AccountType::Business
+        )
     }
 }
 

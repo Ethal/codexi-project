@@ -161,6 +161,9 @@ impl CompliancePolicy for BusinessPolicy {}
 pub struct StudentPolicy;
 impl CompliancePolicy for StudentPolicy {}
 
+pub struct CashPolicy;
+impl CompliancePolicy for CashPolicy {}
+
 // ── Saving ─────────────────────────────────────────
 // No overdraft. Only Transfer allowed for debit movements.
 // Transaction Debit and Fee Debit forbidden — Transfer only.
@@ -325,6 +328,7 @@ pub fn policy_for(account_type: AccountType) -> Box<dyn CompliancePolicy> {
         AccountType::Business => Box::new(BusinessPolicy),
         AccountType::Student => Box::new(StudentPolicy),
         AccountType::Income => Box::new(IncomePolicy),
+        AccountType::Cash => Box::new(CashPolicy),
     }
 }
 
@@ -433,6 +437,7 @@ mod tests {
             &DepositPolicy,
             &LoanPolicy,
             &IncomePolicy,
+            &CashPolicy,
         ] {
             assert!(
                 policy

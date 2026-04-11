@@ -16,7 +16,7 @@ pub struct DashboardCollection {
     pub total_credit: Decimal,
     pub total_debit: Decimal,
     pub balance: Decimal,
-    pub savings_rate: Decimal,
+    pub savings_rate: Option<Decimal>,
     pub op_count: usize,
     pub average_operation: Decimal,
     // Top 5

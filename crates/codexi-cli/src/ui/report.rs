@@ -6,7 +6,8 @@ use thousands::Separable;
 use codexi::dto::{MonthlyReport, StatsCollection};
 
 use crate::ui::{
-    CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, draw_savings_bar, truncate_text,
+    CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_MUTED, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, draw_savings_bar,
+    truncate_text,
 };
 
 pub fn view_monthly_report(report: &MonthlyReport) {
@@ -35,12 +36,22 @@ pub fn view_monthly_report(report: &MonthlyReport) {
     for item in &report.items {
         let s = &item.stats;
         let balance_txt = VALUE_STYLE.apply_to(format!("{:>18}", format!("{:.2}", s.balance).separate_with_commas()));
-        let bar = draw_savings_bar(s.savings_rate, 32);
-        let savings_txt = format!("{:>7.2}%", s.savings_rate);
-        let savins_styled = if s.savings_rate < Decimal::ZERO {
-            DEBIT_STYLE.apply_to(savings_txt)
-        } else {
-            CREDIT_STYLE.apply_to(savings_txt)
+
+        let (savings_val, savings_bar) = match s.savings_rate {
+            Some(v) => {
+                let bar = draw_savings_bar(v, 32);
+                let savings_txt = format!("{:>7.2}", v);
+                let savings_styled = if v < Decimal::ZERO {
+                    DEBIT_STYLE.apply_to(savings_txt)
+                } else {
+                    CREDIT_STYLE.apply_to(savings_txt)
+                };
+                (format!("{}%", savings_styled), format!("{:<31}", bar))
+            }
+            None => (
+                format!("{}", STYLE_MUTED.apply_to("N/A")),
+                format!("{:<38}", STYLE_MUTED.apply_to("(not supported by account type)")),
+            ),
         };
 
         let period_txt = if s.ignored.is_empty() {
@@ -55,8 +66,8 @@ pub fn view_monthly_report(report: &MonthlyReport) {
             CREDIT_STYLE.apply_to(format!("{:.2}", s.total_credit).separate_with_commas()),
             DEBIT_STYLE.apply_to(format!("{:.2}", s.total_debit).separate_with_commas()),
             balance_txt,
-            savins_styled,
-            bar,
+            savings_val,
+            savings_bar,
         );
     }
 
@@ -93,10 +104,34 @@ pub fn view_monthly_report(report: &MonthlyReport) {
 
 /// View Financial
 pub fn view_financial(stats: &StatsCollection) {
-    let savings_style = if stats.savings_rate < Decimal::ZERO {
-        DEBIT_STYLE
-    } else {
-        CREDIT_STYLE
+    // Savings rate
+    // Savings rate
+    let savings_line = match stats.savings_rate {
+        Some(v) => {
+            let bar = draw_savings_bar(v, 32);
+            let rate_str = format!("{:>12.2}%", v);
+            let rate_styled = if v < Decimal::ZERO {
+                DEBIT_STYLE.apply_to(&rate_str)
+            } else {
+                CREDIT_STYLE.apply_to(&rate_str)
+            };
+            format!(
+                "│ {}   {}   {}{:<13}│",
+                STYLE_NORMAL.apply_to("savings rate"),
+                rate_styled,
+                bar,
+                "",
+            )
+        }
+        None => {
+            let na_text = "N/A  (not applicable for this account type)";
+            format!(
+                "│ {} {}{:<21}│",
+                STYLE_NORMAL.apply_to("savings rate"),
+                STYLE_MUTED.apply_to(na_text),
+                "",
+            )
+        }
     };
     println!();
     println!(
@@ -106,59 +141,60 @@ pub fn view_financial(stats: &StatsCollection) {
     println!();
 
     println!("┌──────────────────────────────────────────────────────────────────────────────┐");
-    let title_text = format!("{:<77}", "Financial analytics (excl. init and checkpoint)");
+    let title_text = format!("{:<77}", "Financial analytics (excl. init, checkpoint, void, voided)");
     println!("│ {}│", TITLE_STYLE.apply_to(title_text));
     println!("├──────────────────────┬──────────────────┬────────────────────────────────────┤");
 
-    // Line 1 related to total_credit/op count
-    let ops_count_val = format!("{}", stats.operation_count);
+    // Line 1 — total credit / ops count all
     println!(
-        "│ {:<20} │ {:>16} │ {} {:<23} │",
+        "│ {:<20} │ {:>16} │ {} {:<17} │",
         STYLE_NORMAL.apply_to("total credit"),
         CREDIT_STYLE.apply_to(format!("{:.2}", stats.total_credit).separate_with_commas()),
-        STYLE_NORMAL.apply_to("ops count:"),
-        VALUE_STYLE.apply_to(ops_count_val),
+        STYLE_NORMAL.apply_to("ops count (all):"),
+        VALUE_STYLE.apply_to(format!("{}", stats.operation_count)),
     );
 
-    // Line 2 related to total_debit/ avg/op
-    let avg_op_val = format!("{:.2}", stats.average_operation);
+    // Line 2 — total debit / ops count real
     println!(
-        "│ {:<20} │ {:>16} │ {} {:<26} │",
+        "│ {:<20} │ {:>16} │ {} {:<16} │",
         STYLE_NORMAL.apply_to("total debit"),
         DEBIT_STYLE.apply_to(format!("{:.2}", stats.total_debit).separate_with_commas()),
-        STYLE_NORMAL.apply_to("avg/op:"),
-        VALUE_STYLE.apply_to(avg_op_val)
+        STYLE_NORMAL.apply_to("ops count (real):"),
+        VALUE_STYLE.apply_to(format!("{:<4}", stats.real_operation_count)),
     );
 
-    // Line 3 related to balance
+    // Line 3 — balance / avg/op real
     println!(
-        "│ {:<20} │ {:>16} │ {:<26} │",
+        "│ {:<20} │ {:>16} │ {} {:<19} │",
         STYLE_NORMAL.apply_to("balance"),
         VALUE_STYLE.apply_to(format!("{:.2}", stats.balance).separate_with_commas()),
-        " ".repeat(34)
+        STYLE_NORMAL.apply_to("avg/op (real):"),
+        VALUE_STYLE.apply_to(format!("{:.2}", stats.average_operation).separate_with_commas()),
+    );
+
+    // Line 4 — adjustments
+    println!(
+        "│                      │                  │ {} {:<21} │",
+        STYLE_NORMAL.apply_to("adjustments:"),
+        VALUE_STYLE.apply_to(format!(
+            "{} ({:.1}%)",
+            stats.adjustment_count, stats.adjustment_percentage
+        )),
     );
 
     println!("├──────────────────────┴──────────────────┴────────────────────────────────────┤");
 
-    let label = STYLE_NORMAL.apply_to("savings rate");
-    let rate_val = format!("{:>12.2}%", stats.savings_rate);
-    let bar = draw_savings_bar(stats.savings_rate, 32);
-    println!(
-        "│ {}   {}   {} {:<11} │",
-        label,
-        savings_style.apply_to(rate_val),
-        bar,
-        ""
-    );
+    // Savings rate
+    println!("{}", savings_line);
 
     println!("├──────────────────────────────────────────────────────────────────────────────┤");
     println!(
         "│ {:<76} │",
-        TITLE_STYLE.apply_to("behavioral insights & system health (excl. void, voided)")
+        TITLE_STYLE.apply_to("behavioral insights (excl. transfer DR, adjust, void, voided)")
     );
     println!("├────────────────────────────────────────┬─────────────────────────────────────┤");
 
-    // Spending Rate and Duration
+    // Daily burning rate / period length
     println!(
         "│ {:<20}{:>18} │ {:<21}{:>14} │",
         STYLE_NORMAL.apply_to("daily burning rate:"),
@@ -167,24 +203,20 @@ pub fn view_financial(stats: &StatsCollection) {
         VALUE_STYLE.apply_to(format!("{} days", stats.days_count))
     );
 
-    // Largest expense and account quality (adjustments)
+    // Max single expense
     println!(
-        "│ {:<20}{:>18} │ {:<21}{:>14} │",
+        "│ {:<20}{:>18} │ {:<35} │",
         STYLE_NORMAL.apply_to("max single expense:"),
         DEBIT_STYLE.apply_to(format!("{:.2}", stats.max_single_debit).separate_with_commas()),
-        STYLE_NORMAL.apply_to("adjustments:"),
-        VALUE_STYLE.apply_to(format!(
-            "{} ({:.1}%)",
-            stats.adjustment_count, stats.adjustment_percentage
-        ))
+        ""
     );
 
     println!("├────────────────────────────────────────┴─────────────────────────────────────┤");
 
-    // Section Top Expenses
+    // Top 5 expenses
     println!(
         "│ {:<76} │",
-        TITLE_STYLE.apply_to("top 5 expenses (excl. adjust, voided, void)")
+        TITLE_STYLE.apply_to("top 5 expenses (excl. transfer DR, adjust, void, voided)")
     );
     println!("├────────┬──────────┬──────────────────┬───────┬───────────────────────────────┤");
 
@@ -203,14 +235,37 @@ pub fn view_financial(stats: &StatsCollection) {
     }
     println!("└────────┴──────────┴──────────────────┴───────┴───────────────────────────────┘");
 
-    if !stats.ignored.is_empty() {
+    // Notes section
+    let show_savings_note = stats.savings_rate.is_some();
+    let show_ignored_note = !stats.ignored.is_empty();
+
+    if show_savings_note || show_ignored_note {
         println!();
-        println!("{}", NOTE_STYLE.apply_to("Note:"));
-        let ignore_txt = NOTE_STYLE.apply_to(format!(
-            "{} operation(s) ignored, pair Void,Voided not in the period",
-            stats.ignored.len()
-        ));
-        println!("{}", ignore_txt);
+        println!("{}", NOTE_STYLE.apply_to("Notes:"));
+        if show_ignored_note {
+            println!(
+                "{}",
+                NOTE_STYLE.apply_to(format!(
+                    "• {} operation(s) ignored: Void/Voided pair not fully in the period.",
+                    stats.ignored.len()
+                ))
+            );
+        }
+        if show_savings_note {
+            println!(
+                "{}",
+                NOTE_STYLE
+                    .apply_to("• Savings rate excludes outgoing transfers (loans, internal moves) from spending.")
+            );
+            println!(
+                "{}",
+                NOTE_STYLE.apply_to("• A positive savings rate with a negative balance means outgoing transfers")
+            );
+            println!(
+                "{}",
+                NOTE_STYLE.apply_to("  exceeded incoming transfers — not that real expenses exceeded real income.")
+            );
+        }
         println!();
     }
 }

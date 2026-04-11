@@ -50,7 +50,6 @@ pub enum CodexiError {
     NotATransfer(String),
     #[error("VAL_OPERATION: No Operation {0} in the current account")]
     NoOperation(String),
-
 }
 
 impl ResolveError for CodexiError {

@@ -18,6 +18,7 @@ pub enum AccountType {
     Student,
     Loan,
     Income,
+    Cash,
 }
 
 /// Methods for AccountType
@@ -33,6 +34,7 @@ impl AccountType {
             AccountType::Student => "Student",
             AccountType::Loan => "Loan",
             AccountType::Income => "Income",
+            AccountType::Cash => "Cash",
         }
     }
     /// Try to create an AccountType from a string
@@ -47,6 +49,7 @@ impl AccountType {
             "student" | "stu" => Ok(AccountType::Student),
             "loan" | "loa" => Ok(AccountType::Loan),
             "income" | "inc" => Ok(AccountType::Income),
+            "cash" | "cas" => Ok(AccountType::Cash),
             _ => Err(AccountTypeError::Unknown(s.to_string())),
         }
     }

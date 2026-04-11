@@ -15,7 +15,7 @@ use codexi::{
         codexi::CodexiError,
         counterparty::{Counterparty, CounterpartyError},
         operation::{OperationFlow, OperationKind, RegularKind},
-        search::{SearchParamsBuilder, search, NulidSearchFilter},
+        search::{NulidSearchFilter, SearchParamsBuilder, search},
         utils::resolve_by_id_or_name,
     },
     types::DateRange,
@@ -211,22 +211,18 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             let g_filter = match category.as_deref() {
                 None => NulidSearchFilter::Any,
                 Some("None") => NulidSearchFilter::NoneOnly,
-                Some(v) => NulidSearchFilter::One(
-                    resolve_by_id_or_name::<Category, CategoryError>(
-                        v,
-                        &codexi.categories.list,
-                    )?
-                ),
+                Some(v) => NulidSearchFilter::One(resolve_by_id_or_name::<Category, CategoryError>(
+                    v,
+                    &codexi.categories.list,
+                )?),
             };
             let c_filter = match counterparty.as_deref() {
                 None => NulidSearchFilter::Any,
                 Some("None") => NulidSearchFilter::NoneOnly,
-                Some(v) => NulidSearchFilter::One(
-                    resolve_by_id_or_name::<Counterparty, CounterpartyError>(
-                        v,
-                        &codexi.counterparties.list,
-                    )?
-                ),
+                Some(v) => NulidSearchFilter::One(resolve_by_id_or_name::<Counterparty, CounterpartyError>(
+                    v,
+                    &codexi.counterparties.list,
+                )?),
             };
             let amount_min_d = parse_optional_decimal(&amount_min, "amount_min")?;
             let amount_max_d = parse_optional_decimal(&amount_max, "amount_max")?;
