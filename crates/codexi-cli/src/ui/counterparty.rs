@@ -7,7 +7,9 @@ use codexi::{
     dto::{CounterpartyCollection, CounterpartyStatsCollection},
 };
 
-use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, STYLE_DANGER, STYLE_MUTED, TITLE_STYLE, VALUE_STYLE, truncate_text};
+use crate::ui::{
+    CREDIT_STYLE, DEBIT_STYLE, STYLE_DANGER, STYLE_MUTED, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, truncate_text,
+};
 
 /// view to list of the counterparties
 pub fn view_counterparty(datas: &CounterpartyCollection) {
@@ -22,7 +24,7 @@ pub fn view_counterparty(datas: &CounterpartyCollection) {
     for cp in &datas.items {
         let id_style = match &cp.terminated {
             Some(_) => STYLE_DANGER,
-            None => STYLE_MUTED,
+            None => STYLE_NORMAL,
         };
         let id = id_style.apply_to(cp.id.to_string());
         let id_short = id_style.apply_to(format!("#{}", format_id_short(&cp.id)));

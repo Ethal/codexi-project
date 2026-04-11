@@ -7,7 +7,9 @@ use codexi::{
     dto::{CategoryCollection, CategoryStatsCollection},
 };
 
-use crate::ui::{CREDIT_STYLE, DEBIT_STYLE, STYLE_DANGER, STYLE_MUTED, TITLE_STYLE, VALUE_STYLE, truncate_text};
+use crate::ui::{
+    CREDIT_STYLE, DEBIT_STYLE, STYLE_DANGER, STYLE_MUTED, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, truncate_text,
+};
 
 /// view to list the category
 pub fn view_category(datas: &CategoryCollection) {
@@ -22,11 +24,11 @@ pub fn view_category(datas: &CategoryCollection) {
     for c in &datas.items {
         let id_style = match &c.terminated {
             Some(_) => STYLE_DANGER,
-            None => STYLE_MUTED,
+            None => STYLE_NORMAL,
         };
         let parent_style = match &c.parent_terminated {
             Some(_) => STYLE_DANGER,
-            None => STYLE_MUTED,
+            None => STYLE_NORMAL,
         };
         let id = id_style.apply_to(c.id.to_string());
         let id_short = id_style.apply_to(format!("#{}", format_id_short(&c.id)));
