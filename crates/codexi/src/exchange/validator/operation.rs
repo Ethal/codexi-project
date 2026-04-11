@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{
     CODEXI_EXCHANGE_FORMAT_VERSION,
-    core::{CoreWarning, CoreWarningKind, parse_decimal, parse_id, parse_optional_id},
+    core::{CoreWarning, CoreWarningKind, format_decimal, parse_id, parse_optional_id},
     exchange::{ExchangeAccountOperations, ExchangeError, ExchangeOperation},
     logic::operation::{OperationError, OperationKind, OperationKindError, RegularKind},
 };
@@ -42,8 +42,7 @@ pub fn validate_import_operations(import: &ExchangeAccountOperations) -> Result<
                 ));
             }
             // Amount still validated for new operations
-            let amount = parse_decimal(&op.amount, "amount")?;
-            if amount < Decimal::ZERO {
+            if op.amount < Decimal::ZERO {
                 return Err(ExchangeError::InvalidAmount(
                     "New operation has invalid amount — must be strictly positive".into(),
                 ));
@@ -65,11 +64,11 @@ pub fn validate_import_operations(import: &ExchangeAccountOperations) -> Result<
         ops_by_id.insert(id, op);
 
         // Amount must be strictly positive
-        let amount = parse_decimal(&op.amount, "amount")?;
-        if amount < Decimal::ZERO {
+        if op.amount < Decimal::ZERO {
             return Err(ExchangeError::InvalidAmount(format!(
                 "Operation {} has invalid amount {} — must be strictly positive",
-                id_s, amount
+                id_s,
+                format_decimal(op.amount)
             )));
         }
 
