@@ -95,8 +95,9 @@ impl Codexi {
 
         let op_from_id = op_from.id;
         // Calculate effective exchange rate : amount_to / amount_from
-        let exchange_rate = amount_to / amount_from;
-        op_from.context.exchange_rate = exchange_rate;
+        let exchange_rate_from = amount_to / amount_from;
+        let exchange_rate_to = amount_from / amount_to;
+        op_from.context.exchange_rate = exchange_rate_from;
 
         // --- Build destination operation (Credit) ---
         let desc_to = format!("FROM #{}: {}", format_id_short(&format_id(from_id)), description);
@@ -107,6 +108,7 @@ impl Codexi {
         let mut ctx_to = OperationContext::default();
         ctx_to.currency_id = Some(currency_to);
         ctx_to.category_id = category_id;
+        ctx_to.exchange_rate = exchange_rate_to;
 
         // Pre-set the id we reserved earlier
         let mut op_to = OperationBuilder::default()
