@@ -140,7 +140,7 @@ impl TryFrom<&ExchangeOperationContext> for OperationContext {
         Ok(Self {
             category_id: parse_optional_id(oc.category_id.as_deref())?,
             currency_id: parse_optional_id(oc.currency_id.as_deref())?,
-            exchange_rate: parse_decimal(&oc.exchange_rate, "exchaneg rate")?,
+            exchange_rate: parse_decimal(&oc.exchange_rate, "exchange rate")?,
             payee: oc.payee.clone(),
             reconciled: parse_optional_date(oc.reconciled.as_deref())?,
             counterparty_id: parse_optional_id(oc.counterparty_id.as_deref())?,
