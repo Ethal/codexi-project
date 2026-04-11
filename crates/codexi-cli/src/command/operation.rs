@@ -46,5 +46,14 @@ pub enum OperationCommand {
             help = "Category of the operation, accept full ID, short ID or name"
         )]
         category: Option<String>,
+        // Exchange rate
+        #[arg(
+            short = 'r',
+            long,
+            value_name = "FROM TO",
+            num_args = 2,
+            help = "Exchange rate: --rate <from> <to>"
+        )]
+        rate: Option<Vec<String>>,
     },
 }

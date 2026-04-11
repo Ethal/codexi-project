@@ -71,6 +71,14 @@ pub enum ReportCommand {
         to: Option<String>,
     },
 
+    /// Exchange rate report.
+    Rate {
+        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report (YYYY-MM-DD)")]
+        from: Option<String>,
+        #[arg(long, value_name = "TO_DATE", help = "End date of the report (YYYY-MM-DD)")]
+        to: Option<String>,
+    },
+
     /// Tree view: Counterparty → Category → Operations.
     Tree {
         #[arg(long, value_name = "FROM_DATE", help = "Start date of the report (YYYY-MM-DD)")]

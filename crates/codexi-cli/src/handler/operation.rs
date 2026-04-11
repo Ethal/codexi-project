@@ -3,7 +3,7 @@
 use anyhow::Result;
 
 use codexi::{
-    core::DataPaths,
+    core::{DataPaths, parse_optional_decimal},
     dto::SearchOperationItem,
     file_management::FileManagement,
     logic::{
@@ -47,9 +47,17 @@ pub fn handle_operation_command(command: OperationCommand, paths: &DataPaths) ->
             description,
             counterparty,
             category,
+            rate,
         } => {
             let account = codexi.get_current_account()?;
             let op_id = resolve_id::<Operation, OperationError>(&id, &account.operations)?;
+
+            let arg_from = rate.as_ref().and_then(|v| v.get(0).cloned());
+            let arg_to = rate.as_ref().and_then(|v| v.get(1).cloned());
+
+            let from = parse_optional_decimal(&arg_from, "from")?;
+            let to = parse_optional_decimal(&arg_to, "to")?;
+
             let counterparty_id = counterparty
                 .map(|name| {
                     resolve_by_id_or_name::<Counterparty, CounterpartyError>(&name, &codexi.counterparties.list)
@@ -59,7 +67,7 @@ pub fn handle_operation_command(command: OperationCommand, paths: &DataPaths) ->
                 .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
                 .transpose()?;
 
-            codexi.update_operation(op_id, description.as_deref(), counterparty_id, category_id)?;
+            codexi.update_operation(op_id, description.as_deref(), counterparty_id, category_id, from, to)?;
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!("update done.");
         }

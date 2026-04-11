@@ -276,14 +276,12 @@ pub struct CounterpartyCategoryGroup {
     pub categories: Vec<CategorySubGroup>,
 }
 
-
 impl SearchOperationList {
     pub fn group_by_counterparty_category(
         &self,
         counterparties: &CounterpartyList,
         categories: &CategoryList,
     ) -> Vec<CounterpartyCategoryGroup> {
-
         let mut outer: CounterpartyOuterMap = HashMap::new();
 
         for item in self.active_items() {

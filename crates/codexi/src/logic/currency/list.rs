@@ -16,6 +16,10 @@ impl CurrencyList {
         Self { currencies: Vec::new() }
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &Currency> {
+        self.currencies.iter()
+    }
+
     pub fn add(&mut self, currency: Currency) -> Nulid {
         let id = currency.id;
         self.currencies.push(currency);

@@ -2,6 +2,7 @@
 
 use chrono::NaiveDate;
 use nulid::Nulid;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -164,6 +165,8 @@ impl Codexi {
         desc: Option<&str>,
         counterparty: Option<Nulid>,
         category: Option<Nulid>,
+        from: Option<Decimal>,
+        to: Option<Decimal>,
     ) -> Result<(), CodexiError> {
         let acc = self.get_current_account_mut()?;
         let op = acc
@@ -177,6 +180,11 @@ impl Codexi {
         }
         if let Some(g) = category {
             op.update_category(g);
+        }
+        if let Some(f) = from
+            && let Some(t) = to
+        {
+            op.update_exchange_rate(f, t).map_err(AccountError::Operation)?;
         }
         Ok(())
     }

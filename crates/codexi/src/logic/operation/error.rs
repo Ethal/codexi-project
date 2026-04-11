@@ -23,6 +23,10 @@ pub enum OperationError {
     OperationBuilder(String),
     #[error("OP_AMOUNT: Operation amount below zero or negative: {0}")]
     InvalidAmount(String),
+    #[error("OP_RATE: Can not update rate on this type of operation {0}")]
+    InvalidUpdateRateOperationType(String),
+    #[error("OP_RATE: Rate not valid")]
+    InvalidRate,
     #[error("VAL_OP: No Operation with id: {0}")]
     OperationNotFound(String),
     #[error("OP_ACCOUNT: Multiple operatin match '{0}', use more characters")]

@@ -8,7 +8,8 @@ use codexi::{
     core::DataPaths,
     dto::{
         BalanceItem, CategoryStatsCollection, CounterpartyStatsCollection, CounterpartyTreeCollection,
-        DashboardCollection, MonthlyReport, StatementCollection, StatsCollection, SummaryCollection,
+        DashboardCollection, ExchangeRateCollection, MonthlyReport, StatementCollection, StatsCollection,
+        SummaryCollection,
     },
     file_management::FileManagement,
     logic::{
@@ -23,7 +24,7 @@ use crate::{
     export::{export_statement_html, export_stats_html},
     msg_info, msg_warn,
     ui::{
-        view_balance, view_category_stats, view_counterparty_stats, view_dashboard, view_financial,
+        view_balance, view_category_stats, view_counterparty_stats, view_dashboard, view_exchange_rate, view_financial,
         view_monthly_report, view_summary, view_tree,
     },
 };
@@ -73,6 +74,17 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
             let groups = s_ops.group_by_category(&codexi.categories);
             let stats = CategoryStatsCollection::build(groups);
             view_category_stats(&stats);
+        }
+        ReportCommand::Rate { from, to } => {
+            let range = DateRange::parse(from.as_deref(), to.as_deref())?;
+            let params = SearchParamsBuilder::default().from(range.from).to(range.to).build()?;
+            let s_ops = search(account, &params)?;
+            if s_ops.is_empty_active() {
+                msg_warn!("No data available");
+                return Ok(());
+            }
+            let rate_report = ExchangeRateCollection::build(&codexi, account, &s_ops);
+            view_exchange_rate(&rate_report);
         }
         ReportCommand::Tree { from, to } => {
             let range = DateRange::parse(from.as_deref(), to.as_deref())?;

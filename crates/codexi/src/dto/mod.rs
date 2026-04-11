@@ -7,6 +7,7 @@ mod category;
 mod counterparty;
 mod currency;
 mod dashboard;
+mod exchange_rate;
 mod monthly_report;
 mod operation;
 mod statement;
@@ -20,6 +21,7 @@ pub use category::{CategoryCollection, CategoryItem, CategoryStatsCollection, Ca
 pub use counterparty::{CounterpartyCollection, CounterpartyItem, CounterpartyStatsCollection, CounterpartyStatsItem};
 pub use currency::{CurrencyCollection, CurrencyItem};
 pub use dashboard::DashboardCollection;
+pub use exchange_rate::ExchangeRateCollection;
 pub use monthly_report::MonthlyReport;
 pub use operation::{CounterpartyTreeCollection, SearchOperationCollection, SearchOperationItem};
 pub use statement::{CodexiContext, StatementCollection, StatementItem};

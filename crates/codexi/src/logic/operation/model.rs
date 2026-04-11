@@ -13,6 +13,7 @@ use crate::core::{format_date, validate_text_rules};
 use crate::logic::operation::OperationError;
 use crate::logic::operation::OperationFlow;
 use crate::logic::operation::OperationKind;
+use crate::logic::operation::RegularKind;
 use crate::logic::utils::HasNulid;
 
 // IMPORTANT use for exchange , could be deleted avec addition of the field account_id in operation
@@ -87,10 +88,22 @@ impl Operation {
     pub fn update_counterparty(&mut self, counterparty_id: Nulid) {
         self.context.counterparty_id = Some(counterparty_id);
     }
+    pub fn update_exchange_rate(&mut self, from: Decimal, to: Decimal) -> Result<(), OperationError> {
+        if !matches!(self.kind, OperationKind::Regular(RegularKind::Transaction)) {
+            return Err(OperationError::InvalidUpdateRateOperationType(
+                self.kind.as_str().to_string(),
+            ));
+        }
+        if from <= Decimal::ZERO || to <= Decimal::ZERO {
+            return Err(OperationError::InvalidRate);
+        }
+        self.context.exchange_rate = to / from;
+        Ok(())
+    }
+
     pub fn update_context(&mut self, context: &OperationContext) {
         self.context = context.clone();
     }
-
     pub fn update_meta(&mut self, meta: &OperationMeta) {
         self.meta = meta.clone();
     }
@@ -98,14 +111,13 @@ impl Operation {
     pub fn is_void(&self) -> bool {
         self.kind.is_void()
     }
-
     pub fn is_voided(&self) -> bool {
         self.links.void_by.is_some()
     }
+
     pub fn is_adjust(&self) -> bool {
         self.kind.is_adjust()
     }
-
     pub fn is_transfer(&self) -> bool {
         self.kind.is_transfer()
     }
