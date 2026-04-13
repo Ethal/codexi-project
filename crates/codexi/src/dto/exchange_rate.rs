@@ -62,11 +62,8 @@ impl ExchangeRateCollection {
             .map(|so| {
                 let op = &so.operation;
                 let rate = op.context.exchange_rate;
-                let cost = if op.flow.is_debit() {
-                    op.amount * rate
-                } else {
-                    op.amount * rate
-                };
+                let cost = op.amount * rate;
+
                 ExchangeRateItem {
                     op_id: format_id(op.id),
                     date: format_date(op.date),

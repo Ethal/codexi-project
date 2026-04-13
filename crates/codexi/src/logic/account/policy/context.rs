@@ -422,12 +422,11 @@ mod tests {
     }
 
     #[test]
-    fn allows_interest_ignored_on_current() {
+    fn allows_interest_on_current() {
         let mut ctx = ctx_current();
         let warnings = ctx.update_context(None, None, None, None, Some(true), None).unwrap();
-        assert_eq!(warnings.len(), 1);
-        assert!(matches!(warnings[0].kind, CoreWarningKind::ContextNotApplicable));
-        assert!(!ctx.allows_interest); // inchangé
+        assert_eq!(warnings.len(), 0);
+        assert!(ctx.allows_interest); // inchangé
     }
 
     // ── allows_joint_signers ─────────────────────────────────

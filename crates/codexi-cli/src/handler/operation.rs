@@ -52,7 +52,7 @@ pub fn handle_operation_command(command: OperationCommand, paths: &DataPaths) ->
             let account = codexi.get_current_account()?;
             let op_id = resolve_id::<Operation, OperationError>(&id, &account.operations)?;
 
-            let arg_from = rate.as_ref().and_then(|v| v.get(0).cloned());
+            let arg_from = rate.as_ref().and_then(|v| v.first().cloned());
             let arg_to = rate.as_ref().and_then(|v| v.get(1).cloned());
 
             let from = parse_optional_decimal(&arg_from, "from")?;
