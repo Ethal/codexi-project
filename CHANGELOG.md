@@ -3,7 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 ---
+## [Unreleased] — 
 
+### Added
+
+### Changed
+- ⚠️ (Upcoming) End of support for migration from v1 and v2 (legacy).
+- ⚠️ (Upcoming) End of support of reading bincode ledger format file (legacy).
+
+### Fixed
+
+---
 ## [0.5.0] — 2026-04-13
 
 ### Added
