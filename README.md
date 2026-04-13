@@ -89,8 +89,8 @@ codexi-cli account set-context --overdraft 500 --min-balance 0
 codexi-cli history init 2025-01-01 1500.00
 
 # 2. Record daily operations
-codexi-cli credit 2025-01-05 2400.00 "Monthly salary"
-codexi-cli debit  2025-01-06 45.00  "Groceries"
+codexi-cli credit 2025-01-05 2400.00 "Monthly salary" -c employer -g 
+codexi-cli debit  2025-01-06 45.00  "Groceries" -c supermarket -g 
 
 # 3. Transfer between accounts
 codexi-cli transfer 2025-01-10 100.00 1500000 <account_id|name> "ATM withdrawal"
@@ -128,11 +128,6 @@ codexi-cli admin backup
 | `transfer <date> <amount_from> <amount_to> <account_id\|name> [desc] [-g category]` | Transfer from current account to another |
 | `search` (`view`) `[--from] [--to] [--text] [--kind] [--flow] [--counterparty] [--category] [--a-min] [--a-max] [--last] [--today] [--open]` | Search and filter operations |
 
-### Operation
-| Command | Description |
-| :--- | :--- |
-| `operation view <id> [--raw]` | view an operation  |
-
 ### Account
 | Command | Description |
 | :--- | :--- |
@@ -145,6 +140,12 @@ codexi-cli admin backup
 | `account set-bank <bank_id>` | Set bank for current account |
 | `account set-currency <currency_id> [--update-operation]` | Set currency for current account |
 | `account set-context [--overdraft] [--min-balance] [--max-monthly-transactions] [--deposit-locked-until] [--interest] [--signers]` | Configure compliance parameters for current account |
+
+### Operation
+| Command | Description |
+| :--- | :--- |
+| `operation view <id> [--raw]` | View an operation |
+| `operation update <id> [--description\-d] [--counterparty\-c] [--category\-g] [--rate\-r]` | Update description, counterparty, category and rate for an operation |
 
 ### Bank
 | Command | Description |
@@ -179,15 +180,21 @@ codexi-cli admin backup
 | `loan simulate --capital <amount> --start <date> --refund <date> [--type] [--rate] [--free-days]` | Simulate interest and amount due |
 
 ### Report
+
 | Command | Description |
 | :--- | :--- |
+| `report dashboard [--from] [--to]` | A dashbord with the main statistics |
 | `report summary` | Quick overview of the current account |
 | `report balance [--from] [--to]` | Debit / credit / balance summary |
-| `report monthly [--from] [--to] ` | Monthly report, resume of the analytics dashboard |
+| `report monthly [--from] [--to]` | Monthly report, resume of the analytics dashboard |
 | `report financial [--from] [--to] [--open]` | Full analytics dashboard |
-| `report counterparty [--from] [--to] ` | Counterparty statistics |
-| `report category [--from] [--to] ` | Category statistics |
-| `report statement [--from] [--to] [--open]` | Export an HTML statement |
+| `report counterparty [--from] [--to]` | Counterparty statistics |
+| `report category [--from] [--to]` | Category statistics |
+| `report rate [--from] [--to]` | Exchange rate statistics |
+| `report tree [--from] [--to]` | A tree view with counterparty/category/operarion |
+| `report statement [--from] [--to] [--open]` | produce a list of operation in report.html |
+
+> Report is related to the current account.
 
 ### History
 | Command | Description |

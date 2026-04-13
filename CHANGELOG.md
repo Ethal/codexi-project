@@ -1,44 +1,123 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 ---
 
-## [Unreleased] — 
+## [0.5.0] — 2026-04-13
 
 ### Added
-- **CLI command `report tree`** — `--from` and `--to` tree view of Counterparty -> Category -> Operations.
-- **CLI command `operation update`** — `--description \ -d`, `--counterparty \ -c`and  `--category \ -g`.
-- **CLI command `search`** — `--counterparty \ -c` and `--category \ -g` flags and wire them through to the search layer. search `-c|-g None` returns the undefined categories and counterparties, respectively.
+- **CLI command `report rate`** — new exchange rate report with `--from` and `--to`
+  date filters. Lists all operations with a meaningful exchange rate (`rate ≠ 1`),
+  including transfers. Displays amount in account currency, effective rate, and cost
+  in the target currency (`amount × rate`). Summary shows avg, best and worst rate
+  over the period. Cost currency resolved automatically when exactly one other
+  currency exists in the ledger.
+- **CLI command `operation update --rate / -r`** — new flag accepting two values
+  `<from> <to>` to set the exchange rate on an existing `Transaction` operation.
+  Rate stored as `to / from` (units of target currency per unit of source currency).
+  Rejected on non-Transaction kinds. Guards: `from` and `to` must both be strictly
+  positive before division to avoid panic on zero.
+- **CLI command `report tree`** — new tree view `Counterparty → Category → Operations`
+  with `--from` and `--to` date filters. Displays hierarchical grouping of all active
+  operations, including transfers and uncategorized entries under `[No Counterparty]`
+  and `[No Category]`.
+- **CLI command `operation update`** — `--description / -d`, `--counterparty / -c`
+  and `--category / -g` flags to update an existing operation in place.
+- **CLI command `search`** — `-c / --counterparty` and `-g / --category` flags wired
+  through to the search layer. Passing `None` returns operations with no counterparty
+  or no category respectively.
 - **CLI command `report counterparty`** — support `--from` and `--to`.
 - **CLI command `report category`** — support `--from` and `--to`.
 - **CLI command `report monthly`** — support `--from` and `--to`.
-- **CLI command `use`** — alias for the command `account use`.
 - **CLI command `report dashboard`** — support `--from` and `--to`.
-- **DTOs `CategoryItem::build`** — used to resolve parent data.
-- **DTOs `MonthlyReport::build`** — used by the new command `report monthly`.
-- **DTOs `CounterpartyStatsCollection::build`** — used by the new command `report counterpary`.
-- **DTOs `CategoryStatsCollection::build`** — used by the new command `report category`.
-- **DTOs `DashboardColection::build`** — used by the new command `report dashboard`.
-- **UI `view_montly`** — view for the new command `report monthly`.
-- **UI `view_counterparty_stats`** — stats view for the new command `report counterparty`.
-- **UI `view_category_stats`** — stats view for the new command `report category`.
-- **UI `view_dashboard_stats`** — stats view for the new command `report category`.
+- **CLI command `use`** — alias for `account use`.
+- **`AccountType::Cash`** — new account type for physical cash wallets and pass-through
+  accounts. Compliance rules identical to `Current` (overdraft allowed by convention).
+  `savings_rate` is not applicable and displays `N/A` in financial reports.
+- **Logic `group_by_counterparty_category`** — new method on `SearchOperationList`
+  producing a two-level `Counterparty → Category` grouping with nested operations.
+  Transfers fall naturally under `[No Counterparty]`. Void and voided operations
+  excluded from totals and grouping via `active_items`.
+- **DTOs `CounterpartyTreeCollection` / `CounterpartyNode` / `CategoryNode` /
+  `OperationLeaf`** — tree DTO layer for `report tree`. Follows the same
+  `build(groups)` pattern as existing stats collections.
+- **DTOs `CategoryItem::build`** — resolves parent data (name, terminated state).
+- **DTOs `MonthlyReport::build`** — used by `report monthly`.
+- **DTOs `CounterpartyStatsCollection::build`** — used by `report counterparty`.
+- **DTOs `CategoryStatsCollection::build`** — used by `report category`.
+- **DTOs `DashboardCollection::build`** — used by `report dashboard`.
+- **UI `view_tree`** — tree view for `report tree`. Uses `├─` / `└─` indentation
+  with debit/credit totals at counterparty and category level.
+- **UI `view_monthly_report`** — view for `report monthly`.
+- **UI `view_counterparty_stats`** — stats view for `report counterparty`.
+- **UI `view_category_stats`** — stats view for `report category`.
+- **UI `view_dashboard`** — dashboard view for `report dashboard`.
 
 ### Changed
-- **CLI command `report stats`** — rename to `report financial` to clarify purpose.
--**UI** — Introduce unified UI style constants and helpers.
--**UI** — account switch messaging to include the account name and id ("Switched to account: <name> (<id>)").
-- **UI `Top Expense`** — tie-breaker added to compare op_date so items with equal amounts are ordered deterministically.
-- **UI `view_category_list`** — Enhance category listing and logic to surface parent info and termination state.
-- **DTOs** — include parent_name and parent_terminated in CategoryItem, update CategoryCollection::build accordingly.
-- **ExchangeCCategoryList.list** — Add a serde rename, it serializes/deserializes as the JSON key "categories".
-- **ExchangeCounterpartyList.list** — Add a serde rename, it serializes/deserializes as the JSON key "counterparties".
-- **Import to codexi** — refactoring import functionality out of the `Codexi model` to `Codexi import`, improve separation of concerns.
-- **UI `view_codexi_infos`** — add count of all operations of the ledger included the one in archive files.
-- **UI `overview_account`** — Add an UI indicator to mark accounts that are expected to have zero balance.
+- **`ExchangeRateCollection::build`** — cost computed as `amount × rate` (standard
+  direct rate convention: `rate = to / from`, `cost = amount × rate = amount_target`).
+  No flow-based branching needed — formula is correct for both debit and credit
+  regardless of account currency direction.
+- **CLI command `report stats`** — renamed to `report financial` to clarify purpose.
+- **`active_items()`** — now excludes void and voided operations in addition to
+  init and checkpoint. All grouping functions (`group_by_counterparty`,
+  `group_by_category`, `group_by_counterparty_category`) benefit automatically —
+  eliminates phantom rows with zero totals caused by void operations.
+- **`group_by_counterparty`** — Transfer operations are no longer skipped via an
+  explicit guard. They fall naturally under `[No Counterparty]` when no counterparty
+  is assigned, consistent with the tree view behavior.
+- **`StatsCollection`** — reworked financial analytics around two explicit perimeters:
+  - *Perimeter 1 (account reality)* — all flows excluding init, checkpoint, void,
+    voided. Used for `total_credit`, `total_debit`, `balance`, `operation_count`.
+  - *Perimeter 2 (real economic flows)* — excludes Transfer DR (loans, internal
+    moves). Transfer CR kept as available cash. Used for `savings_rate`,
+    `daily_average`, `average_operation`, `top_expenses`, `max_single_debit`.
+  - `savings_rate` is `Option<Decimal>` — `None` for `Cash` accounts.
+  - `real_total_credit`, `real_total_debit`, `real_operation_count` added.
+  - Transfers removed from `top 5 expenses` and `daily burning rate`.
+- **`search/operation.rs`** — refactored grouping helpers:
+  - Private helpers `resolve_counterparty_name_kind`, `resolve_category_name`,
+    `accumulate_flow` extracted to eliminate duplication across the three
+    `group_by_*` functions.
+  - Constants `NO_COUNTERPARTY` and `NO_CATEGORY` replace scattered string literals.
+  - Type aliases `CategoryInnerMap` and `CounterpartyOuterMap` added to satisfy
+    `clippy::type_complexity` on the nested `HashMap` in
+    `group_by_counterparty_category`.
+- **UI `view_financial`** — updated to reflect two-perimeter model:
+  - `ops count (all)` and `ops count (real)` shown separately.
+  - `savings rate` hidden and replaced by `N/A` for `Cash` accounts.
+  - Notes section displayed only when relevant (savings rate present or ignored
+    operations exist).
+  - Labels updated: `excl. transfer DR, adjust, void, voided` for behavioral
+    insights and top expenses.
+- **UI `view_dashboard`** — savings rate block handles `Option<Decimal>`:
+  `Some(v)` renders value + bar over two lines, `None` renders
+  `N/A (cash account)` + empty line to preserve column alignment.
+- **UI `view_monthly_report`** — savings rate column handles `Option<Decimal>`:
+  `None` renders `N/A` with `(not supported by account type)` annotation.
+- **UI** — unified UI style constants and helpers introduced.
+- **UI** — account switch messaging updated to include name and id
+  (`Switched to account: <name> (<id>)`).
+- **UI `view_financial` top expenses** — tie-breaker on `op_date` added for
+  deterministic ordering of equal-amount expenses.
+- **UI `view_category_list`** — enhanced to surface parent info and termination
+  state.
+- **DTOs** — `parent_name` and `parent_terminated` added to `CategoryItem`.
+  `CategoryCollection::build` updated accordingly.
+- **`ExchangeCategoryList.list`** — serde rename: serializes as JSON key
+  `"categories"`.
+- **`ExchangeCounterpartyList.list`** — serde rename: serializes as JSON key
+  `"counterparties"`.
+- **Import** — refactored import functionality out of `Codexi` model into
+  `Codexi import` for better separation of concerns.
+- **UI `view_codexi_infos`** — operation count now includes archived files.
+- **UI `overview_account`** — indicator added for accounts expected to carry
+  zero balance.
 
 ### Fixed
-- **ExchangeOperation** — export the field alue of `account_id` with the `account.id` of the operation instead of the `operation.id`.
+- **`ExchangeOperation`** — `account_id` field now exports `account.id` instead
+  of `operation.id`.
 
 ## [0.4.0] — 2026-04-05
 > ⚠️ Breaking: DTO modules have been moved from `logic/*` to `dto/*`
