@@ -11,6 +11,17 @@ pub fn parse_optional<T, U, E>(opt: Option<T>, f: fn(T) -> Result<U, E>) -> Resu
     opt.map(f).transpose()
 }
 
+pub fn normalize_vec_input(v: Vec<String>) -> Vec<String> {
+    v.into_iter().map(|s| normalize_string(&s)).collect()
+}
+
+pub fn normalize_string(s: &str) -> String {
+    s.chars()
+        .filter(|c| !c.is_control())
+        .map(|c| if c.is_whitespace() { ' ' } else { c })
+        .collect()
+}
+
 pub fn parse_text(parts: Vec<String>) -> String {
     let mut out = String::new();
 
@@ -25,7 +36,6 @@ pub fn parse_text(parts: Vec<String>) -> String {
         }
         out.push_str(trimmed);
     }
-
     out
 }
 
