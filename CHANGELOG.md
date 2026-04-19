@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] — 
 
 ### Added
+- **Input normalization** to sanitize CLI input from external sources (Unicode whitespace, control chars)
 
 ### Changed
 - ⚠️ (Upcoming) End of support for migration from v1 and v2 (legacy).

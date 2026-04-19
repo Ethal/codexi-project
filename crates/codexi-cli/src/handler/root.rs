@@ -1,12 +1,14 @@
 // src/handler/main.rs
 
 use anyhow::Result;
-use chrono::{Local, NaiveDate};
-use rust_decimal::Decimal;
+use chrono::Local;
 use std::path::Path;
 
 use codexi::{
-    core::{CoreError, DataPaths, format_date, parse_date, parse_decimal, parse_optional_decimal, parse_text},
+    core::{
+        DataPaths, format_date, normalize_string, normalize_vec_input, parse_date, parse_decimal,
+        parse_optional_decimal, parse_text,
+    },
     dto::{AccountCollection, SearchOperationCollection, StatementCollection},
     file_management::FileManagement,
     logic::{
@@ -61,8 +63,11 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             counterparty,
             category,
         } => {
-            let amount_d = parse_decimal(&amount, "amount")?;
             let date = parse_date(&date)?;
+            let amount_s = normalize_string(&amount);
+            let amount_d = parse_decimal(&amount_s, "amount")?;
+            let desc = normalize_vec_input(description);
+            let desc_s = parse_text(desc);
 
             let mut codexi = FileManagement::load_current_state(paths)?;
             let category_id = category
@@ -80,17 +85,12 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 OperationKind::Regular(RegularKind::Transaction),
                 OperationFlow::Debit,
                 amount_d,
-                parse_text(description.clone()),
+                desc_s.clone(),
                 counterparty_id,
                 category_id,
             )?;
             FileManagement::save_current_state(&codexi, paths)?;
-            msg_info!(
-                "Debit operation added: {} {} {}",
-                date,
-                amount_d,
-                &description.join(" ")
-            );
+            msg_info!("Debit operation added: {} {} {}", date, amount_d, desc_s);
         }
 
         RootCommand::Credit {
@@ -100,7 +100,11 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             counterparty,
             category,
         } => {
-            let (date_n, amount_n, desc_n) = normalize_date_amount_desc(&date, &amount, description)?;
+            let date = parse_date(&date)?;
+            let amount_s = normalize_string(&amount);
+            let amount_d = parse_decimal(&amount_s, "amount")?;
+            let desc = normalize_vec_input(description);
+            let desc_s = parse_text(desc);
 
             let mut codexi = FileManagement::load_current_state(paths)?;
             let category_id = category
@@ -115,17 +119,17 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
 
             let reg_kind = RegularKind::Transaction;
             account.register_transaction(
-                date_n,
+                date,
                 OperationKind::Regular(reg_kind),
                 OperationFlow::Credit,
-                amount_n,
-                desc_n.clone(),
+                amount_d,
+                desc_s.clone(),
                 counterparty_id,
                 category_id,
             )?;
 
             FileManagement::save_current_state(&codexi, paths)?;
-            msg_info!("Crebit operation added: {} {} {}", date_n, amount_n, desc_n);
+            msg_info!("Crebit operation added: {} {} {}", date, amount_d, desc_s);
         }
         RootCommand::Interest {
             date,
@@ -134,7 +138,11 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             counterparty,
             category,
         } => {
-            let (date_n, amount_n, desc_n) = normalize_date_amount_desc(&date, &amount, description)?;
+            let date = parse_date(&date)?;
+            let amount_s = normalize_string(&amount);
+            let amount_d = parse_decimal(&amount_s, "amount")?;
+            let desc = normalize_vec_input(description);
+            let desc_s = parse_text(desc);
 
             let mut codexi = FileManagement::load_current_state(paths)?;
             let category_id = category
@@ -149,17 +157,17 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
 
             let reg_kind = RegularKind::Interest;
             account.register_transaction(
-                date_n,
+                date,
                 OperationKind::Regular(reg_kind),
                 OperationFlow::Credit,
-                amount_n,
-                desc_n.clone(),
+                amount_d,
+                desc_s.clone(),
                 counterparty_id,
                 category_id,
             )?;
 
             FileManagement::save_current_state(&codexi, paths)?;
-            msg_info!("Crebit operation added: {} {} {}", date_n, amount_n, desc_n);
+            msg_info!("Crebit operation added: {} {} {}", date, amount_d, desc_s);
         }
         RootCommand::Transfer {
             date,
@@ -169,18 +177,21 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
             description,
             category,
         } => {
-            let mut codexi = FileManagement::load_current_state(paths)?;
-
             let date = parse_date(&date)?;
-            let amount_from_d = parse_decimal(&amount_from, "amount fom")?;
-            let amount_to_d = parse_decimal(&amount_to, "amount to")?;
+            let amount_from_s = normalize_string(&amount_from);
+            let amount_from_d = parse_decimal(&amount_from_s, "amount_from")?;
+            let amount_to_s = normalize_string(&amount_to);
+            let amount_to_d = parse_decimal(&amount_to_s, "amount_to")?;
+            let desc = normalize_vec_input(description);
+            let desc_s = parse_text(desc);
+
+            let mut codexi = FileManagement::load_current_state(paths)?;
             let acc_id_to = resolve_by_id_or_name::<Account, CodexiError>(&account_id_to, &codexi.accounts)?;
-            let desc = parse_text(description.clone());
             let category_id = category
                 .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
                 .transpose()?;
 
-            codexi.transfer(date, amount_from_d, acc_id_to, amount_to_d, desc.clone(), category_id)?;
+            codexi.transfer(date, amount_from_d, acc_id_to, amount_to_d, desc_s.clone(), category_id)?;
 
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!(
@@ -189,7 +200,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 amount_from_d,
                 amount_to_d,
                 acc_id_to,
-                desc
+                desc_s
             );
         }
 
@@ -276,16 +287,4 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
         RootCommand::Loan(args) => handle_loan_command(args.command, paths)?,
     }
     Ok(())
-}
-
-/// Normalized the date, amount, description
-fn normalize_date_amount_desc(
-    date: &str,
-    amount: &str,
-    description: Vec<String>,
-) -> Result<(NaiveDate, Decimal, String), CoreError> {
-    let date_n = parse_date(date)?;
-    let amount_d = parse_decimal(amount, "amount")?;
-    let desc = parse_text(description.clone());
-    Ok((date_n, amount_d, desc))
 }
