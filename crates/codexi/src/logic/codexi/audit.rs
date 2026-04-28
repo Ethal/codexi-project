@@ -9,30 +9,34 @@ use crate::{
     core::{CoreWarning, CoreWarningKind},
     logic::{
         account::{Account, AccountAnchors, AccountError, AccountMeta, ComplianceAction, TemporalAction},
+        codexi::{Codexi, CodexiError},
         operation::{Operation, OperationFlow},
     },
 };
 
-impl Account {
-    /// Creates a copy of the account with the same metadata (ID, name, bank, etc.)
-    /// but resets all history and calculation anchors.
-    pub(crate) fn clone_empty(&self) -> Self {
-        Self {
-            id: self.id,
-            name: self.name.clone(),
-            context: self.context.clone(),
-            bank_id: self.bank_id,
-            currency_id: self.currency_id,
-            carry_forward_balance: Decimal::ZERO, // Sera défini par le premier Init rejoué
-            open_date: self.open_date,            // On garde la date d'ouverture originale
-            operations: Vec::new(),               // Historique vide
-            terminated_date: None,                // État ouvert par défaut pour le replay
-            // --- Reset des ancres de calcul and current balance---
-            current_balance: Decimal::ZERO,
-            checkpoints: self.checkpoints.clone(),
-            anchors: AccountAnchors::default(),
-            meta: AccountMeta::default(),
+impl Codexi {
+    pub fn main_audit(&self) -> Result<(Vec<CoreWarning>, String), CodexiError> {
+        let account = self.get_current_account()?;
+        let name = account.name.clone();
+
+        let warnings = self.audit(account)?;
+
+        Ok((warnings, name))
+    }
+
+    /// Perfomed rebuild of balance and, account_id
+    pub fn rebuild(&mut self) -> Result<(), CodexiError> {
+        let account = self.get_current_account_mut()?;
+        // rebuild balance
+        account.rebuild_balances_from(account.operations.first().map(|op| op.date).unwrap_or_default());
+        // rebuild account_id
+        for op in &mut account.operations {
+            if op.is_legacy_account() {
+                op.account_id = account.id;
+            }
         }
+
+        Ok(())
     }
     /// Audit the account
     /// TEST 1 — policy via replay /
@@ -45,26 +49,26 @@ impl Account {
     /// TEST 8 — transfer links
     /// TEST 9 — kegacy_account (operation with account_id.is_nil())
     /// TEST 10 — Counter party exist
-    pub fn audit(&self) -> Result<Vec<CoreWarning>, AccountError> {
+    pub fn audit(&self, account: &Account) -> Result<Vec<CoreWarning>, AccountError> {
         let mut warnings = Vec::new();
 
-        self.audit_void_links(&mut warnings); // TEST 5
-        self.audit_double_void(&mut warnings); // TEST 6
-        self.audit_transfer_links(&mut warnings); // TEST 8
+        self.audit_void_links(account, &mut warnings); // TEST 5
+        self.audit_double_void(account, &mut warnings); // TEST 6
+        self.audit_transfer_links(account, &mut warnings); // TEST 8
 
         // Remembering the FINAL closing anchor of the file
-        let final_checkpoint = &self.anchors.last_checkpoint;
+        let final_checkpoint = account.anchors.last_checkpoint.clone();
         // Create the shadow account
-        let mut shadow_account = self.clone_empty();
+        let mut shadow_account = Self::clone_empty(account);
 
         let mut first_op = true;
         let mut running_balance = Decimal::ZERO;
 
         // Replay
-        for op in &self.operations {
+        for op in &account.operations {
             if first_op {
                 first_op = false;
-                // No temporal policy chek on the fist op — le shadow start from zero
+                // No temporal/compliance policy check on the fist op — the shadow start from zero
                 shadow_account.commit_operation(op.clone());
                 running_balance = match op.flow {
                     OperationFlow::Credit => running_balance + op.amount,
@@ -79,10 +83,10 @@ impl Account {
             shadow_account.compliance_policy(ComplianceAction::Create(op.kind, op.flow, op.amount), op.date)?;
 
             // TEST 2 : locked period
-            // If the operation is a normal transaction, it is not allowed
+            // If the operation is a regular transaction, it is not allowed
             // to exist on a date BEFORE or EQUALLY equal to the last checkpoint of the file.
             if op.kind.is_regular()
-                && let Some(final_chk_date) = final_checkpoint
+                && let Some(final_chk_date) = final_checkpoint.clone()
                 && op.date <= final_chk_date.date
             {
                 return Err(AccountError::InvalidData(format!(
@@ -112,55 +116,74 @@ impl Account {
                 });
             }
             // TEST 9 : Operation with legacy account id or account.id != op.account_id
-            if op.is_legacy_account() || op.account_id != self.id {
+            if op.is_legacy_account() || op.account_id != account.id {
                 warnings.push(CoreWarning {
                     kind: CoreWarningKind::InvalidData,
                     message: format!("TEST 9: Operation {} missing account_id (legacy data)", op.id),
                 });
             }
+            // TEST 10 : chek counterparty and category
+            if let Some(counterparty_id) = op.context.counterparty_id
+                && !self.counterparties.is_exist(&counterparty_id)
+            {
+                warnings.push(CoreWarning {
+                    kind: CoreWarningKind::InvalidData,
+                    message: format!(
+                        "TEST 10: Operation {} has invalid counterparty_id {}",
+                        op.id, counterparty_id
+                    ),
+                });
+            }
+            if let Some(category_id) = op.context.category_id
+                && !self.categories.is_exist(&category_id)
+            {
+                warnings.push(CoreWarning {
+                    kind: CoreWarningKind::InvalidData,
+                    message: format!("TEST 10: Operation {} has invalid category_id {}", op.id, category_id),
+                });
+            }
         }
 
         // TEST 4 : current balance of the account
-        if (self.current_balance - running_balance).abs() > dec!(0.001) {
+        if (account.current_balance - running_balance).abs() > dec!(0.001) {
             warnings.push(CoreWarning {
                 kind: CoreWarningKind::InvalidData,
                 message: format!(
                     "TEST 4: Account current_balance mismatch: stored {}, calculated {}",
-                    self.current_balance, running_balance
+                    account.current_balance, running_balance
                 ),
             });
         }
         // TEST 7
-        self.audit_anchors(&shadow_account, &mut warnings);
+        self.audit_anchors(account, &shadow_account, &mut warnings);
 
         Ok(warnings)
     }
-
-    /// Perfomed and audit and a balance rebuild
-    pub fn audit_and_rebuild(&mut self) -> Result<Vec<CoreWarning>, AccountError> {
-        let warnings = self.audit()?; // si Err → blocking, NO rebuild
-
-        let has_warnings = warnings.iter().all(|w| matches!(w.kind, CoreWarningKind::InvalidData));
-
-        if !warnings.is_empty() && has_warnings {
-            // rebuild balance
-            self.rebuild_balances_from(self.operations.first().map(|op| op.date).unwrap_or_default());
-            // rebuild account_id
-            for op in &mut self.operations {
-                if op.is_legacy_account() {
-                    op.account_id = self.id;
-                }
-            }
+    /// Creates a copy of the account with the same metadata (ID, name, bank, etc.)
+    /// but resets all history and calculation anchors.
+    fn clone_empty(account: &Account) -> Account {
+        Account {
+            id: account.id,
+            name: account.name.clone(),
+            context: account.context.clone(),
+            bank_id: account.bank_id,
+            currency_id: account.currency_id,
+            carry_forward_balance: Decimal::ZERO, // Sera défini par le premier Init rejoué
+            open_date: account.open_date,         // On garde la date d'ouverture originale
+            operations: Vec::new(),               // Historique vide
+            terminated_date: None,                // État ouvert par défaut pour le replay
+            // --- Reset des ancres de calcul and current balance---
+            current_balance: Decimal::ZERO,
+            checkpoints: account.checkpoints.clone(),
+            anchors: AccountAnchors::default(),
+            meta: AccountMeta::default(),
         }
-
-        Ok(warnings)
     }
-
     /// Audit of void links
-    fn audit_void_links(&self, warnings: &mut Vec<CoreWarning>) {
-        let op_index: HashMap<Nulid, &Operation> = self.operations.iter().map(|op| (op.id, op)).collect();
+    fn audit_void_links(&self, account: &Account, warnings: &mut Vec<CoreWarning>) {
+        let op_index: HashMap<Nulid, &Operation> = account.operations.iter().map(|op| (op.id, op)).collect();
 
-        for op in &self.operations {
+        for op in &account.operations {
             if let Some(void_by_id) = op.links.void_by {
                 match op_index.get(&void_by_id) {
                     None => warnings.push(CoreWarning {
@@ -208,9 +231,9 @@ impl Account {
         }
     }
     /// audit of the double void
-    fn audit_double_void(&self, warnings: &mut Vec<CoreWarning>) {
+    fn audit_double_void(&self, account: &Account, warnings: &mut Vec<CoreWarning>) {
         let mut void_targets: HashMap<Nulid, Nulid> = HashMap::new();
-        for op in &self.operations {
+        for op in &account.operations {
             if let Some(void_of_id) = op.links.void_of
                 && let Some(existing) = void_targets.insert(void_of_id, op.id)
             {
@@ -226,17 +249,21 @@ impl Account {
     }
 
     /// Audit of the anchors
-    fn audit_anchors(&self, shadow: &Account, warnings: &mut Vec<CoreWarning>) {
+    fn audit_anchors(&self, account: &Account, shadow: &Account, warnings: &mut Vec<CoreWarning>) {
         let checks = [
-            ("last_init", &shadow.anchors.last_init, &self.anchors.last_init),
+            ("last_init", &shadow.anchors.last_init, &account.anchors.last_init),
             (
                 "last_checkpoint",
                 &shadow.anchors.last_checkpoint,
-                &self.anchors.last_checkpoint,
+                &account.anchors.last_checkpoint,
             ),
-            ("last_adjust", &shadow.anchors.last_adjust, &self.anchors.last_adjust),
-            ("last_void", &shadow.anchors.last_void, &self.anchors.last_void),
-            ("last_regular", &shadow.anchors.last_regular, &self.anchors.last_regular),
+            ("last_adjust", &shadow.anchors.last_adjust, &account.anchors.last_adjust),
+            ("last_void", &shadow.anchors.last_void, &account.anchors.last_void),
+            (
+                "last_regular",
+                &shadow.anchors.last_regular,
+                &account.anchors.last_regular,
+            ),
         ];
         for (name, calculated, stored) in checks {
             if calculated != stored {
@@ -256,8 +283,8 @@ impl Account {
     /// a transfer_account_id set, and vice versa.
     /// Cross-account link validity (twin exists in the other account)
     /// cannot be checked here — handled at Codexi level.
-    fn audit_transfer_links(&self, warnings: &mut Vec<CoreWarning>) {
-        for op in &self.operations {
+    fn audit_transfer_links(&self, account: &Account, warnings: &mut Vec<CoreWarning>) {
+        for op in &account.operations {
             let has_transfer_id = op.links.transfer_id.is_some();
             let has_transfer_acc = op.links.transfer_account_id.is_some();
 

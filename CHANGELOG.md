@@ -9,8 +9,15 @@ All notable changes to this project will be documented in this file.
 - **Input normalization** to sanitize CLI input from external sources (Unicode whitespace, control chars)
 
 ### Changed
-- ⚠️ (Upcoming) End of support for migration from v1 and v2 (legacy).
-- ⚠️ (Upcoming) End of support of reading bincode ledger format file (legacy).
+- **Audit** move to codexi level and refractoring, 
+- **Storage** only cborium is supported
+
+### Removed
+- ⚠️ **Support** for migration from v1 and v2 (legacy).
+- ⚠️ **Support** of reading bincode/cbor ledger format file (legacy).
+- **CLI command `admin migrate`** 
+- **`bincode`, `serde_cbor`** crates.
+- **`log`, `env_logger`** crates.
 
 ### Fixed
 

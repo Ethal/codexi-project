@@ -32,7 +32,6 @@ pub enum StoreEntity {
 /// Storage format
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum StorageFormat {
-    Cbor,
     Ciborium,
     Unknown,
 }
@@ -41,8 +40,7 @@ impl StorageFormat {
     /// Get the string representation of the specific storage format
     pub fn as_str(&self) -> &'static str {
         match self {
-            StorageFormat::Cbor => "Cbor",
-            StorageFormat::Ciborium => "Ciborium",
+            StorageFormat::Ciborium => "Cibor",
             StorageFormat::Unknown => "Unknown",
         }
     }

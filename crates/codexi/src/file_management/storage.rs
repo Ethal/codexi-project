@@ -31,9 +31,8 @@ impl FileManagement {
     pub fn read_storage(path: &Path) -> Result<StoreEntity, StorageError> {
         let bytes = fs::read(path)?;
 
-        // Cbor en premier — anciens fichiers, fallback Ciborium pour nouveaux
-        let env: FileEnvelope = serde_cbor::from_slice(&bytes)
-            .or_else(|_| ciborium::from_reader(bytes.as_slice()).map_err(StorageError::CiboriumDe))?;
+        // Read envelope
+        let env: FileEnvelope = ciborium::from_reader(bytes.as_slice())?;
 
         // Magic
         if env.magic != CODEXI_MAGIC {
@@ -57,10 +56,6 @@ impl FileManagement {
         match env.format {
             StorageFormat::Ciborium => {
                 let entity: StoreEntity = ciborium::from_reader(env.payload.as_slice())?;
-                Ok(entity)
-            }
-            StorageFormat::Cbor => {
-                let entity: StoreEntity = serde_cbor::from_slice(&env.payload)?;
                 Ok(entity)
             }
             _ => Err(StorageError::InvalidStorageFormat { format: env.format }),

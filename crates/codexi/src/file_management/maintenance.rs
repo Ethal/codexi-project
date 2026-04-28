@@ -299,7 +299,7 @@ impl FileManagement {
             codexi_counterparty_count,
             data_version: CODEXI_DATA_FORMAT_VERSION.to_string(),
             exchange_version: CODEXI_EXCHANGE_FORMAT_VERSION.to_string(),
-            storage_format: StorageFormat::Cbor,
+            storage_format: StorageFormat::Ciborium,
             disk_usage,
         };
 

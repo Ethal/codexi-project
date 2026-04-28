@@ -41,7 +41,6 @@ impl Codexi {
             new_account.update_meta(imported_account.meta);
             new_account.update_context(imported_account.context);
             new_account.refresh_anchors(); //
-            new_account.audit()?;
             self.add_account(new_account);
 
             summary.created = 1;
