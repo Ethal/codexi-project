@@ -235,7 +235,7 @@ impl OperationContainer for Account {
 mod tests {
     use super::*;
     use crate::core::parse_date;
-    use crate::logic::operation::{OperationBuilder, OperationFlow, OperationKind, RegularKind, SystemKind};
+    use crate::logic::operation::{OperationBuilder, OperationFlow, OperationKind, SystemKind};
     use rust_decimal_macros::dec;
 
     // Helper to create an empty account
@@ -299,100 +299,6 @@ mod tests {
         assert_eq!(
             account.anchors.last_checkpoint.map(|la| la.date),
             Some(parse_date("2026-01-20").unwrap())
-        );
-    }
-
-    #[test]
-    fn test_audit_invalid_history() {
-        let mut account = setup_empty_account();
-
-        // 1. Initialisation normal at 01/03
-        let init_date = parse_date("2026-03-01").unwrap();
-        let op = OperationBuilder::default()
-            .date(init_date)
-            .kind(OperationKind::System(SystemKind::Init))
-            .flow(OperationFlow::Credit)
-            .amount(dec!(10))
-            .description("description".to_string())
-            .account_id(account.id)
-            .build()
-            .unwrap();
-        account.commit_operation(op);
-
-        // 2. manual  corruption : insert of  débit at 01/02 (BEFORE the init)
-        // we dont use the temporal policy , direct push
-        let op = OperationBuilder::default()
-            .date(parse_date("2026-02-01").unwrap())
-            .kind(OperationKind::Regular(RegularKind::Transaction))
-            .flow(OperationFlow::Credit)
-            .amount(dec!(10))
-            .description("fraudulent".to_string())
-            .account_id(account.id)
-            .build()
-            .unwrap();
-
-        account.operations.push(op);
-
-        // sort to simulate a file properly corrupted
-        account.operations.sort_by_key(|o| o.date);
-        account.refresh_anchors();
-
-        // 3. audit shall fail temporal_policy can not accept  a débit before the Init
-        let result = account.audit();
-        assert!(result.is_err(), "The audit should detect an operation before init");
-    }
-
-    #[test]
-    fn test_audit_locked_period_violation() {
-        let mut account = setup_empty_account();
-        let d1 = parse_date("2026-01-01").unwrap();
-        let d2 = parse_date("2026-01-15").unwrap();
-        let d3 = parse_date("2026-01-30").unwrap();
-
-        // Init -> Checkpoint at 30/01
-        account.commit_operation(
-            OperationBuilder::default()
-                .date(d1)
-                .kind(OperationKind::System(SystemKind::Init))
-                .flow(OperationFlow::Credit)
-                .amount(dec!(100))
-                .description("ok".to_string())
-                .account_id(account.id)
-                .build()
-                .unwrap(),
-        );
-        account.commit_operation(
-            OperationBuilder::default()
-                .date(d3)
-                .kind(OperationKind::System(SystemKind::Checkpoint))
-                .flow(OperationFlow::Credit)
-                .amount(dec!(100))
-                .description("ok".to_string())
-                .account_id(account.id)
-                .build()
-                .unwrap(),
-        );
-
-        // Corrupted : insert débit at 15/01 (period close par d3)
-        account.operations.push(
-            OperationBuilder::default()
-                .date(d2)
-                .kind(OperationKind::Regular(RegularKind::Transaction))
-                .flow(OperationFlow::Debit)
-                .amount(dec!(10))
-                .description("fraudulent".to_string())
-                .account_id(account.id)
-                .build()
-                .unwrap(),
-        );
-
-        account.operations.sort_by_key(|o| o.date);
-        account.refresh_anchors();
-
-        // The audit shall détect than d2 is <= the checkpoint d3 during the replay
-        assert!(
-            account.audit().is_err(),
-            "The audit shall reject an operation in a close period"
         );
     }
 }

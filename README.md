@@ -3,7 +3,7 @@
 **A high-integrity, anchor-based personal financial ledger built in Rust.**
 > 🌐 [codexi.ethal.fr](https://codexi.ethal.fr)
 
-![Rust](https://img.shields.io/badge/Rust-1.94.0-c5a059?logo=rust&style=flat-square) ![Rust Edition](https://img.shields.io/badge/edition-2024-orange?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square) ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-black?logo=windows&style=flat-square) ![CI](https://img.shields.io/github/actions/workflow/status/ethal/codexi-project/rust.yml?branch=main&style=flat-square&logo=githubactions&label=CI) [![Binaries](https://img.shields.io/badge/Binaries-available-blue?style=flat-square&logo=github)](https://github.com/ethal/codexi-project/releases)
+![Rust](https://img.shields.io/badge/Rust-1.95.0-c5a059?logo=rust&style=flat-square) ![Rust Edition](https://img.shields.io/badge/edition-2024-orange?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square) ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-black?logo=windows&style=flat-square) ![CI](https://img.shields.io/github/actions/workflow/status/ethal/codexi-project/rust.yml?branch=main&style=flat-square&logo=githubactions&label=CI) [![Binaries](https://img.shields.io/badge/Binaries-available-blue?style=flat-square&logo=github)](https://github.com/ethal/codexi-project/releases)
 
 ![Codexi Financial Analytics Dashboard](docs/screenshots/stats_dashboard.png)
 
@@ -230,7 +230,6 @@ codexi-cli admin backup
 | `admin infos` | Display ledger metadata and storage info |
 | `admin backup [--target-dir]` | Full ZIP backup (ledger + archives) |
 | `admin restore <filename>` | Restore from a ZIP backup |
-| `admin migrate <version>` | Migrate ledger and archives to a new format version |
 | `admin audit [--rebuild]` | Audit the current account and rebuild balance as per option |
 | `admin clear-data` | ⚠️ Move ledger files to trash |
 | `admin trash` | ⚠️ Manage the trash |
@@ -315,7 +314,7 @@ A companion **`www/`** directory contains the static website hosted at [codexi.e
 
 > **Note**: CLI versions `1.0.0` → `2.0.1` correspond to an earlier
 > single-binary architecture, kept as git tags for reference.
-> `serde_cbor` (V3 legacy) files remain readable for backward compatibility.
+> No migration facility. 
 ---
 
 ## 🤝 Contributing

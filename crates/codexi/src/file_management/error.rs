@@ -62,8 +62,6 @@ pub enum FileCodexiError {
 pub enum StorageError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
-    #[error("SYS_CBOR: {0}, Try the command migrate <VERSION>")]
-    Cbor(#[from] serde_cbor::Error),
     #[error("SYS_CIBORIUM_SER: {0}, Try the command migrate <VERSION>")]
     CiboriumSer(#[from] ciborium::ser::Error<std::io::Error>),
     #[error("SYS_CIBORIUM_DE: {0}, Try the command migrate <VERSION>")]

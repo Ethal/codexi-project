@@ -1,6 +1,6 @@
 // src/handler/admin.rs
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 use chrono::Local;
 use rust_decimal::Decimal;
 use std::path::{Path, PathBuf};
@@ -9,7 +9,7 @@ use codexi::{
     core::{DataPaths, format_optional_date, format_optional_id, format_optional_u32},
     file_management::FileManagement,
     logic::{
-        codexi::{Codexi, migrate_v1, migrate_v2},
+        codexi::Codexi,
         operation::{OperationFlow, OperationKind, RegularKind, SystemKind},
     },
 };
@@ -36,35 +36,12 @@ pub fn handle_admin_command(command: AdminCommand, cwd: &Path, paths: &DataPaths
             FileManagement::restore_backup(paths, &full_path)?;
             msg_info!("Restore backup completed");
         }
-
-        AdminCommand::Migrate { version } => match version {
-            2 => {
-                migrate_v1(paths)?;
-                msg_info!("Migrate done");
-            }
-            3 => {
-                let warnings = migrate_v2(paths)?;
-                if !warnings.is_empty() {
-                    view_warning(&warnings);
-                    msg_warn!("Migration ompleted, {} warnings", warnings.len());
-                } else {
-                    msg_info!("Migration completed");
-                }
-            }
-            _ => bail!("Migration not supported"),
-        },
         AdminCommand::Audit { rebuild } => {
             let mut codexi = FileManagement::load_current_state(paths)?;
-            let (warnings, name) = {
-                let account = codexi.get_current_account_mut()?;
-                if rebuild {
-                    (account.audit_and_rebuild()?, account.name.clone())
-                } else {
-                    (account.audit()?, account.name.clone())
-                }
-            }; // borrow account released here
+            let (warnings, name) = codexi.main_audit()?;
 
             if rebuild {
+                codexi.rebuild()?;
                 FileManagement::save_current_state(&codexi, paths)?;
             }
 

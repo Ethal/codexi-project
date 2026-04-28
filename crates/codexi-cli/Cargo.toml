@@ -29,7 +29,3 @@ thousands = { workspace = true }
 dialoguer = { workspace = true }
 console = { workspace = true }
 chrono = { workspace = true }
-
-# Logging
-log = { workspace = true }
-env_logger = { workspace = true }

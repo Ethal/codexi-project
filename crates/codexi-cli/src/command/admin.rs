@@ -32,13 +32,6 @@ pub enum AdminCommand {
         filename: String,
     },
 
-    ///⚠️  Migration an old version of the loger(codexi.dat), including archived file if any.
-    Migrate {
-        /// Version to migrate.
-        #[arg(value_name = "VERSION", help = "Version of the file to migrate(1->2, 2->3).")]
-        version: usize,
-    },
-
     /// Audit the Codexi.
     Audit {
         #[arg(short, long, help = "Balance rebuild of the current account")]

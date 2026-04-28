@@ -4,7 +4,6 @@ mod account_type;
 mod action;
 mod anchors;
 mod archive;
-mod audit;
 mod container;
 mod error;
 mod merge;
