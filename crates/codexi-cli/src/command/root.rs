@@ -32,10 +32,14 @@ Typical workflow:
     arg_required_else_help = true
 )]
 pub struct Cli {
+    #[arg(long, help = "Tui mode")]
+    pub tui: bool,
+
     #[arg(short, long, global = true, help = "Skip confirmation prompts")]
     pub yes: bool,
+
     #[command(subcommand)]
-    pub command: RootCommand,
+    pub command: Option<RootCommand>,
 }
 
 #[derive(Subcommand, Debug)]

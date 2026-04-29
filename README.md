@@ -118,6 +118,8 @@ codexi-cli admin backup
 
 ## 🗂️ Command Reference
 
+The option `--tui` provide acces to a TUI menu, refer to [Menu Tui](docs/menu_tui.md) for the tree of the menu.
+
 ### Core
 | Command | Description |
 | :--- | :--- |

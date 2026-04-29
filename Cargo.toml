@@ -46,8 +46,12 @@ directories = "6.0"
 thousands = "0.2.0"
 dialoguer = "0.12"
 console = "0.16"
-inquire = "0.9"
 derive_builder = "0.20"
+
+# Tui
+inquire = "0.9"
+inquire-derive = "0.9"
+crossterm = "0.29.0"
 
 [profile.release]
 opt-level = 2

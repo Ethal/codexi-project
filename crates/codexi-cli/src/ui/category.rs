@@ -35,7 +35,7 @@ pub fn view_category(datas: &CategoryCollection) {
         let parent = match (&c.parent_name, &c.parent_id) {
             (Some(name), Some(pid)) => {
                 let styled_pid = parent_style.apply_to(format!("({})", format_id_short(pid)));
-                let name_tr = truncate_text(name, 17);
+                let name_tr = truncate_text(name, 13);
                 format!("{}{}", name_tr, styled_pid)
             }
             _ => "─(—)".to_string(),
