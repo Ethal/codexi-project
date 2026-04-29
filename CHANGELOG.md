@@ -6,16 +6,18 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] — 
 
 ### Added
-- **Input normalization** to sanitize CLI input from external sources (Unicode whitespace, control chars)
+- **Input normalization** to sanitize CLI input from external sources (Unicode whitespace, control chars).
+- **CLI command `--tui`** a simple TUI for quick access of overviezw, view, report, account, counterparty, category, backup .
 
 ### Changed
-- **Audit** move to codexi level and refractoring, 
-- **Storage** only cborium is supported
+- **Audit** move to codexi level and refractoring.
+- **Storage** only cborium is supported.
+- **`view_account_context`, `view_category`** improve view.
 
 ### Removed
 - ⚠️ **Support** for migration from v1 and v2 (legacy).
 - ⚠️ **Support** of reading bincode/cbor ledger format file (legacy).
-- **CLI command `admin migrate`** 
+- **CLI command `admin migrate`**
 - **`bincode`, `serde_cbor`** crates.
 - **`log`, `env_logger`** crates.
 

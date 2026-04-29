@@ -48,12 +48,12 @@ pub fn view_account(items: &AccountCollection) {
 /// view to context of the current account
 pub fn view_account_context(item: &AccountItem) {
     let title_text = TITLE_STYLE.apply_to(format!(
-        "name:{} currency:{} - Account context ",
+        "Name: {} – Currency: {}",
         item.name,
         format_optional_currency_item(&item.currency)
     ));
     println!();
-    println!("{}) ", title_text);
+    println!("{} ", title_text);
     println!(" Account Type: {}", item.context.account_type);
     println!(
         " Overdraft limit: {}",

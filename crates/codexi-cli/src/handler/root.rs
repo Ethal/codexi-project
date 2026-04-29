@@ -40,8 +40,9 @@ use crate::ui::view_search;
 
 pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()> {
     let skip_confirm = cli.yes;
+    let command = cli.command.unwrap();
 
-    match cli.command {
+    match command {
         RootCommand::Overview => {
             let codexi = FileManagement::load_current_state(paths)?;
             let accounts = AccountCollection::build(&codexi);

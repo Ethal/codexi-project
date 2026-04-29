@@ -29,3 +29,8 @@ thousands = { workspace = true }
 dialoguer = { workspace = true }
 console = { workspace = true }
 chrono = { workspace = true }
+
+# Tui
+inquire = { workspace = true }
+inquire-derive = { workspace = true }
+crossterm = { workspace = true }
