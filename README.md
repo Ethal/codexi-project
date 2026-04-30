@@ -37,6 +37,20 @@ dated today. This preserves a complete, tamper-evident audit trail.
 
 ---
 
+## 💰 Balance Semantics
+
+Codexi distinguishes between two types of balances depending on the context:
+
+- **Global balance** — the actual account balance, shown in commands like `overview`
+- **Filtered balance** — a running balance recomputed from the currently displayed operations (e.g. in `search`)
+
+When using `search` with filters (date, category, etc.), the balance column is **recalculated from the filtered dataset only**.  
+It does **not represent the real account balance**, but ensures a consistent and readable flow within the result set.
+
+This design avoids misleading gaps when operations are hidden by filters and keeps the output coherent for analysis.
+
+To get the real account balance, use `overview`.
+
 ## ✨ Features
 
 - **Multi-Account** — manage several accounts, switch active account at any time

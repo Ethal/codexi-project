@@ -378,7 +378,7 @@ impl SearchParamsBuilder {
 /*==============================================================================*/
 
 pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Result<SearchOperationList, SearchError> {
-    let ops_map = container.get_operations_with_balance();
+    let mut ops_map = container.get_operations_with_balance();
     let from = params.from;
     let to = params.to;
     let text = params.text.as_deref();
@@ -416,8 +416,9 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
     };
 
     let mut matched = SearchOperationList::new(params);
+    let mut cur_bal = Decimal::ZERO;
 
-    for item in ops_map {
+    for item in &mut ops_map {
         let op = &item.operation;
 
         if let Some(s_date) = from
@@ -481,8 +482,9 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
         {
             continue;
         }
-
-        matched.items.push(item);
+        item.balance = cur_bal + item.operation.flow.to_sign() * item.operation.amount;
+        cur_bal = item.balance;
+        matched.items.push(item.clone());
     }
 
     let result = if let Some(n) = latest {
