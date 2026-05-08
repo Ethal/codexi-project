@@ -377,10 +377,21 @@ impl fmt::Display for TuiAccount {
     }
 }
 
-struct TuiAccountItemView<'a>(&'a AccountItem);
-impl fmt::Display for TuiAccountItemView<'_> {
+struct TuiChoice {
+    id: String,
+    label: String,
+}
+
+impl fmt::Display for TuiChoice {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let acc = self.0;
+        write!(f, "{}", self.label)
+    }
+}
+
+fn select_account(items: &AccountCollection) -> Result<Option<String>> {
+    let mut options = Vec::new();
+
+    for acc in &items.items {
         let marker = match (acc.current, acc.close) {
             (false, false) => "      ".to_string(),
             (true, false) => "   (*)".to_string(),
@@ -388,8 +399,7 @@ impl fmt::Display for TuiAccountItemView<'_> {
             (true, true) => "(c)(*)".to_string(),
         };
 
-        write!(
-            f,
+        let label = format!(
             "{} {} {} - {:<10} {:<7} {} {}",
             marker,
             acc.id,
@@ -398,25 +408,27 @@ impl fmt::Display for TuiAccountItemView<'_> {
             acc.context.account_type,
             format_optional_currency_item(&acc.currency),
             format_optional_bank_item(&acc.bank),
-        )
+        );
+
+        options.push(TuiChoice {
+            id: acc.id.clone(),
+            label,
+        });
     }
-}
-fn select_account(items: &[AccountItem]) -> Result<Option<&AccountItem>> {
-    let mut options: Vec<String> = items.iter().map(|i| format!("{}", TuiAccountItemView(i))).collect();
-    options.push("← Back".to_string());
+
+    let back = TuiChoice {
+        id: "".to_string(),
+        label: "← Back".into(),
+    };
+    options.push(back);
 
     let choice = Select::new("Select", options).prompt()?;
 
-    if choice == "← Back" {
+    if choice.label == "← Back" {
         return Ok(None);
     }
 
-    let acc = items
-        .iter()
-        .find(|i| format!("{}", TuiAccountItemView(i)) == choice)
-        .unwrap();
-
-    Ok(Some(acc))
+    Ok(Some(choice.id))
 }
 
 pub fn tui_account(paths: &DataPaths, codexi: &mut Codexi) -> Result<()> {
@@ -428,8 +440,8 @@ pub fn tui_account(paths: &DataPaths, codexi: &mut Codexi) -> Result<()> {
         match choice {
             TuiAccount::Use => {
                 let items = AccountCollection::build(codexi);
-                if let Some(account) = select_account(&items.items)? {
-                    let id = parse_id(&account.id)?;
+                if let Some(account_id) = select_account(&items)? {
+                    let id = parse_id(&account_id)?;
                     codexi.set_current_account(&id)?;
                     FileManagement::save_current_state(codexi, paths)?;
                     Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
