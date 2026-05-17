@@ -143,7 +143,9 @@ impl OperationBuilder {
             op.description = "no description".to_string();
         }
 
-        op.context.exchange_rate = Decimal::ONE;
+        if op.context.exchange_rate == Decimal::ZERO {
+            op.context.exchange_rate = Decimal::ONE;
+        }
 
         // Check the amount
         if op.amount < Decimal::ZERO {

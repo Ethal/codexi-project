@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
 - **`log`, `env_logger`** crates.
 
 ### Fixed
+- Transfer link initialization by assigning `transfer_id` after destination operation creation.
+- Unintended overwrite of custom exchange rates in OperationBuilder by only defaulting to `1` when the value is unset (`0`).
 
 ---
 ## [0.5.0] — 2026-04-13

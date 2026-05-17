@@ -192,7 +192,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
                 .transpose()?;
 
-            codexi.transfer(date, amount_from_d, acc_id_to, amount_to_d, desc_s.clone(), category_id)?;
+            codexi.transfer(date, amount_from_d, amount_to_d, acc_id_to, desc_s.clone(), category_id)?;
 
             FileManagement::save_current_state(&codexi, paths)?;
             msg_info!(

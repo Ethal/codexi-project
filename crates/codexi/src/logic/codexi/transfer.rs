@@ -21,8 +21,8 @@ impl Codexi {
         &mut self,
         date: NaiveDate,
         amount_from: Decimal,
-        to_id: Nulid,
         amount_to: Decimal,
+        to_id: Nulid,
         description: String,
         category_id: Option<Nulid>,
     ) -> Result<(Nulid, Nulid), CodexiError> {
@@ -68,18 +68,21 @@ impl Codexi {
                 .map_err(AccountError::ComplianceViolation)?;
         }
 
+        // Calculate effective exchange rate : amount_to / amount_from
+        let exchange_rate_from = amount_to / amount_from;
+        let exchange_rate_to = amount_from / amount_to;
+
         // --- Build source operation (Debit) ---
         // We need op_to_id first to cross-link — so we pre-generate the destination id
-        let op_to_id = Nulid::new().map_err(AccountError::Id)?;
 
         let desc_from = format!("TO #{}: {}", format_id_short(&format_id(to_id)), description);
         let mut links_from = OperationLinks::default();
-        links_from.transfer_id = Some(op_to_id);
         links_from.transfer_account_id = Some(to_id);
 
         let mut ctx_from = OperationContext::default();
         ctx_from.currency_id = Some(currency_from);
         ctx_from.category_id = category_id;
+        ctx_from.exchange_rate = exchange_rate_from;
 
         let mut op_from = OperationBuilder::default()
             .date(date)
@@ -94,10 +97,6 @@ impl Codexi {
             .map_err(AccountError::Operation)?;
 
         let op_from_id = op_from.id;
-        // Calculate effective exchange rate : amount_to / amount_from
-        let exchange_rate_from = amount_to / amount_from;
-        let exchange_rate_to = amount_from / amount_to;
-        op_from.context.exchange_rate = exchange_rate_from;
 
         // --- Build destination operation (Credit) ---
         let desc_to = format!("FROM #{}: {}", format_id_short(&format_id(from_id)), description);
@@ -111,7 +110,7 @@ impl Codexi {
         ctx_to.exchange_rate = exchange_rate_to;
 
         // Pre-set the id we reserved earlier
-        let mut op_to = OperationBuilder::default()
+        let op_to = OperationBuilder::default()
             .date(date)
             .kind(kind)
             .flow(OperationFlow::Credit)
@@ -122,7 +121,11 @@ impl Codexi {
             .context(ctx_to)
             .build()
             .map_err(AccountError::Operation)?;
-        op_to.id = op_to_id; // use the pre-generated id for cross-linking
+
+        let op_to_id = op_to.id;
+
+        // update the source operation transfer id with the op id from destination
+        op_from.links.transfer_id = Some(op_to_id);
 
         // --- Commit both operations ---
         let acc_from = self.get_account_by_id_mut(&from_id)?;
@@ -290,8 +293,8 @@ mod tests {
         let res = codexi.transfer(
             transfer_date(),
             dec!(53.05),
-            to_id,
             dec!(1_000_000),
+            to_id,
             "ATM withdrawal".into(),
             None,
         );
@@ -319,14 +322,19 @@ mod tests {
     #[test]
     fn transfer_exchange_rate_calculated() {
         let (mut codexi, _from_id, to_id) = setup_codexi_two_accounts();
-        let (op_from_id, _) = codexi
-            .transfer(transfer_date(), dec!(53.05), to_id, dec!(1_000_000), "ATM".into(), None)
+        let (op_from_id, op_to_id) = codexi
+            .transfer(transfer_date(), dec!(53.05), dec!(1_000_000), to_id, "ATM".into(), None)
             .unwrap();
 
         // Rate = 1_000_000 / 53.05
         let acc_eur = codexi.get_current_account().unwrap();
         let op = acc_eur.get_operation_by_id(op_from_id).unwrap();
         let expected_rate = dec!(1_000_000) / dec!(53.05);
+        assert_eq!(op.context.exchange_rate, expected_rate);
+
+        let acc_idr = codexi.get_account_by_id(&to_id).unwrap();
+        let op = acc_idr.get_operation_by_id(op_to_id).unwrap();
+        let expected_rate = dec!(53.05) / dec!(1_000_000);
         assert_eq!(op.context.exchange_rate, expected_rate);
     }
 
@@ -336,8 +344,8 @@ mod tests {
         let res = codexi.transfer(
             transfer_date(),
             dec!(100),
-            from_id, // same as current_account
             dec!(100),
+            from_id, // same as current_account
             "self".into(),
             None,
         );
@@ -347,7 +355,7 @@ mod tests {
     #[test]
     fn transfer_amount_from_zero_fails() {
         let (mut codexi, _, to_id) = setup_codexi_two_accounts();
-        let res = codexi.transfer(transfer_date(), dec!(0), to_id, dec!(100_000), "test".into(), None);
+        let res = codexi.transfer(transfer_date(), dec!(0), dec!(100_000), to_id, "test".into(), None);
         assert!(matches!(
             res,
             Err(CodexiError::Account(AccountError::ComplianceViolation(
@@ -359,7 +367,7 @@ mod tests {
     #[test]
     fn transfer_amount_to_zero_fails() {
         let (mut codexi, _, to_id) = setup_codexi_two_accounts();
-        let res = codexi.transfer(transfer_date(), dec!(100), to_id, dec!(0), "test".into(), None);
+        let res = codexi.transfer(transfer_date(), dec!(100), dec!(0), to_id, "test".into(), None);
         assert!(matches!(
             res,
             Err(CodexiError::Account(AccountError::ComplianceViolation(
@@ -373,7 +381,7 @@ mod tests {
         let (mut codexi, from_id, to_id) = setup_codexi_two_accounts();
         // Remove currency from source account
         codexi.get_account_by_id_mut(&from_id).unwrap().currency_id = None;
-        let res = codexi.transfer(transfer_date(), dec!(100), to_id, dec!(100_000), "test".into(), None);
+        let res = codexi.transfer(transfer_date(), dec!(100), dec!(100_000), to_id, "test".into(), None);
         assert!(matches!(res, Err(CodexiError::TransferNoCurrency(_))));
     }
 
@@ -382,7 +390,7 @@ mod tests {
         let (mut codexi, _, to_id) = setup_codexi_two_accounts();
         // Remove currency from destination account
         codexi.get_account_by_id_mut(&to_id).unwrap().currency_id = None;
-        let res = codexi.transfer(transfer_date(), dec!(100), to_id, dec!(100_000), "test".into(), None);
+        let res = codexi.transfer(transfer_date(), dec!(100), dec!(100_000), to_id, "test".into(), None);
         assert!(matches!(res, Err(CodexiError::TransferNoCurrency(_))));
     }
 
@@ -393,8 +401,8 @@ mod tests {
         let res = codexi.transfer(
             transfer_date(),
             dec!(1_600), // 1000 + 600 > overdraft limit of 500
-            to_id,
             dec!(30_000_000),
+            to_id,
             "too much".into(),
             None,
         );
@@ -407,7 +415,7 @@ mod tests {
     fn void_transfer_ok() {
         let (mut codexi, _from_id, to_id) = setup_codexi_two_accounts();
         let (op_from_id, op_to_id) = codexi
-            .transfer(transfer_date(), dec!(53.05), to_id, dec!(1_000_000), "ATM".into(), None)
+            .transfer(transfer_date(), dec!(53.05), dec!(1_000_000), to_id, "ATM".into(), None)
             .unwrap();
 
         // Void from current account (EUR)
@@ -435,7 +443,7 @@ mod tests {
     fn void_transfer_already_voided_fails() {
         let (mut codexi, _, to_id) = setup_codexi_two_accounts();
         let (op_from_id, _) = codexi
-            .transfer(transfer_date(), dec!(53.05), to_id, dec!(1_000_000), "ATM".into(), None)
+            .transfer(transfer_date(), dec!(53.05), dec!(1_000_000), to_id, "ATM".into(), None)
             .unwrap();
 
         // First void — ok
