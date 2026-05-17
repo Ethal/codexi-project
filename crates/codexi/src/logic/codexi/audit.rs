@@ -6,7 +6,7 @@ use rust_decimal_macros::dec;
 use std::collections::HashMap;
 
 use crate::{
-    core::{CoreWarning, CoreWarningKind},
+    core::{CoreWarning, CoreWarningKind, format_id},
     logic::{
         account::{Account, AccountAnchors, AccountError, AccountMeta, ComplianceAction, TemporalAction},
         codexi::{Codexi, CodexiError},
@@ -24,20 +24,60 @@ impl Codexi {
         Ok((warnings, name))
     }
 
-    /// Perfomed rebuild of balance and, account_id
+    /// Perfomed rebuild of balance, operation account id, exchange rate
     pub fn rebuild(&mut self) -> Result<(), CodexiError> {
-        let account = self.get_current_account_mut()?;
-        // rebuild balance
-        account.rebuild_balances_from(account.operations.first().map(|op| op.date).unwrap_or_default());
-        // rebuild account_id
-        for op in &mut account.operations {
-            if op.is_legacy_account() {
-                op.account_id = account.id;
+        let mut transfers = Vec::new();
+
+        {
+            let account = self.get_current_account_mut()?;
+            // rebuild the balance
+            account.rebuild_balances_from(account.operations.first().map(|op| op.date).unwrap_or_default());
+
+            for op in &mut account.operations {
+                // rebuild account_id
+                if op.is_legacy_account() {
+                    op.account_id = account.id;
+                }
+
+                // collect transfer infos
+                if let Some(b_acc_id) = op.links.transfer_account_id {
+                    if let Some(b_op_id) = op.links.transfer_id {
+                        transfers.push((op.id, op.amount, b_acc_id, b_op_id));
+                    }
+                }
             }
+        }
+
+        // rebuild rate
+        for (a_op_id, a_amount, b_acc_id, b_op_id) in transfers {
+            // amout the the other operations
+            let b_amount =
+                {
+                    let b_acc = self.get_account_by_id(&b_acc_id)?;
+                    let b_op = b_acc.get_operation_by_id(b_op_id).ok_or(CodexiError::Account(
+                        AccountError::OperationNotFound(format_id(b_op_id)),
+                    ))?;
+                    b_op.amount
+                };
+
+            // Rate calculation
+            let mut rate = Decimal::ONE;
+            if a_amount != Decimal::ZERO {
+                rate = b_amount / a_amount;
+            };
+            // get current account
+            let account = self.get_current_account_mut()?;
+            // operation
+            let a_op = account.get_operation_by_id_mut(a_op_id).ok_or(CodexiError::Account(
+                AccountError::OperationNotFound(format_id(a_op_id)),
+            ))?;
+
+            a_op.context.exchange_rate = rate;
         }
 
         Ok(())
     }
+
     /// Audit the account
     /// TEST 1 — policy via replay /
     /// TEST 2 — locked period
