@@ -85,7 +85,7 @@ pub fn view_operation(item: &SearchOperationItem) {
     println!(
         "  {} {}",
         l("Rate"),
-        format!("{:.2}", item.exchange_rate).separate_with_commas()
+        format!("{:.8}", item.exchange_rate).separate_with_commas()
     );
     println!("  {} {}", l("Category"), format_optional_text(item.category.as_deref()));
     println!("  {} {}", l("Payee"), format_optional_text(item.payee.as_deref()));

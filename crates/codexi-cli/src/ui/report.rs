@@ -310,7 +310,7 @@ pub fn view_exchange_rate(data: &ExchangeRateCollection) {
             STYLE_MUTED.apply_to(id_short),
             STYLE_MUTED.apply_to(&item.date),
             DEBIT_STYLE.apply_to(format!("{:.2}", item.amount).separate_with_commas()),
-            VALUE_STYLE.apply_to(format!("{:.4}", item.rate).separate_with_commas()),
+            VALUE_STYLE.apply_to(format!("{:.8}", item.rate).separate_with_commas()),
             CREDIT_STYLE.apply_to(format!("{:.2}", item.cost).separate_with_commas()),
             truncate_text(&item.description, 31),
         );
@@ -322,21 +322,21 @@ pub fn view_exchange_rate(data: &ExchangeRateCollection) {
     println!(
         "│{:<37}│{:>18}│{:>18}│{:<31}│",
         STYLE_MUTED.apply_to(" avg rate"),
-        VALUE_STYLE.apply_to(format!("{:.4}", data.avg_rate).separate_with_commas()),
+        VALUE_STYLE.apply_to(format!("{:.8}", data.avg_rate).separate_with_commas()),
         "",
         "",
     );
     println!(
         "│{:<37}│{:>18}│{:>18}│{:<31}│",
         STYLE_MUTED.apply_to(" best rate"),
-        VALUE_STYLE.apply_to(format!("{:.4}", data.best_rate).separate_with_commas()),
+        VALUE_STYLE.apply_to(format!("{:.8}", data.best_rate).separate_with_commas()),
         "",
         "",
     );
     println!(
         "│{:<37}│{:>18}│{:>18}│{:<31}│",
         STYLE_MUTED.apply_to(" worst rate"),
-        VALUE_STYLE.apply_to(format!("{:.4}", data.worst_rate).separate_with_commas()),
+        VALUE_STYLE.apply_to(format!("{:.8}", data.worst_rate).separate_with_commas()),
         "",
         "",
     );
