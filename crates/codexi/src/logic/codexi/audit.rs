@@ -10,7 +10,7 @@ use crate::{
     logic::{
         account::{Account, AccountAnchors, AccountError, AccountMeta, ComplianceAction, TemporalAction},
         codexi::{Codexi, CodexiError},
-        operation::{Operation, OperationFlow},
+        operation::{Operation, OperationFlow, OperationKind},
     },
 };
 
@@ -47,7 +47,7 @@ impl Codexi {
     /// TEST 6 — double void
     /// TEST 7 — anchors consistency
     /// TEST 8 — transfer links
-    /// TEST 9 — kegacy_account (operation with account_id.is_nil())
+    /// TEST 9 — legacy_account (operation with account_id.is_nil())
     /// TEST 10 — Counter party exist
     pub fn audit(&self, account: &Account) -> Result<Vec<CoreWarning>, AccountError> {
         let mut warnings = Vec::new();
@@ -305,7 +305,7 @@ impl Codexi {
             if has_transfer_id
                 && !matches!(
                     op.kind,
-                    crate::logic::operation::OperationKind::Regular(crate::logic::operation::RegularKind::Transfer)
+                    OperationKind::Regular(crate::logic::operation::RegularKind::Transfer)
                 )
             {
                 warnings.push(CoreWarning {
