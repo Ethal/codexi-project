@@ -40,16 +40,17 @@ pub fn handle_admin_command(command: AdminCommand, cwd: &Path, paths: &DataPaths
             let mut codexi = FileManagement::load_current_state(paths)?;
             let (warnings, name) = codexi.main_audit()?;
 
-            if rebuild {
-                codexi.rebuild()?;
-                FileManagement::save_current_state(&codexi, paths)?;
-            }
-
             if !warnings.is_empty() {
                 msg_warn!("Account: {} Audit completed, {} warnings", name, warnings.len());
                 view_warning(&warnings);
             } else {
                 msg_info!("Account: {} Audit completed, no warnings", name);
+            }
+
+            if rebuild {
+                codexi.rebuild()?;
+                FileManagement::save_current_state(&codexi, paths)?;
+                msg_info!("Rebuild completed");
             }
         }
         AdminCommand::ClearData => {
