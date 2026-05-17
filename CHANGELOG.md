@@ -8,13 +8,14 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **Input normalization** – to sanitize CLI input from external sources (Unicode whitespace, control chars).
 - **CLI command `--tui`** – a simple TUI for quick access of overviezw, view, report, account, counterparty, category, backup .
+- **Codexi::Rebuild** – reconstruct the exchange rate on tranfer operation.  
 
 ### Changed
 - **Audit** – moved to codexi-level, refactored.
 - **Storage** – only Ciborium format is now supported.
 - **`view_account_context`, `view_category`** – improved views, minor fixes.
 - **Search balance** – introduced filtered running balance (does not reflect global account/operation balance).
- 
+
 ### Removed
 - ⚠️ **Support** for migration from v1 and v2 (legacy).
 - ⚠️ **Support** of reading bincode/cbor ledger format file (legacy).
