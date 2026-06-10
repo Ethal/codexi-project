@@ -41,6 +41,7 @@ pub struct SearchOperationItem {
     pub category: Option<String>, // resolved from category_id
     pub payee: Option<String>,
     pub reconciled: Option<String>,
+    pub counterparty: Option<String>,
 
     // ── Meta ──────────────────────────────────────────────────
     pub tags: Option<String>,
@@ -68,6 +69,13 @@ impl SearchOperationItem {
             .context
             .category_id
             .and_then(|id| codexi.categories.get_name_by_id(&id));
+
+        // Resolve counterparty
+        let counterparty = s_op
+            .operation
+            .context
+            .counterparty_id
+            .and_then(|id| codexi.counterparties.get_name_by_id(&id));
 
         // can_be_void
         let can_be_void = account.can_void(s_op.operation.id);
@@ -103,6 +111,7 @@ impl SearchOperationItem {
             category,
             payee: s_op.operation.context.payee.clone(),
             reconciled: format_optional_date(s_op.operation.context.reconciled),
+            counterparty,
 
             // ── Meta ──────────────────────────────────────────
             tags: s_op.operation.meta.tags.clone().map(|t| t.join(", ")),

@@ -7,8 +7,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **Input normalization** – to sanitize CLI input from external sources (Unicode whitespace, control chars).
-- **CLI command `--tui`** – a simple TUI for quick access of overviezw, view, report, account, counterparty, category, backup .
-- **Codexi::Rebuild** – reconstruct the exchange rate on tranfer operation.  
+- **CLI command `--tui`** – a simple TUI for quick access of overviezw, view, report, account, counterparty, category, backup.
+- **Codexi::Rebuild** – reconstruct the exchange rate on tranfer operation.
+- **Cli Ui** – add a note in the report of the counterparty related to the tranfer operation`s.  
 
 ### Changed
 - **Audit** – moved to codexi-level, refactored.
@@ -18,7 +19,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - ⚠️ **Support** for migration from v1 and v2 (legacy).
-- ⚠️ **Support** of reading bincode/cbor ledger format file (legacy).
+- ⚠️ **Support** of reading ledger format file (legacy) by `bincode`and `serde_cbor` crates.
 - **CLI command `admin migrate`**
 - **`bincode`, `serde_cbor`** crates.
 - **`log`, `env_logger`** crates.

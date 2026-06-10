@@ -66,7 +66,7 @@ impl CounterpartyList {
             .ok_or_else(|| CounterpartyError::CounterpartyNotFound(format_id(*id)))
     }
 
-    pub fn counterparty_name_by_id(&self, id: &Nulid) -> Option<String> {
+    pub fn get_name_by_id(&self, id: &Nulid) -> Option<String> {
         self.list.iter().find(|b| &b.id == id).map(|b| b.name.clone())
     }
 

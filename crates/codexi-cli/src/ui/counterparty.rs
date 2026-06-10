@@ -8,7 +8,8 @@ use codexi::{
 };
 
 use crate::ui::{
-    CREDIT_STYLE, DEBIT_STYLE, STYLE_DANGER, STYLE_MUTED, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE, truncate_text,
+    CREDIT_STYLE, DEBIT_STYLE, NOTE_STYLE, STYLE_DANGER, STYLE_MUTED, STYLE_NORMAL, TITLE_STYLE, VALUE_STYLE,
+    truncate_text,
 };
 
 /// view to list of the counterparties
@@ -71,6 +72,13 @@ pub fn view_counterparty_stats(data: &CounterpartyStatsCollection) {
 
     println!(
         "└───────┴──────────────────┴──────────────┴─────┴──────────────────┴───────┴──────────────────┴───────┴──────────────────┴──────────┘"
+    );
+    println!();
+    println!(
+        "{}",
+        NOTE_STYLE.apply_to(
+            "Note: As transfer operation have no counterparty, These type of operations are not part of this report"
+        )
     );
     println!();
 }

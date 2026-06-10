@@ -214,6 +214,7 @@ impl SearchOperationList {
 
         for item in self.active_items() {
             let op = &item.operation;
+            // As transfer have no counterparty, transfer operation not part of the group
             if op.is_transfer() {
                 continue;
             }
