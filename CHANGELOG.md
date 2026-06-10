@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - **CLI command `--tui`** – a simple TUI for quick access of overviezw, view, report, account, counterparty, category, backup.
 - **Codexi::Rebuild** – reconstruct the exchange rate on tranfer operation.
 - **Cli Ui** – add a note in the report of the counterparty related to the tranfer operation`s.  
+- **Cli Ui** – add counterparty in `operation view`.
+- **Cli Ui** – add data direcroy in `admin infos`.
 
 ### Changed
 - **Audit** – moved to codexi-level, refactored.

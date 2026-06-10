@@ -22,6 +22,7 @@ pub struct CodexiInfos {
     pub exchange_version: String,
     pub storage_format: StorageFormat,
     pub disk_usage: DiskUsage,
+    pub data_dir: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -301,6 +302,7 @@ impl FileManagement {
             exchange_version: CODEXI_EXCHANGE_FORMAT_VERSION.to_string(),
             storage_format: StorageFormat::Ciborium,
             disk_usage,
+            data_dir: paths.root.to_string_lossy().to_string(),
         };
 
         Ok(result)

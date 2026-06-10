@@ -26,14 +26,15 @@ pub fn view_warning(warnings: &[CoreWarning]) {
 pub fn view_codexi_infos(datas: &CodexiInfos) {
     println!();
     println!("📒 {}", TITLE_STYLE.apply_to("Infos"));
-    println!("{}", "─".repeat(55));
+    println!("{}", "─".repeat(80));
     println!("  {} {}", label("Data version", 18), datas.data_version);
     println!("  {} {}", label("Exchange version", 18), datas.exchange_version);
     println!("  {} {}", label("Storage format", 18), datas.storage_format);
+    println!("  {} {}", label("data directory", 18), datas.data_dir);
 
     println!();
     println!("💰 {}", TITLE_STYLE.apply_to("Codexi"));
-    println!("{}", "─".repeat(55));
+    println!("{}", "─".repeat(80));
     println!("  {} {}", label("Accounts", 27), datas.codexi_account_count);
     println!(
         "  {} {}",
@@ -47,7 +48,7 @@ pub fn view_codexi_infos(datas: &CodexiInfos) {
     println!();
     let usage = &datas.disk_usage;
     println!("📦 {}", TITLE_STYLE.apply_to("Disk usage"));
-    println!("{}", "─".repeat(55));
+    println!("{}", "─".repeat(80));
     println!("  data_dir/");
     println!(
         "    {:<18} {:<10}",
@@ -83,7 +84,7 @@ pub fn view_codexi_infos(datas: &CodexiInfos) {
     );
 
     println!();
-    println!("{}", "─".repeat(55));
+    println!("{}", "─".repeat(80));
     println!(
         "  {:<20} {}",
         TITLE_STYLE.apply_to("TOTAL"),
