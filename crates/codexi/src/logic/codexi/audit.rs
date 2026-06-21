@@ -40,10 +40,10 @@ impl Codexi {
                 }
 
                 // collect transfer infos
-                if let Some(b_acc_id) = op.links.transfer_account_id {
-                    if let Some(b_op_id) = op.links.transfer_id {
-                        transfers.push((op.id, op.amount, b_acc_id, b_op_id));
-                    }
+                if let Some(b_acc_id) = op.links.transfer_account_id
+                    && let Some(b_op_id) = op.links.transfer_id
+                {
+                    transfers.push((op.id, op.amount, b_acc_id, b_op_id));
                 }
             }
         }
