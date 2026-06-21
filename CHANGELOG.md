@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - ⚠️ **Search balance** – introduced filtered running balance (does not reflect global account/operation balance).
 - ⚠️ **Backup** – replace ZIP archives with tar + gz compression
 - **Cli Ui** – extract exchange rate display into dedicated 'rate' module ui/rate.rs"
+- **Dependencies** – Moved `rust_decimal_macros` from `dependencies` to `dev-dependencies` to reduce production binary size. All `dec!` macro calls replaced with direct `Decimal` constructors (e.g., `dec!(500)` → `Decimal::new(500, 0)`, `dec!(0.001)` → `Decimal::new(1, 3)`).
 
 ### Removed
 - ⚠️ **Support** for migration from v1 and v2 (legacy).

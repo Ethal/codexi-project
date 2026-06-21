@@ -3,7 +3,6 @@
 use chrono::{Local, NaiveDate};
 use nulid::Nulid;
 use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 use std::mem;
 use std::path::PathBuf;
 
@@ -170,7 +169,7 @@ impl Account {
         let current_balance = Balance::build(&balance_items);
         let difference = physical_amount - current_balance.total();
         // check the difference if equal to zero or below < 0.001 -> Error
-        if difference.abs() < dec!(0.001) || difference.abs() == Decimal::ZERO {
+        if difference.abs() < Decimal::new(1, 3) || difference.abs() == Decimal::ZERO {
             return Err(AccountError::NoAdjust);
         }
         let op_flow = OperationFlow::from_sign(difference);

@@ -25,7 +25,6 @@ sha2 =  { workspace = true }
 
 # Decimal to replace f64
 rust_decimal = { workspace = true }
-rust_decimal_macros =  { workspace = true }
 
 # Backup/restore
 tar = { workspace = true }
@@ -36,3 +35,6 @@ walkdir = { workspace = true }
 directories = { workspace = true }
 thousands = { workspace = true }
 derive_builder = { workspace = true }
+
+[dev-dependencies]
+rust_decimal_macros =  { workspace = true }

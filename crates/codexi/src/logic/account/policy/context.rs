@@ -2,7 +2,6 @@
 
 use chrono::NaiveDate;
 use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 
 use crate::core::{CoreWarning, CoreWarningKind};
@@ -42,8 +41,8 @@ impl AccountContext {
         match account_type {
             AccountType::Current => Self {
                 account_type,
-                overdraft_limit: dec!(500),
-                min_balance: dec!(0),
+                overdraft_limit: Decimal::new(500, 0),
+                min_balance: Decimal::ZERO,
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
                 allows_interest: account_type.allows_interest(),
@@ -51,8 +50,8 @@ impl AccountContext {
             },
             AccountType::Cash => Self {
                 account_type,
-                overdraft_limit: dec!(500),
-                min_balance: dec!(0),
+                overdraft_limit: Decimal::new(500, 0),
+                min_balance: Decimal::ZERO,
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
                 allows_interest: account_type.allows_interest(),
@@ -60,8 +59,8 @@ impl AccountContext {
             },
             AccountType::Income => Self {
                 account_type,
-                overdraft_limit: dec!(0),
-                min_balance: dec!(0),
+                overdraft_limit: Decimal::ZERO,
+                min_balance: Decimal::ZERO,
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
                 allows_interest: account_type.allows_interest(),
@@ -69,8 +68,8 @@ impl AccountContext {
             },
             AccountType::Loan => Self {
                 account_type,
-                overdraft_limit: dec!(0),
-                min_balance: dec!(0),
+                overdraft_limit: Decimal::ZERO,
+                min_balance: Decimal::ZERO,
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
                 allows_interest: account_type.allows_interest(),
@@ -78,8 +77,8 @@ impl AccountContext {
             },
             AccountType::Saving => Self {
                 account_type,
-                overdraft_limit: dec!(0),
-                min_balance: dec!(10),
+                overdraft_limit: Decimal::ZERO,
+                min_balance: Decimal::TEN,
                 max_monthly_transactions: Some(6),
                 deposit_locked_until: None,
                 allows_interest: account_type.allows_interest(),
@@ -87,8 +86,8 @@ impl AccountContext {
             },
             AccountType::Joint => Self {
                 account_type,
-                overdraft_limit: dec!(1_000),
-                min_balance: dec!(0),
+                overdraft_limit: Decimal::ONE_THOUSAND,
+                min_balance: Decimal::ZERO,
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
                 allows_interest: account_type.allows_interest(),
@@ -96,8 +95,8 @@ impl AccountContext {
             },
             AccountType::Deposit => Self {
                 account_type,
-                overdraft_limit: dec!(0),
-                min_balance: dec!(0),
+                overdraft_limit: Decimal::ZERO,
+                min_balance: Decimal::ZERO,
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
                 allows_interest: account_type.allows_interest(),
@@ -105,8 +104,8 @@ impl AccountContext {
             },
             AccountType::Business => Self {
                 account_type,
-                overdraft_limit: dec!(10_000),
-                min_balance: dec!(0),
+                overdraft_limit: Decimal::new(10000, 0),
+                min_balance: Decimal::ZERO,
                 max_monthly_transactions: None,
                 deposit_locked_until: None,
                 allows_interest: account_type.allows_interest(),
@@ -114,8 +113,8 @@ impl AccountContext {
             },
             AccountType::Student => Self {
                 account_type,
-                overdraft_limit: dec!(100),
-                min_balance: dec!(0),
+                overdraft_limit: Decimal::ONE_HUNDRED,
+                min_balance: Decimal::ZERO,
                 max_monthly_transactions: Some(30),
                 deposit_locked_until: None,
                 allows_interest: account_type.allows_interest(),

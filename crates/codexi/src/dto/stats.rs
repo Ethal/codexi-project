@@ -1,7 +1,6 @@
 // src/dto/stats.rs
 
 use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 use std::collections::HashSet;
 
 use crate::{
@@ -151,7 +150,7 @@ impl StatsCollection {
         let cal_savings_rate = if real_credit > Decimal::ZERO {
             ((real_credit - real_debit) / real_credit) * Decimal::ONE_HUNDRED
         } else if real_debit > Decimal::ZERO {
-            dec!(-100)
+            Decimal::new(-100, 0)
         } else {
             Decimal::ZERO
         };

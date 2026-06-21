@@ -2,7 +2,6 @@
 
 use nulid::Nulid;
 use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 use std::collections::HashMap;
 
 use crate::{
@@ -146,7 +145,7 @@ impl Codexi {
             };
 
             // TEST 3 : crossref balance operation vs live calculation
-            if (op.balance - running_balance).abs() > dec!(0.001) {
+            if (op.balance - running_balance).abs() > Decimal::new(1, 3) {
                 warnings.push(CoreWarning {
                     kind: CoreWarningKind::InvalidData,
                     message: format!(
@@ -185,7 +184,7 @@ impl Codexi {
         }
 
         // TEST 4 : current balance of the account
-        if (account.current_balance - running_balance).abs() > dec!(0.001) {
+        if (account.current_balance - running_balance).abs() > Decimal::new(1, 3) {
             warnings.push(CoreWarning {
                 kind: CoreWarningKind::InvalidData,
                 message: format!(
