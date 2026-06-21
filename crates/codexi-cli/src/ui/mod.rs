@@ -9,6 +9,7 @@ mod currency;
 mod display;
 mod loan;
 mod operation;
+mod rate;
 mod report;
 mod tree;
 
@@ -21,6 +22,7 @@ pub use currency::view_currency;
 pub use display::*;
 pub use loan::*;
 pub use operation::*;
+pub use rate::*;
 pub use report::*;
 pub use tree::*;
 

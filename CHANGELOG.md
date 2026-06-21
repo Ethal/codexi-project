@@ -17,8 +17,9 @@ All notable changes to this project will be documented in this file.
 - **Audit** – moved to codexi-level, refactored.
 - **Storage** – only Ciborium format is now supported.
 - **`view_account_context`, `view_category`** – improved views, minor fixes.
-- **Search balance** – introduced filtered running balance (does not reflect global account/operation balance).
+- ⚠️ **Search balance** – introduced filtered running balance (does not reflect global account/operation balance).
 - ⚠️ **Backup** – replace ZIP archives with tar + gz compression
+- **Cli Ui** – extract exchange rate display into dedicated 'rate' module ui/rate.rs"
 
 ### Removed
 - ⚠️ **Support** for migration from v1 and v2 (legacy).
