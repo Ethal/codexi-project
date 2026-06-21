@@ -10,47 +10,47 @@ pub struct AdminArgs {
 }
 
 /// Technical maintenance, disaster recovery, and low-level file management.
-/// To be use carefully, performed a --help is recommended
+/// Use with caution; run `--help` for details.
 #[derive(Subcommand, Debug)]
 pub enum AdminCommand {
-    /// Get technical information about the current codexi file
+    /// Display technical metadata for the current ledger (version, paths, size, etc.).
     Infos,
 
-    /// Backup(Zip file) the ledger(codexi.dat) include the archive file.
+    /// Create a backup of the ledger (`codexi.dat`) and its archive files.
     Backup {
         #[arg(
             long,
             value_name = "DIR or PATH",
-            help = "Target directory or full path for the backup ZIP file. If a directory is provided, a default filename with timestamp will be used."
+            help = "Target directory or full path for the backup file. If a directory is provided, a timestamped filename will be generated."
         )]
         target_dir: Option<String>,
     },
 
-    ///⚠️  Restore a ledger(codexi.dat) include the archive file from a backup file(Zip File).
+    /// ⚠️  Restore the ledger (`codexi.dat` + archives) from a backup file.
     Restore {
-        #[arg(value_name = "FILENAME", help = "The backup ZIP filename to restore from")]
+        #[arg(value_name = "FILENAME", help = "The backup file to restore from.")]
         filename: String,
     },
 
-    /// Audit the Codexi.
+    /// Run integrity checks on the ledger (balances, links, policies).
     Audit {
-        #[arg(short, long, help = "Balance rebuild of the current account")]
+        #[arg(short, long, help = "Rebuild balances for the current account.")]
         rebuild: bool,
     },
 
-    ///⚠️  Move all files related to the current ledger(Codexi) in the app active directory to the app trash directory.
+    /// ⚠️  Move all ledger-related files from the active directory to the trash.
     ClearData,
 
-    /// Manage the application trash (Recover or purge deleted files).
+    /// Manage the application trash (recover or purge deleted files).
     Trash(TrashArgs),
 
-    /// Export all the data of the current codexi to json file
+    /// Export all ledger data to a JSON file (full snapshot).
     ExportSpecial,
 
-    ///⚠️  Restore all the data of the current codexi from json file, no validations is perfom
+    /// ⚠️  Restore all ledger data from a JSON file (no validation performed).
     ImportSpecial,
 
-    /// Export operations in a script for a replay
+    /// Generate a replayable shell script from the ledger's operations.
     ExportScript,
 }
 
@@ -61,16 +61,16 @@ pub struct TrashArgs {
     pub command: TrashCommand,
 }
 
-/// Manage the application trash (Recover or purge deleted files).
+/// Manage the application trash (recover or purge deleted files).
 #[derive(Subcommand, Debug)]
 pub enum TrashCommand {
-    ///⚠️  Restore a Codexi from the app trash directory to the app active directory.
+    /// ⚠️  Restore a ledger from the trash to the active directory.
     Restore {
-        /// date of the folder to restore.
-        #[arg(value_name = "DATE_TIME", help = "Date format YYYYMMDD_HHMMSS.")]
+        /// Date of the trash folder to restore (format: `YYYYMMDD_HHMMSS`).
+        #[arg(value_name = "DATE_TIME")]
         date: String,
     },
 
-    ///⚠️  Emptying the trash in app directory.
+    /// ⚠️  Permanently delete all files in the trash.
     Purge,
 }
