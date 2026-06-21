@@ -38,8 +38,9 @@ tera = "1.20"
 opener = "0.8"
 
 # Backup/restore
-zip = "0.6"
 walkdir = "2.3"
+tar = "0.4"
+flate2 = "1"
 
 # Utilities
 directories = "6.0"

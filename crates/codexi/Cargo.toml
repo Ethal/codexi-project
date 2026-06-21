@@ -28,7 +28,8 @@ rust_decimal = { workspace = true }
 rust_decimal_macros =  { workspace = true }
 
 # Backup/restore
-zip = { workspace = true }
+tar = { workspace = true }
+flate2 = { workspace = true }
 walkdir = { workspace = true }
 
 # Utilities

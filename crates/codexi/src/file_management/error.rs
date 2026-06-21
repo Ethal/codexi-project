@@ -28,9 +28,7 @@ pub enum FileArchiveError {
 pub enum FileBackupError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
-    #[error("SYS_ZIP: {0}")]
-    Zip(#[from] zip::result::ZipError),
-    #[error("SYS_ZIP: {0}")]
+    #[error("SYS_TAR: {0}")]
     Maintenance(#[from] FileMaintenanceError),
     #[error("DATA_NO_DIR_OR_FILE: {0}")]
     NoDirOrFile(String),
