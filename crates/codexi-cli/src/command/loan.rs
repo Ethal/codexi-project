@@ -17,23 +17,31 @@ pub enum LoanCommand {
         #[command(subcommand)]
         action: LoanPolicyAction,
     },
-    /// Simulate a loan and display the amount due
+
+    /// Simulate a loan and display amount due, interest, and repayment schedule
     Simulate {
+        /// Capital amount (e.g., 1_000_000)
         #[arg(
             long,
             value_name = "CAPITAL",
             required = true,
-            allow_negative_numbers = false,
-            help = "Capital amount (e.g. 1_000_000)"
+            help = "Loan capital amount (positive, e.g., 1_000_000)"
         )]
         capital: String,
 
-        #[arg(long, value_name = "DATE", required = true, help = "Loan start date (YYYY-MM-DD)")]
-        start: String,
-
+        /// Loan start date
         #[arg(
             long,
-            value_name = "DATE",
+            value_name = "START_DATE",
+            required = true,
+            help = "Loan start date (YYYY-MM-DD)"
+        )]
+        start: String,
+
+        /// Expected refund date
+        #[arg(
+            long,
+            value_name = "REFUND_DATE",
             required = true,
             help = "Expected refund date (YYYY-MM-DD)"
         )]
@@ -42,25 +50,24 @@ pub enum LoanCommand {
         /// Override policy type for this simulation only
         #[arg(
             long = "type",
-            value_name = "TYPE",
+            value_name = "INTEREST_TYPE",
             help = "Interest type: 'linear' or 'compound' (overrides policy)"
         )]
-        type_interest: Option<String>,
+        interest_type: Option<String>,
 
-        /// Override interest rate for this simulation only
+        /// Override daily interest rate for this simulation only
         #[arg(
             long,
             value_name = "RATE",
-            allow_negative_numbers = false,
-            help = "Daily interest rate in % (overrides policy)"
+            help = "Daily interest rate in % (0-100, overrides policy)"
         )]
         rate: Option<String>,
 
+        /// Override free period for this simulation only
         #[arg(
             long,
             value_name = "DAYS",
-            allow_negative_numbers = false,
-            help = "Free period in days before interest applies"
+            help = "Free period in days before interest applies (overrides policy)"
         )]
         free_days: Option<u32>,
     },
@@ -70,63 +77,46 @@ pub enum LoanCommand {
 pub enum LoanPolicyAction {
     /// Show the current loan policy
     Show,
+
     /// Set loan policy parameters (persisted to disk)
     Set {
+        /// Interest type: 'linear' or 'compound'
         #[arg(
-            long = "typeinterest",
-            value_name = "TYPE",
+            long = "type",
+            value_name = "INTEREST_TYPE",
             help = "Interest type: 'linear' or 'compound'"
         )]
-        type_interest: Option<String>,
+        interest_type: Option<String>,
 
-        #[arg(
-            long,
-            value_name = "RATE",
-            allow_negative_numbers = false,
-            help = "Daily interest rate in %"
-        )]
+        /// Daily interest rate in %
+        #[arg(long, value_name = "RATE", help = "Daily interest rate in % (0-100)")]
         rate: Option<String>,
 
-        #[arg(
-            long,
-            value_name = "DAYS",
-            allow_negative_numbers = false,
-            help = "Free period in days before interest applies"
-        )]
+        /// Free period in days before interest applies
+        #[arg(long, value_name = "DAYS", help = "Free period in days before interest applies")]
         free_days: Option<u32>,
 
-        #[arg(
-            long,
-            value_name = "PCT",
-            allow_negative_numbers = false,
-            help = "Max interest cap as % of capital (0-100)"
-        )]
+        /// Max interest cap as % of capital
+        #[arg(long, value_name = "MAX_CAP_PCT", help = "Max interest cap as % of capital (0-100)")]
         max_cap: Option<String>,
 
-        #[arg(
-            long,
-            value_name = "DAYS",
-            allow_negative_numbers = false,
-            help = "Max loan duration in days"
-        )]
+        /// Max loan duration in days
+        #[arg(long, value_name = "MAX_DAYS", help = "Max loan duration in days")]
         max_days: Option<u32>,
 
+        /// Minimum capital required
         #[arg(
             long,
-            value_name = "AMOUNT",
-            allow_negative_numbers = false,
-            help = "Minimum capital required"
+            value_name = "MIN_CAPITAL",
+            help = "Minimum capital required (positive amount)"
         )]
         min_capital: Option<String>,
 
-        #[arg(
-            long,
-            value_name = "PCT",
-            allow_negative_numbers = false,
-            help = "Max penalty as % of capital (0-100)"
-        )]
+        /// Max penalty as % of capital
+        #[arg(long, value_name = "MAX_PENALTY_PCT", help = "Max penalty as % of capital (0-100)")]
         max_penalty: Option<String>,
     },
+
     /// Reset loan policy to default values
     Reset,
 }

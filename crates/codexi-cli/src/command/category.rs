@@ -11,30 +11,37 @@ pub struct CategoryArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum CategoryCommand {
-    /// List the categories
+    /// List all categories
     List,
-    /// Add a category
+
+    /// Add a new category
     Add {
-        /// Category name
-        #[arg(value_name = "NAME", required = true, num_args = 1.., help = "Category name")]
+        /// Category name (1+ words)
+        #[arg(
+            value_name = "NAME",
+            required = true,
+            num_args = 1..,
+            help = "Category name (accepts multiple words)"
+        )]
         name: Vec<String>,
 
-        /// Parent id of the category as needed
+        /// Parent category
         #[arg(
             long = "parent",
             value_name = "PARENT_ID",
-            help = "parent id of the category as needd, accept id\name"
+            help = "Parent category ID, short ID, or name (optional)"
         )]
         parent_id: Option<String>,
 
-        /// Category note
-        #[arg(long, value_name = "NOTE", num_args = 1.., help = "note of the category")]
-        note: Option<Vec<String>>,
+        /// Optional note
+        #[arg(long, value_name = "NOTE", help = "Note about the category")]
+        note: Option<String>,
     },
-    /// Teminate a category
+
+    /// [WARN] Terminate a category
     Terminate {
-        /// Id of the category
-        #[arg(value_name = "ID", required = true, help = "id\name of the category")]
+        /// Category ID or name
+        #[arg(value_name = "ID", required = true, help = "Category ID, short ID, or name")]
         id: String,
     },
 }

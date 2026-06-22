@@ -9,16 +9,16 @@ pub struct DataArgs {
     pub command: DataCommand,
 }
 
-/// Manage data mobility (Import/Export) and local safety snapshots
+/// Import/export data and manage snapshots
 #[derive(Subcommand, Debug)]
 pub enum DataCommand {
-    /// Export the data to an external format (CSV, TOML, JSON)
+    /// Export ledger data to CSV, TOML, or JSON
     Export(ExchangeTypeArgs),
 
-    /// Import data from an external format (CSV, TOML, JSON)
+    /// Import ledger data from CSV, TOML, or JSON
     Import(ExchangeTypeArgs),
 
-    ///Manage local snapshots (Quick-save points before major changes)
+    /// Manage ledger snapshots (save/restore state before major changes)
     Snapshot(SnapshotArgs),
 }
 
@@ -29,33 +29,36 @@ pub struct SnapshotArgs {
     pub command: SnapshotCommand,
 }
 
-///Manage local snapshots (Quick-save points before major changes)
+/// Manage Codexi snapshots
 #[derive(Subcommand, Debug)]
 pub enum SnapshotCommand {
-    /// Create a snapshot
-    Create {},
+    /// Create a snapshot of the current ledger
+    Create,
 
-    /// list the available snapshot
-    List {},
+    /// List all available snapshots
+    List,
 
-    /// Restore a snapshot
+    /// [WARN] Restore the ledger from a snapshot
     Restore {
+        /// Snapshot file to restore
         #[arg(
-            help = "Used 'ListSnapShot' for the available snapshot files",
+            help = "Use 'data snapshot list' to see available snapshot files",
             value_name = "SNAPSHOT_FILE"
         )]
         snapshot_file: String,
     },
 
-    /// Remove old snapshot files, keeping only the 5 most recent ones by default
+    /// Delete old snapshots (keeps 5 most recent by default)
     Clean {
+        /// Number of most recent snapshots to keep
         #[arg(
             short,
             long,
-            help = "Number of most recent snapshots to keep (default: 5)",
-            value_name = "KEEP_FILE"
+            value_name = "N",
+            default_value_t = 5,
+            help = "Number of most recent snapshots to keep (default: 5)"
         )]
-        keep: Option<usize>,
+        keep: usize,
     },
 }
 
@@ -66,42 +69,47 @@ pub struct ExchangeTypeArgs {
     pub command: ExchangeTypeCommand,
 }
 
-///Manage exchange type
+/// Exchange data types
 #[derive(Subcommand, Debug)]
 pub enum ExchangeTypeCommand {
-    /// Exchange account header
+    /// Account metadata (name, context, bank, currency, etc.)
     AccountHeader {
         #[arg(value_enum)]
         format: ExchangeFormat,
     },
 
-    /// Exchange operation
+    /// Operations (transactions, transfers, etc.)
     Operation {
         #[arg(value_enum)]
         format: ExchangeFormat,
     },
 
-    /// Exchange currency
+    /// Currency list
     Currency {
         #[arg(value_enum)]
         format: ExchangeFormat,
     },
-    /// Exchange category
+
+    /// Category list
     Category {
         #[arg(value_enum)]
         format: ExchangeFormat,
     },
-    /// Exchange counterparty
+
+    /// Counterparty list
     Counterparty {
         #[arg(value_enum)]
         format: ExchangeFormat,
     },
 }
 
-/// Available exchange format
+/// Available export/import formats
 #[derive(Debug, Clone, ValueEnum)]
 pub enum ExchangeFormat {
+    /// Comma-Separated Values
     Csv,
+    /// Tom's Obvious, Minimal Language
     Toml,
+    /// JavaScript Object Notation
     Json,
 }

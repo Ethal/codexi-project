@@ -13,44 +13,44 @@ pub struct AdminArgs {
 /// Use with caution; run `--help` for details.
 #[derive(Subcommand, Debug)]
 pub enum AdminCommand {
-    /// Display technical metadata for the current ledger (version, paths, size, etc.).
+    /// Show technical metadata (version, paths, size, etc.)
     Infos,
 
-    /// Create a backup of the ledger (`codexi.dat`) and its archive files.
+    /// Create a backup of the ledger and archive files
     Backup {
         #[arg(
             long,
             value_name = "DIR or PATH",
-            help = "Target directory or full path for the backup file. If a directory is provided, a timestamped filename will be generated."
+            help = "Backup destination directory or file path. If a directory is provided, a timestamped file is created."
         )]
         target_dir: Option<String>,
     },
 
-    /// ⚠️  Restore the ledger (`codexi.dat` + archives) from a backup file.
+    /// Restore the ledger from a backup file
     Restore {
-        #[arg(value_name = "FILENAME", help = "The backup file to restore from.")]
+        #[arg(value_name = "FILENAME", help = "Backup file to restore from")]
         filename: String,
     },
 
-    /// Run integrity checks on the ledger (balances, links, policies).
+    /// Run integrity checks on the ledger
     Audit {
-        #[arg(short, long, help = "Rebuild balances for the current account.")]
+        #[arg(short, long, help = "Rebuild balances for the current account")]
         rebuild: bool,
     },
 
-    /// ⚠️  Move all ledger-related files from the active directory to the trash.
+    /// Move all ledger files to trash
     ClearData,
 
-    /// Manage the application trash (recover or purge deleted files).
+    /// Manage trash (restore or permanently delete files)
     Trash(TrashArgs),
 
-    /// Export all ledger data to a JSON file (full snapshot).
+    /// Export full ledger data as JSON
     ExportSpecial,
 
-    /// ⚠️  Restore all ledger data from a JSON file (no validation performed).
+    /// Import full ledger data from JSON (no validation)
     ImportSpecial,
 
-    /// Generate a replayable shell script from the ledger's operations.
+    /// Generate a replayable shell script from ledger operations
     ExportScript,
 }
 
@@ -61,16 +61,16 @@ pub struct TrashArgs {
     pub command: TrashCommand,
 }
 
-/// Manage the application trash (recover or purge deleted files).
+/// Manage trash (restore or purge deleted files)
 #[derive(Subcommand, Debug)]
 pub enum TrashCommand {
-    /// ⚠️  Restore a ledger from the trash to the active directory.
+    /// [WARN] Restore a ledger from trash
     Restore {
-        /// Date of the trash folder to restore (format: `YYYYMMDD_HHMMSS`).
+        /// Trash timestamp (YYYYMMDD_HHMMSS)
         #[arg(value_name = "DATE_TIME")]
         date: String,
     },
 
-    /// ⚠️  Permanently delete all files in the trash.
+    /// [WARN] Permanently delete all trash files
     Purge,
 }

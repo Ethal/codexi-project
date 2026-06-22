@@ -57,9 +57,7 @@ impl FileManagement {
         }
     }
     /// Clean the snapshot, keep the latest 5 by default or as per a value provide
-    pub fn clean_snapshot(paths: &DataPaths, keep: Option<usize>) -> Result<(), FileSnapshotError> {
-        let keep = keep.unwrap_or(5);
-
+    pub fn clean_snapshot(paths: &DataPaths, keep: usize) -> Result<(), FileSnapshotError> {
         let mut files = Self::list_snapshot(paths)?;
         files.reverse();
 

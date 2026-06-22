@@ -24,7 +24,6 @@ pub fn handle_counterparty_command(command: CounterpartyCommand, paths: &DataPat
         CounterpartyCommand::Add { name, kind, note } => {
             let name_n = name.join(" ");
             let kind_n = CounterpartyKind::try_from(kind.as_str())?;
-            let note = note.map(|n| n.join(" "));
             let note_n = note.as_deref();
             codexi.counterparties.create(&name_n, kind_n, note_n)?;
             FileManagement::save_current_state(&codexi, paths)?;

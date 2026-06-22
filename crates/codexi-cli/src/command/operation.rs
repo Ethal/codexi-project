@@ -12,47 +12,65 @@ pub struct OperationArgs {
 /// Manage operations
 #[derive(Subcommand, Debug)]
 pub enum OperationCommand {
-    /// View an operation
+    /// View operation details
     View {
-        /// Operation id
-        #[arg(value_name = "ID", required = true, help = "Operation id, accept full ID, short ID")]
+        /// Operation ID (full or short)
+        #[arg(
+            value_name = "ID",
+            required = true,
+            help = "Operation ID. Accepts full ID or short ID"
+        )]
         id: String,
 
-        /// View the raw data
-        #[arg(short, long)]
+        /// View raw data
+        #[arg(short, long, help = "Display raw operation data")]
         raw: bool,
     },
-    /// Update description, counterparty or category
+
+    /// Update operation metadata (description, counterparty, category, or exchange rate)
     Update {
-        /// Operation id
-        #[arg(value_name = "ID", required = true, help = "Operation id, accept full ID, short ID")]
+        /// Operation ID (full or short)
+        #[arg(
+            value_name = "ID",
+            required = true,
+            help = "Operation ID. Accepts full ID or short ID"
+        )]
         id: String,
+
         /// Description
-        #[arg(short = 'd', long, value_name = "DESCRIPTION", help = "Description of the operation")]
+        #[arg(
+            short = 'd',
+            long,
+            value_name = "DESCRIPTION",
+            help = "New description for the operation"
+        )]
         description: Option<String>,
+
         /// Counterparty
         #[arg(
             short = 'c',
             long,
             value_name = "COUNTERPARTY",
-            help = "Counterparty of the operation, accept full ID, short ID or name"
+            help = "Counterparty (ID, short ID, or name)"
         )]
         counterparty: Option<String>,
+
         /// Category
         #[arg(
             short = 'g',
             long,
             value_name = "CATEGORY",
-            help = "Category of the operation, accept full ID, short ID or name"
+            help = "Category (ID, short ID, or name)"
         )]
         category: Option<String>,
-        // Exchange rate
+
+        /// Exchange rate
         #[arg(
             short = 'r',
             long,
             value_name = "FROM TO",
             num_args = 2,
-            help = "Exchange rate: --rate <from> <to>"
+            help = "Exchange rate: units of <TO> per unit of <FROM> (e.g., --rate EUR USD)"
         )]
         rate: Option<Vec<String>>,
     },

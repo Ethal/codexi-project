@@ -11,6 +11,6 @@ pub struct CurrencyArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum CurrencyCommand {
-    /// List the currencies
+    /// List all available currencies
     List,
 }

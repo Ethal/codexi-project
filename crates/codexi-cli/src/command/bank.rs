@@ -11,6 +11,6 @@ pub struct BankArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum BankCommand {
-    /// List the banks
+    /// List all banks
     List,
 }

@@ -1,4 +1,4 @@
-// scr/command/root.rs
+// src/command/root.rs
 
 use clap::{Parser, Subcommand};
 
@@ -6,7 +6,7 @@ use crate::command::account::AccountArgs;
 use crate::command::admin::AdminArgs;
 use crate::command::bank::BankArgs;
 use crate::command::category::CategoryArgs;
-use crate::command::countparty::CounterpartyArgs;
+use crate::command::counterparty::CounterpartyArgs;
 use crate::command::currency::CurrencyArgs;
 use crate::command::data::DataArgs;
 use crate::command::history::HistoryArgs;
@@ -21,18 +21,18 @@ use crate::command::report::ReportArgs;
     about = "Codexi - Personal financial ledger & analytics",
     long_about = r#"
 Codexi is an append-only financial ledger designed for clarity,
-traceability and long-term analysis.
+traceability, and long-term analysis.
 
 Typical workflow:
-  - record operations (debit / credit)
-  - search and filter data
-  - generate reports
-  - manage snapshots, archives, Backups
+  - Record operations (debit/credit/transfer/interest)
+  - Search and filter data
+  - Generate reports (dashboard, financial, monthly, etc.)
+  - Manage snapshots, archives, and backups
 "#,
     arg_required_else_help = true
 )]
 pub struct Cli {
-    #[arg(long, help = "Tui mode")]
+    #[arg(long, help = "Enable TUI mode")]
     pub tui: bool,
 
     #[arg(short, long, global = true, help = "Skip confirmation prompts")]
@@ -44,28 +44,23 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum RootCommand {
-    /// Show an overview of the accounts (id,name,type,currency,debit,credit,balance)
+    /// List all accounts with their balance, debit, and credit
     Overview,
 
-    /// Alias of 'account use'
+    /// Switch to another account (alias for `account use`)
     Use {
-        /// Account id
+        /// Account ID, short ID, or name
         #[arg(
             value_name = "ID",
             required = true,
-            help = "Account ID. Accept full ID, short ID or name of the account"
+            help = "Account ID. Accepts full ID, short ID, or name"
         )]
         id: String,
     },
 
-    /// Add a regular debit operation
+    /// Add a debit operation
     Debit {
-        #[arg(
-            index = 1,
-            value_name = "DATE",
-            required = true,
-            help = "Date of the debit operation (YYYY-MM-DD)"
-        )]
+        #[arg(index = 1, value_name = "DATE", required = true, help = "Date (YYYY-MM-DD)")]
         date: String,
 
         #[arg(
@@ -73,7 +68,7 @@ pub enum RootCommand {
             value_name = "AMOUNT",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount of the debit operation, shall be positive"
+            help = "Amount (must be positive)"
         )]
         amount: String,
 
@@ -82,7 +77,7 @@ pub enum RootCommand {
             value_name = "DESCRIPTION",
             required = false,
             num_args = 0..,
-            help = "Description of the debit operation"
+            help = "Operation description"
         )]
         description: Vec<String>,
 
@@ -90,8 +85,7 @@ pub enum RootCommand {
             short = 'c',
             long = "counterparty",
             value_name = "COUNTERPARTY",
-            required = false,
-            help = "Counterparty of the debit"
+            help = "Counterparty (ID, short ID, or name)"
         )]
         counterparty: Option<String>,
 
@@ -99,20 +93,14 @@ pub enum RootCommand {
             short = 'g',
             long = "category",
             value_name = "CATEGORY",
-            required = false,
-            help = "category of the debit"
+            help = "Category (ID, short ID, or name)"
         )]
         category: Option<String>,
     },
 
-    /// Add a regular credit operation
+    /// Add a credit operation
     Credit {
-        #[arg(
-            index = 1,
-            value_name = "DATE",
-            required = true,
-            help = "Date of the credit operation (YYYY-MM-DD)"
-        )]
+        #[arg(index = 1, value_name = "DATE", required = true, help = "Date (YYYY-MM-DD)")]
         date: String,
 
         #[arg(
@@ -120,7 +108,7 @@ pub enum RootCommand {
             value_name = "AMOUNT",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount of the credit operation, shall be positive"
+            help = "Amount (must be positive)"
         )]
         amount: String,
 
@@ -129,7 +117,7 @@ pub enum RootCommand {
             value_name = "DESCRIPTION",
             required = false,
             num_args = 0..,
-            help = "Description of the credit operation"
+            help = "Operation description"
         )]
         description: Vec<String>,
 
@@ -137,8 +125,7 @@ pub enum RootCommand {
             short = 'c',
             long = "counterparty",
             value_name = "COUNTERPARTY",
-            required = false,
-            help = "Counterparty of the credit"
+            help = "Counterparty (ID, short ID, or name)"
         )]
         counterparty: Option<String>,
 
@@ -146,19 +133,14 @@ pub enum RootCommand {
             short = 'g',
             long = "category",
             value_name = "CATEGORY",
-            required = false,
-            help = "category of the credit"
+            help = "Category (ID, short ID, or name)"
         )]
         category: Option<String>,
     },
-    /// Add a regular interest operation
+
+    /// Add an interest operation
     Interest {
-        #[arg(
-            index = 1,
-            value_name = "DATE",
-            required = true,
-            help = "Date of the interest operation (YYYY-MM-DD)"
-        )]
+        #[arg(index = 1, value_name = "DATE", required = true, help = "Date (YYYY-MM-DD)")]
         date: String,
 
         #[arg(
@@ -166,7 +148,7 @@ pub enum RootCommand {
             value_name = "AMOUNT",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount of the interest operation, shall be positive"
+            help = "Amount (must be positive)"
         )]
         amount: String,
 
@@ -175,7 +157,7 @@ pub enum RootCommand {
             value_name = "DESCRIPTION",
             required = false,
             num_args = 0..,
-            help = "Description of the interest operation"
+            help = "Operation description"
         )]
         description: Vec<String>,
 
@@ -183,8 +165,7 @@ pub enum RootCommand {
             short = 'c',
             long = "counterparty",
             value_name = "COUNTERPARTY",
-            required = false,
-            help = "Counterparty of the interest"
+            help = "Counterparty (ID, short ID, or name)"
         )]
         counterparty: Option<String>,
 
@@ -192,56 +173,47 @@ pub enum RootCommand {
             short = 'g',
             long = "category",
             value_name = "CATEGORY",
-            required = false,
-            help = "category of the interest"
+            help = "Category (ID, short ID, or name)"
         )]
         category: Option<String>,
     },
-    /// Add a transfer operation between current account and other account in the ledger.
-    /// <ACCOUNT_ID_TO> accept full ID, short ID, name of the account
+
+    /// Transfer funds to another account. Supports full ID, short ID, or name
     Transfer {
-        /// date of the transfer
-        #[arg(
-            index = 1,
-            value_name = "DATE",
-            required = true,
-            help = "Date of the operation (YYYY-MM-DD)"
-        )]
+        #[arg(index = 1, value_name = "DATE", required = true, help = "Date (YYYY-MM-DD)")]
         date: String,
-        /// Amount from the current account to be sent
+
         #[arg(
             index = 2,
             value_name = "AMOUNT_FROM",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount, in currency, from the current account to be sent, shall be positive"
+            help = "Amount sent from current account (positive)"
         )]
         amount_from: String,
-        /// Amount of the destination account to be received
+
         #[arg(
             index = 3,
             value_name = "AMOUNT_TO",
             required = true,
             allow_negative_numbers = false,
-            help = "Amount, in currency, of the destination account to be received, shall be positive"
+            help = "Amount received by destination account (positive)"
         )]
         amount_to: String,
-        /// Account id of the destination
+
         #[arg(
             index = 4,
             value_name = "ACCOUNT_ID_TO",
             required = true,
-            allow_negative_numbers = false,
-            help = "Account id of the destination. Accept full ID, short ID or name of the account"
+            help = "Destination account (ID, short ID, or name)"
         )]
         account_id_to: String,
-        /// Description of the operation
+
         #[arg(
             index = 5,
-            value_name = "DESCRIPTION...",
-            num_args = 1..,
-            help = "Description of the operation",
-            default_value = "no description"
+            value_name = "DESCRIPTION",
+            num_args = 0..,
+            help = "Operation description"
         )]
         description: Vec<String>,
 
@@ -249,115 +221,112 @@ pub enum RootCommand {
             short = 'g',
             long = "category",
             value_name = "CATEGORY",
-            required = false,
-            help = "category of the transfer"
+            help = "Category (ID, short ID, or name)"
         )]
         category: Option<String>,
     },
 
-    /// Search and filter on operations in the current account, alias: view.
+    /// Search and filter operations (alias: `view`)
     #[command(alias = "view")]
     Search {
-        /// Arbitrary date range
-        #[arg(long, help = "Start date for filtering operations", value_name = "FROM_DATE")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
 
-        /// Arbitrary date range
-        #[arg(long, help = "End date for filtering operations", value_name = "TO_DATE")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
 
-        /// Filter by text contained in description
-        #[arg(short = 't', long, help = "Filter by text in description", value_name = "TEXT")]
+        #[arg(short = 't', long, value_name = "TEXT", help = "Filter by description text")]
         text: Option<String>,
 
-        /// Filter by type of kind operation (Init, Adjust, Close, Transaction, ...)
         #[arg(
             short = 'k',
             long,
-            help = "Filter by kind: 'init', 'adjust', 'void', 'close/checkpoint', 'transaction', 'fee', 'transfer', 'interest', 'refund'",
-            value_name = "KIND"
+            value_name = "KIND",
+            help = "Filter by kind: 'init', 'adjust', 'void', 'checkpoint', 'transaction', 'fee', 'transfer', 'interest', 'refund'"
         )]
         kind: Option<String>,
 
-        /// Filter by the flow of operation (debit, credit)
-        #[arg(short = 'f', long, help = "Filter by flow: 'debit' or 'credit'", value_name = "FLOW")]
+        #[arg(short = 'f', long, value_name = "FLOW", help = "Filter by flow: 'debit' or 'credit'")]
         flow: Option<String>,
 
-        /// Filter by counterparty
-        #[arg(short = 'c', long, help = "Filter by counterprty.", value_name = "COUNTERPARTY")]
+        #[arg(
+            short = 'c',
+            long,
+            value_name = "COUNTERPARTY",
+            help = "Filter by counterparty (ID, short ID, or name)"
+        )]
         counterparty: Option<String>,
 
-        /// Filter by counterparty
-        #[arg(short = 'g', long, help = "Filter by category.", value_name = "CATEGORY")]
+        #[arg(
+            short = 'g',
+            long,
+            value_name = "CATEGORY",
+            help = "Filter by category (ID, short ID, or name)"
+        )]
         category: Option<String>,
 
-        /// Minimum amount
         #[arg(
             long = "a-min",
-            help = "Minimum amount",
             value_name = "AMOUNT",
-            allow_negative_numbers = true
+            allow_negative_numbers = true,
+            help = "Minimum amount"
         )]
         amount_min: Option<String>,
 
-        /// Maximum amount
         #[arg(
             long = "a-max",
-            help = "Maximum amount",
             value_name = "AMOUNT",
-            allow_negative_numbers = true
+            allow_negative_numbers = true,
+            help = "Maximum amount"
         )]
         amount_max: Option<String>,
 
-        /// The latest operations to display.
         #[arg(
             long,
-            help = "The latest N operations to show",
             value_name = "NUMBER",
-            allow_negative_numbers = false
+            allow_negative_numbers = false,
+            help = "Show the latest N operations"
         )]
         last: Option<usize>,
 
-        /// The operation of today
-        #[arg(long, help = "The operation(s) of 'today'")]
+        #[arg(long, help = "Show today's operations")]
         today: bool,
 
-        /// open in the defaut browser
         #[arg(long, help = "Open result in the default browser")]
         open: bool,
     },
 
-    /// Manage Operations
+    /// Manage operations
     Operation(OperationArgs),
 
-    /// Manage Accounts
+    /// Manage accounts
     Account(AccountArgs),
 
-    /// Manage Banks
+    /// Manage banks
     Bank(BankArgs),
 
-    /// Manage Currencies
+    /// Manage currencies
     Currency(CurrencyArgs),
 
-    /// Manage Counterparties
+    /// Manage counterparties
     Counterparty(CounterpartyArgs),
 
-    /// Manage Categories
+    /// Manage categories
     Category(CategoryArgs),
 
-    /// Manage accounting timeline (init, checkpoint, adjust, void, archives)
+    /// Manage accounting timeline (init, checkpoint, adjust, void, close)
     History(HistoryArgs),
 
-    /// Generate financial reports, statistics, and statements
+    /// Generate financial reports (dashboard, balance, monthly, etc.)
     Report(ReportArgs),
 
-    /// Manage data mobility (Import/Export) and local safety snapshots
+    /// Import/export data and manage snapshots
     Data(DataArgs),
 
-    /// Technical maintenance, disaster recovery, and low-level file management
-    /// To be use carefully, performed a --help is recommended
+    /// [Warn] Technical maintenance, disaster recovery, and low-level file management.
+    /// Use with caution; run `--help` for details.
     Admin(AdminArgs),
 
-    /// Laon Simulation
+    /// Simulate loan interest and repayment (linear or compound)
     Loan(LoanArgs),
 }

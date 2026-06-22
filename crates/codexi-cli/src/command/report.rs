@@ -9,96 +9,87 @@ pub struct ReportArgs {
     pub command: ReportCommand,
 }
 
-/// Generate financial reports, statistics, and statements
+/// Generate financial reports (dashboard, balance, monthly, etc.)
 #[derive(Subcommand, Debug)]
 pub enum ReportCommand {
-    /// Dashboard report.
+    /// Dashboard report with key metrics
     Dashboard {
-        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
-        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
     },
 
-    /// View a summary of the current account.
-    Summary {},
+    /// Summary of the current account
+    Summary,
 
-    /// View balance and debit/credit.
+    /// Balance and debit/credit totals
     Balance {
-        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
-
-        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
     },
 
-    /// Monthly report.
+    /// Monthly report with breakdowns
     Monthly {
-        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
-        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
     },
 
-    /// View financial statistics and analytics for active operations
-    /// NOTE:
-    /// Stats are time-based.
-    /// By default, voided operations are excluded, even if voided outside the period.
+    /// Financial statistics and analytics for active operations
+    /// NOTE: Stats are time-based. Voided operations are excluded by default,
+    /// even if voided outside the period.
     Financial {
-        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
-
-        #[arg(long, value_name = "TO_DATE", help = "End date of report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
-
-        #[arg(long, help = "open the stats with defaut browser")]
+        #[arg(long, help = "Open report in the default browser")]
         open: bool,
     },
 
-    /// Counterparty report.
+    /// Counterparty report with transaction history
     Counterparty {
-        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
-        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
     },
 
-    /// Category report.
+    /// Category report with spending breakdown
     Category {
-        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
-        #[arg(long, value_name = "TO_DATE", help = "End date of the report(YYYY-MM-DD)")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
     },
 
-    /// Exchange rate report.
+    /// Exchange rate report
     Rate {
-        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report (YYYY-MM-DD)")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
-        #[arg(long, value_name = "TO_DATE", help = "End date of the report (YYYY-MM-DD)")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
     },
 
-    /// Tree view: Counterparty → Category → Operations.
+    /// Tree view: Counterparty → Category → Operations
     Tree {
-        #[arg(long, value_name = "FROM_DATE", help = "Start date of the report (YYYY-MM-DD)")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
-        #[arg(long, value_name = "TO_DATE", help = "End date of the report (YYYY-MM-DD)")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
     },
 
-    /// export (html file) a statement of the current account. Available criteria, --from --to.  .
+    /// Export account statement as HTML
     Statement {
-        /// Arbitrary date range
-        #[arg(long, help = "Start date of the report(YYYY-MM-DD)", value_name = "FROM_DATE")]
+        #[arg(long, value_name = "FROM_DATE", help = "Start date (YYYY-MM-DD)")]
         from: Option<String>,
-
-        /// Arbitrary date range
-        #[arg(long, help = "End date of the report(YYYY-MM-DD)", value_name = "TO_DATE")]
+        #[arg(long, value_name = "TO_DATE", help = "End date (YYYY-MM-DD)")]
         to: Option<String>,
-
-        /// open in the defaut browser
-        #[arg(long, help = "open the statemnt with defaut browser")]
+        #[arg(long, help = "Open statement in the default browser")]
         open: bool,
     },
 }

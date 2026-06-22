@@ -1,5 +1,3 @@
-// src/command/account.rs
-
 use clap::{Args, Subcommand};
 
 #[derive(Args, Debug)]
@@ -12,29 +10,32 @@ pub struct AccountArgs {
 /// Manage account identity and lifecycle
 #[derive(Subcommand, Debug)]
 pub enum AccountCommand {
-    /// List all accounts, prefix (*) for Current account, (c) for Close account
+    /// List all accounts (current account marked with *, closed with c)
     List,
 
-    /// Show the context of the current account
+    /// Show the current account context
     Context,
 
     /// Create a new account
     Create {
-        /// Account openning date
-        #[arg(
-            value_name = "DATE",
-            required = true,
-            help = "Opening date of the account (YYYY-MM-DD)"
-        )]
+        /// Account opening date
+        #[arg(value_name = "DATE", required = true, help = "Opening date (YYYY-MM-DD)")]
         date: String,
+
         /// Account name
-        #[arg(value_name = "NAME", required = true, num_args = 1.., help = "Account name")]
-        name: Vec<String>,
-        /// Account Type (Current, Joint, Saving, Deposit, Businness, Student)
         #[arg(
-            value_name = "ACCOUNT_TYPE",
+            value_name = "NAME",
+            required = true,
+            num_args = 1..,
+            help = "Account name"
+        )]
+        name: Vec<String>,
+
+        /// Account type
+        #[arg(
             short = 't',
             long = "type",
+            value_name = "ACCOUNT_TYPE",
             default_value = "Current",
             help = "Account type (Current, Joint, Saving, Deposit, Loan, Business, Student)"
         )]
@@ -43,114 +44,103 @@ pub enum AccountCommand {
 
     /// Switch active account
     Use {
-        /// Account id
-        #[arg(
-            value_name = "ID",
-            required = true,
-            help = "Account ID. Accept full ID, short ID or name of the account"
-        )]
+        /// Account ID, short ID, or name
+        #[arg(value_name = "ID", required = true, help = "Account ID, short ID, or name")]
         id: String,
     },
 
-    /// !!! Close an account (no future action will be available)
+    /// Close an account (irreversible operation)
     Close {
-        /// Account id
+        /// Account ID, short ID, or name
         #[arg(
             index = 1,
             value_name = "ID",
             required = true,
-            help = "Account ID. Accept full ID, short ID or name of the account"
+            help = "Account ID, short ID, or name"
         )]
         id: String,
+
         /// Closing date
-        #[arg(
-            index = 2,
-            value_name = "DATE",
-            required = true,
-            help = "Closing date of the account (YYYY-MM-DD)"
-        )]
+        #[arg(index = 2, value_name = "DATE", required = true, help = "Closing date (YYYY-MM-DD)")]
         date: String,
     },
 
     /// Rename an account
     Rename {
-        /// Account id
+        /// Account ID, short ID, or name
         #[arg(
             index = 1,
             value_name = "ID",
             required = true,
-            help = "Account ID. Accept full ID, short ID or name of the account"
+            help = "Account ID, short ID, or name"
         )]
         id: String,
-        /// New cccount name
-        #[arg(index = 2, value_name = "NAME", required = true, help = "new account name")]
+
+        /// New account name
+        #[arg(index = 2, value_name = "NAME", required = true, help = "New account name")]
         name: Vec<String>,
     },
-    /// Set bank to current account
+
+    /// Set bank for the current account
     SetBank {
-        /// Bank id
-        #[arg(
-            value_name = "ID",
-            required = true,
-            help = "Bank ID. Accept full ID, short ID or name of the bank"
-        )]
+        /// Bank ID, short ID, or name
+        #[arg(value_name = "ID", required = true, help = "Bank ID, short ID, or name")]
         id: String,
     },
-    /// Set currency to current account
+
+    /// Set currency for the current account
     SetCurrency {
-        /// Currency id
-        #[arg(
-            value_name = "ID",
-            required = true,
-            help = "Currency ID. Accept full ID, short ID or code of the currency"
-        )]
+        /// Currency ID, short ID, or code
+        #[arg(value_name = "ID", required = true, help = "Currency ID, short ID, or code")]
         id: String,
-        /// Update all the operations with the account currency
-        #[arg(short, long, help = "Update all the operations with the account currency")]
+
+        /// Update all existing operations with this currency
+        #[arg(short = 'u', long, help = "Update existing operations")]
         update_operation: bool,
     },
-    /// Set context to current account
+
+    /// Configure account context (limits, rules, constraints)
     SetContext {
         /// Overdraft limit
         #[arg(
             short = 'o',
             long,
-            value_name = "OVERDRAFT",
+            value_name = "AMOUNT",
             allow_negative_numbers = false,
-            help = "Overdraft limeit, shall be positive (e.g. 500.00)"
+            help = "Overdraft limit (e.g. 500.00)"
         )]
         overdraft: Option<String>,
-        /// Minimiun balance
+
+        /// Minimum balance
         #[arg(
             short = 'b',
             long,
-            value_name = "BALANCE_MIN",
+            value_name = "AMOUNT",
             allow_negative_numbers = false,
-            help = "Minimiun balance reequired, shall be positive (e.g. 100.00)"
+            help = "Minimum balance (e.g. 100.00)"
         )]
         balance_min: Option<String>,
-        /// Max monthly transactions
+
+        /// Maximum monthly transactions
         #[arg(
             short = 'm',
             long,
-            value_name = "COUNT",
+            value_name = "N",
             allow_negative_numbers = false,
-            help = "Max number of transactions per month, shall be positive"
+            help = "Max monthly transactions"
         )]
         max_monthly_transactions: Option<String>,
-        /// Deposit locked until date
-        #[arg(
-            short = 'd',
-            long,
-            value_name = "DEPOSIT_LOCKED_DATE",
-            help = "Deposit locked until date (YYYY-MM-DD)"
-        )]
+
+        /// Lock deposits until a date
+        #[arg(short = 'd', long, value_name = "DATE", help = "Lock deposits until (YYYY-MM-DD)")]
         deposit_locked_until: Option<String>,
+
         /// Allow interest
         #[arg(short = 'i', long, help = "Allow interest")]
         interest: Option<bool>,
-        /// Allow signers
-        #[arg(short = 's', long, help = "Allow signers")]
+
+        /// Allow joint signers
+        #[arg(short = 's', long, help = "Allow joint signers")]
         signers: Option<bool>,
     },
 }

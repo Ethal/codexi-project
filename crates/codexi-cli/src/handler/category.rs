@@ -28,7 +28,6 @@ pub fn handle_category_command(command: CategoryCommand, paths: &DataPaths) -> R
                 .map(|name| resolve_by_id_or_name::<Category, CategoryError>(&name, &codexi.categories.list))
                 .transpose()?;
 
-            let note = note.map(|n| n.join(" "));
             let note_n = note.as_deref();
             codexi.categories.create(&name_n, parent_id_n, note_n)?;
             FileManagement::save_current_state(&codexi, paths)?;

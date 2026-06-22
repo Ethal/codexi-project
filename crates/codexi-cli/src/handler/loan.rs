@@ -25,7 +25,7 @@ pub fn handle_loan_command(command: LoanCommand, paths: &DataPaths) -> Result<()
                 view_loan_policy_setting(&loan_policy_settings);
             }
             LoanPolicyAction::Set {
-                type_interest,
+                interest_type,
                 rate,
                 free_days,
                 max_cap,
@@ -34,7 +34,7 @@ pub fn handle_loan_command(command: LoanCommand, paths: &DataPaths) -> Result<()
                 max_penalty,
             } => {
                 let mut loan_policy_settings = LoanPolicySettings::load_or_create(tmp_dir);
-                if let Some(v) = type_interest {
+                if let Some(v) = interest_type {
                     loan_policy_settings.type_interest = v;
                 }
                 if let Some(v) = rate {
@@ -63,7 +63,7 @@ pub fn handle_loan_command(command: LoanCommand, paths: &DataPaths) -> Result<()
             capital,
             start,
             refund,
-            type_interest,
+            interest_type,
             rate,
             free_days,
         } => {
@@ -80,7 +80,7 @@ pub fn handle_loan_command(command: LoanCommand, paths: &DataPaths) -> Result<()
                 Some(v) => Duration::days(v as i64),
                 None => Duration::days(loan_policy_settings.free_days as i64),
             };
-            let type_interest_n = match type_interest {
+            let type_interest_n = match interest_type {
                 Some(v) => v.as_str().parse()?,
                 None => loan_policy_settings.type_interest.as_str().parse()?,
             };
