@@ -14,7 +14,7 @@ pub fn view_loan_policy_setting(data: &LoanPolicySettings) {
     println!(
         "{} {}",
         STYLE_MUTED.apply_to("type of interest type:"),
-        VALUE_STYLE.apply_to(&data.type_interest)
+        VALUE_STYLE.apply_to(&data.interest_type)
     );
     println!(
         "{} {}",

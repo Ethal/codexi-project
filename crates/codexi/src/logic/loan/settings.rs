@@ -14,7 +14,7 @@ const LOAN_POLICY_FILENAME: &str = "loan_policy.json";
 /// Persisted loan policy — all fields are primitives for easy serde
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoanPolicySettings {
-    pub type_interest: String,
+    pub interest_type: String,
     pub rate: String,
     pub free_days: u32,
     pub max_cap: Option<String>,
@@ -26,7 +26,7 @@ pub struct LoanPolicySettings {
 impl Default for LoanPolicySettings {
     fn default() -> Self {
         Self {
-            type_interest: "linear".to_string(),
+            interest_type: "linear".to_string(),
             rate: "1".to_string(),
             free_days: 7,
             max_cap: Some("50".to_string()),

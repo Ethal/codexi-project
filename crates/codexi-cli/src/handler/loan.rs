@@ -35,7 +35,7 @@ pub fn handle_loan_command(command: LoanCommand, paths: &DataPaths) -> Result<()
             } => {
                 let mut loan_policy_settings = LoanPolicySettings::load_or_create(tmp_dir);
                 if let Some(v) = interest_type {
-                    loan_policy_settings.type_interest = v;
+                    loan_policy_settings.interest_type = v;
                 }
                 if let Some(v) = rate {
                     loan_policy_settings.rate = v;
@@ -82,7 +82,7 @@ pub fn handle_loan_command(command: LoanCommand, paths: &DataPaths) -> Result<()
             };
             let type_interest_n = match interest_type {
                 Some(v) => v.as_str().parse()?,
-                None => loan_policy_settings.type_interest.as_str().parse()?,
+                None => loan_policy_settings.interest_type.as_str().parse()?,
             };
 
             let loan = match type_interest_n {
