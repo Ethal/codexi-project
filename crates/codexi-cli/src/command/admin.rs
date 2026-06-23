@@ -13,7 +13,7 @@ pub struct AdminArgs {
 /// Use with caution; run `--help` for details.
 #[derive(Subcommand, Debug)]
 pub enum AdminCommand {
-    /// Show technical metadata (version, paths, size, etc.)
+    /// Display technical metadata (version, paths, size, etc.)
     Infos,
 
     /// Create a backup of the ledger and archive files
@@ -21,33 +21,33 @@ pub enum AdminCommand {
         #[arg(
             long,
             value_name = "DIR or PATH",
-            help = "Backup destination directory or file path. If a directory is provided, a timestamped file is created."
+            help = "Destination directory or file path. If a directory is provided, a timestamped file is created."
         )]
         target_dir: Option<String>,
     },
 
-    /// Restore the ledger from a backup file
+    /// [WARN] Restore the ledger from a backup file
     Restore {
-        #[arg(value_name = "FILENAME", help = "Backup file to restore from")]
+        #[arg(value_name = "FILENAME", help = "Backup ZIP file to restore from")]
         filename: String,
     },
 
-    /// Run integrity checks on the ledger
+    /// Run integrity checks on the ledger (balances, links, policies)
     Audit {
         #[arg(short, long, help = "Rebuild balances for the current account")]
         rebuild: bool,
     },
 
-    /// Move all ledger files to trash
+    /// [WARN] Move all ledger-related files to trash
     ClearData,
 
-    /// Manage trash (restore or permanently delete files)
+    /// Manage trash (restore or purge deleted files)
     Trash(TrashArgs),
 
-    /// Export full ledger data as JSON
+    /// Export full ledger data as JSON (full snapshot)
     ExportSpecial,
 
-    /// Import full ledger data from JSON (no validation)
+    /// [WARN] Import full ledger data from JSON (no validation performed)
     ImportSpecial,
 
     /// Generate a replayable shell script from ledger operations
@@ -61,12 +61,12 @@ pub struct TrashArgs {
     pub command: TrashCommand,
 }
 
-/// Manage trash (restore or purge deleted files)
+/// Manage application trash (restore or purge deleted files)
 #[derive(Subcommand, Debug)]
 pub enum TrashCommand {
-    /// [WARN] Restore a ledger from trash
+    /// [WARN] Restore a ledger from trash to active directory
     Restore {
-        /// Trash timestamp (YYYYMMDD_HHMMSS)
+        /// Trash timestamp (format: YYYYMMDD_HHMMSS)
         #[arg(value_name = "DATE_TIME")]
         date: String,
     },
