@@ -21,7 +21,7 @@ rust_decimal_macros =  { workspace = true }
 # CLI
 clap = { workspace = true }
 # html report
-tera = { workspace = true }
+minijinja = { workspace = true }
 opener = { workspace = true }
 
 # Utilities
