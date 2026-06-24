@@ -378,8 +378,30 @@ impl SearchParamsBuilder {
 /*                              SEARCH                                          */
 /*==============================================================================*/
 
+/// Checks whether a transaction falls within the date range.
+fn matches_date_range(op: &Operation, from: Option<NaiveDate>, to: Option<NaiveDate>) -> bool {
+    if let Some(start) = from
+        && op.date < start
+    {
+        return false;
+    }
+    if let Some(end) = to
+        && op.date > end
+    {
+        return false;
+    }
+    true
+}
+
+/// Checks whether an operation matches the search text.
+fn matches_text(op: &Operation, text: Option<&str>) -> bool {
+    text.map_or(true, |t| op.description.to_lowercase().contains(t))
+}
+
 pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Result<SearchOperationList, SearchError> {
     let mut ops_map = container.get_operations_with_balance();
+    ops_map.sort_by_key(|item| item.operation.date);
+
     let from = params.from;
     let to = params.to;
     let text = params.text.as_deref();
@@ -419,24 +441,19 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
     let mut matched = SearchOperationList::new(params);
     let mut cur_bal = Decimal::ZERO;
 
-    for item in &mut ops_map {
+    for item in ops_map {
         let op = &item.operation;
 
-        if let Some(s_date) = from
-            && op.date < s_date
-        {
+        // Filter by date
+        if !matches_date_range(op, from, to) {
             continue;
         }
-        if let Some(e_date) = to
-            && op.date > e_date
-        {
+        // Filter by text
+        if !matches_text(op, text) {
             continue;
         }
-        if let Some(ref needle) = text
-            && !op.description.to_lowercase().contains(needle)
-        {
-            continue;
-        }
+
+        // Filter by counterpartie
         match &counterparty {
             NulidSearchFilter::Any => {}
             NulidSearchFilter::NoneOnly => {
@@ -450,6 +467,8 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
                 }
             }
         }
+
+        // Filter by catégorie
         match &category {
             NulidSearchFilter::Any => {}
             NulidSearchFilter::NoneOnly => {
@@ -463,6 +482,7 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
                 }
             }
         }
+
         if let Some(f_op) = o_flow_filter
             && op.flow != f_op
         {
@@ -483,9 +503,11 @@ pub fn search<T: OperationContainer>(container: &T, params: &SearchParams) -> Re
         {
             continue;
         }
+
+        let mut item = item;
         item.balance = cur_bal + item.operation.flow.to_sign() * item.operation.amount;
         cur_bal = item.balance;
-        matched.items.push(item.clone());
+        matched.items.push(item);
     }
 
     let result = if let Some(n) = latest {
