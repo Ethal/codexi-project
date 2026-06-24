@@ -3,6 +3,7 @@
 // Detailed dto of a colection/single operation — all referenced fields resolved
 
 use rust_decimal::Decimal;
+use serde::Serialize;
 
 use crate::{
     core::{format_date, format_id, format_optional_date, format_optional_id, format_optional_path},
@@ -15,7 +16,7 @@ use crate::{
     },
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct SearchOperationItem {
     // ── Identity ─────────────────────────────────────────────
     pub id: String,

@@ -38,20 +38,18 @@ pub fn export_statement_html(entry: StatementCollection) -> Result<String> {
 
     let ctx = context! {
         items => operations,
-        date_min => entry.from.unwrap_or_else(|| "N/A".to_string()),
-        date_max => entry.to.unwrap_or_else(|| "N/A".to_string()),
+        date_min => &entry.from.unwrap_or_else(|| "N/A".to_string()),
+        date_max => &entry.to.unwrap_or_else(|| "N/A".to_string()),
         operation_count => entry.counts.total(),
-        account_name => entry.account.name,
-        account_number => entry.account.id,
+        account_name => &entry.account.name,
+        account_number => &entry.account.id,
         account_bank => format_optional_bank_item(&entry.account.bank),
         account_currency => format_optional_currency_item(&entry.account.currency),
-        balance_debit => entry.balance.debit.separate_with_commas(),
-        balance_credit => entry.balance.credit.separate_with_commas(),
-        balance_total => entry.balance.total.separate_with_commas(),
+        balance_debit => &entry.balance.debit.separate_with_commas(),
+        balance_credit => &entry.balance.credit.separate_with_commas(),
+        balance_total => &entry.balance.total.separate_with_commas(),
     };
 
     let template = env.get_template("statement.html")?;
-    let html = template.render(ctx)?;
-
-    Ok(html)
+    Ok(template.render(ctx)?)
 }

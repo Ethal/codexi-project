@@ -1,64 +1,132 @@
-<!--assets/templates/statement.html -->
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Statement</title>
+  <title>Account Statement</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; color: #1a1a1a; }
+    :root {
+      --color-credit: #16a34a;
+      --color-debit: #dc2626;
+      --color-balance: #ffa500;
+      --color-neutral: #1a1a1a;
+      --color-border: #e5e7eb;
+      --color-header: #f9fafb;
+    }
 
-    .credit { color: #16a34a; }
-    .debit  { color: #dc2626; }
-    .balance { color: #ffa500; }
-    .neutral { color: #1a1a1a; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      color: var(--color-neutral);
+      line-height: 1.5;
+    }
 
-    /* Table */
-    table.summary { border-collapse: collapse; }
-    table.operation { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ddd; padding: 6px 8px; }
-    th { background: #f0f0f0; }
-    td.num { text-align: right; }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--color-border);
+      margin: 1rem 0;
+    }
+
+    .summary, .operations {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border: 1px solid var(--color-border);
+    }
+
+    th {
+      background: var(--color-header);
+      font-weight: 600;
+    }
+
+    td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .credit { color: var(--color-credit); }
+    .debit  { color: var(--color-debit); }
+    .balance { color: var(--color-balance); }
+    .neutral { color: var(--color-neutral); }
+
+    .header-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .header-info p {
+      margin: 0;
+    }
+
+    @media (max-width: 600px) {
+      th, td {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Account statement</h1>
+  <h1>Account Statement</h1>
   <hr>
-  <div>
-    <p>Account: {{account_number}} — Name: {{account_name}} — Currency: {{account_currency}} — {{operation_count}} Operation(s)</p>
-    <p>Bank: {{account_bank}}</p>
+  <div class="header-info">
+    <p><strong>Account:</strong> {{ account_number }} — {{ account_name }}</p>
+    <p><strong>Bank:</strong> {{ account_bank }}</p>
+    <p><strong>Currency:</strong> {{ account_currency }}</p>
+    <p><strong>Operations:</strong> {{ operation_count }}</p>
   </div>
   <hr>
-  <table class="summary">
-    <tr>
-      <th>Date</th>
-      <th>Debit</th>
-      <th>Credit</th>
-      <th>Balance</th>
-    </tr>
-    <tr>
-      <td>{{date_min}} / {{date_max}}</td>
-      <td class="debit" >{{ balance_debit }}</td>
-      <td class="credit">{{ balance_credit }}</td>
-      <td class="balance" >{{ balance_total }}</td>
-    </tr>
-  </table>
-  <hr>
-  <table class="operation">
-    <tr>
-      <th>Date</th>
-      <th>Description</th>
-      <th>Debit</th>
-      <th>Credit</th>
-    </tr>
 
-    {% for item in items %}
-    <tr>
-      <td>{{ item.date }}</td>
-      <td>{{ item.description }}</td>
-      <td class="num">{{ item.debit }}</td>
-      <td class="num">{{ item.credit }}</td>
-    </tr>
-    {% endfor %}
+  <table class="summary">
+    <thead>
+      <tr>
+        <th scope="col">Period</th>
+        <th scope="col">Total Debit</th>
+        <th scope="col">Total Credit</th>
+        <th scope="col">Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ date_min }} → {{ date_max }}</td>
+        <td class="num debit">{{ balance_debit }}</td>
+        <td class="num credit">{{ balance_credit }}</td>
+        <td class="num balance">{{ balance_total }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="operations">
+    <thead>
+      <tr>
+        <th scope="col">Date</th>
+        <th scope="col">Description</th>
+        <th scope="col">Debit</th>
+        <th scope="col">Credit</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.date }}</td>
+        <td>{{ item.description }}</td>
+        <td class="num">{{ item.debit }}</td>
+        <td class="num">{{ item.credit }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
 </body>
 </html>

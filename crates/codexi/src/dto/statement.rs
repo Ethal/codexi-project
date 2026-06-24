@@ -1,4 +1,4 @@
-// src/dto/staement.rs
+// src/dto/statement.rs
 
 use rust_decimal::Decimal;
 
@@ -16,6 +16,7 @@ use crate::{
     types::DateRange,
 };
 
+/// Global context for enriching data (banks, currencies, categories).
 #[derive(Debug)]
 pub struct CodexiContext {
     pub banks: BankCollection,
@@ -23,6 +24,7 @@ pub struct CodexiContext {
     pub categories: CategoryCollection,
 }
 
+/// Represents a transaction formatted for a statement.
 #[derive(Debug)]
 pub struct StatementItem {
     pub id: String,
@@ -34,24 +36,24 @@ pub struct StatementItem {
 }
 
 impl From<&SearchOperation> for StatementItem {
-    fn from(item: &SearchOperation) -> Self {
-        let (debit, credit) = match item.operation.flow {
-            OperationFlow::Debit => (item.operation.amount, Decimal::ZERO),
-            OperationFlow::Credit => (Decimal::ZERO, item.operation.amount),
+    fn from(op: &SearchOperation) -> Self {
+        let (debit, credit) = match op.operation.flow {
+            OperationFlow::Debit => (op.operation.amount, Decimal::ZERO),
+            OperationFlow::Credit => (Decimal::ZERO, op.operation.amount),
             _ => (Decimal::ZERO, Decimal::ZERO),
         };
         Self {
-            id: item.operation.id.to_string(),
-            date: format_date(item.operation.date),
-            description: item.operation.description.clone(),
+            id: op.operation.id.to_string(),
+            date: format_date(op.operation.date),
+            description: op.operation.description.clone(),
             debit,
             credit,
-            balance: item.balance,
+            balance: op.balance,
         }
     }
 }
 
-// StatementCollection
+/// Complete collection of a bank statement.
 #[derive(Debug)]
 pub struct StatementCollection {
     pub account: AccountItem,
@@ -63,13 +65,9 @@ pub struct StatementCollection {
 }
 
 impl StatementCollection {
-    /// Builds a StatementEntry for the given account, enriched with bank and currency
-    /// names from the Codexi context. Returns None if the account is not found.
+    /// Creates a `StatementCollection` from an account and a list of transactions.
     pub fn build(codexi: &Codexi, account: &Account, s_ops: &SearchOperationList) -> Self {
-        // date min/max
-
         let (from, to) = DateRange::compute(s_ops, s_ops.params.from, s_ops.params.to).formatted();
-
         Self {
             account: AccountItem::build(codexi, account),
             from,
