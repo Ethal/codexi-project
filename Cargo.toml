@@ -43,7 +43,7 @@ tar = "0.4"
 flate2 = "1"
 
 # Utilities
-dirs = "6.0"
+dirs = "7.0"
 thousands = "0.2.0"
 dialoguer = "0.12"
 console = "0.16"

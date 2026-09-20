@@ -29,7 +29,6 @@ All notable changes to this project will be documented in this file.
 - **Backup system** – added manifest with version and application metadata, now backs up both data and config directories separately.
 - **Path handling** – replaced directories with dirs crate, split data and config directories for better cross-platform compatibility.
 
-
 ### Removed
 - ⚠️ **Support** for migration from v1 and v2 (legacy).
 - ⚠️ **Support** of reading ledger format file (legacy) by `bincode`and `serde_cbor` crates.
@@ -41,7 +40,6 @@ All notable changes to this project will be documented in this file.
 - Transfer link initialization by assigning `transfer_id` after destination operation creation.
 - Unintended overwrite of custom exchange rates in OperationBuilder by only defaulting to `1` when the value is unset (`0`).
 
----
 ## [0.5.0] — 2026-04-13
 
 ### Added

@@ -1,7 +1,16 @@
 [package]
 name = "codexi"
+description = "Library of codexi (financial ledger)"
 version = "0.5.0"
 edition = "2024"
+license = "MIT"
+
+[package.metadata.scrutinium]
+status = "stable"
+started = "2025-09"
+
+[lib]
+crate-type = ["lib"]
 
 [dependencies]
 # Error

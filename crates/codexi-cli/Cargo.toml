@@ -1,7 +1,17 @@
 [package]
 name = "codexi-cli"
+description = "Command-line of a financial ledger focused on auditability, traceability and long-term data integrity"
 version = "0.5.0"
 edition = "2024"
+license = "MIT"
+
+[package.metadata.scrutinium]
+status = "stable"
+started = "2025-09"
+
+[[bin]]
+name = "codexi-cli"
+path = "src/main.rs"
 
 [dependencies]
 # Project librairy
