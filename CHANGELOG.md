@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ---
-## [Unreleased] — 
+## [0.6.0] — 2026-09-20
 
 ### Added
 - **Input normalization** – to sanitize CLI input from external sources (Unicode whitespace, control chars).
