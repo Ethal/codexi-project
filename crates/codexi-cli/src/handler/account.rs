@@ -1,6 +1,6 @@
 // src/handler/account.rs
 
-use anyhow::Result;
+use miette::Result;
 
 use codexi::{
     core::{DataPaths, parse_date, parse_optional_date, parse_optional_decimal, parse_optional_u32, parse_text},

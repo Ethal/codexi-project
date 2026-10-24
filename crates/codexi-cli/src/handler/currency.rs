@@ -1,6 +1,6 @@
 // src/handler/currency.rs
 
-use anyhow::Result;
+use miette::Result;
 
 use codexi::{core::DataPaths, dto::CurrencyCollection, file_management::FileManagement};
 

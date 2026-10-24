@@ -1,18 +1,19 @@
 // src/prompts.rs
 
-use anyhow::Result;
 use console::style;
 use dialoguer::{Confirm, Input};
+use miette::{IntoDiagnostic, Result};
 
 pub struct Prompt;
 
 impl Prompt {
     /// A standand confirmation
     pub fn confirm(message: &str, default: bool) -> Result<bool> {
-        Ok(Confirm::new()
+        Confirm::new()
             .with_prompt(style(message).yellow().to_string())
             .default(default)
-            .interact()?)
+            .interact()
+            .into_diagnostic()
     }
 
     /// A confirmation with input texte requirement
@@ -25,7 +26,8 @@ impl Prompt {
                 style(expected).yellow().underlined()
             ))
             .allow_empty(true)
-            .interact_text()?;
+            .interact_text()
+            .into_diagnostic()?;
 
         Ok(input == expected)
     }

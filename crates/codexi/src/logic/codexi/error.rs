@@ -1,5 +1,6 @@
 // src/logic/codexi/error.rs
 
+use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::{
@@ -10,7 +11,7 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum CodexiError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),

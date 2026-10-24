@@ -1,11 +1,12 @@
 // src/logic/category/error.rs
 
+use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::{core::CoreError, logic::utils::ResolveError};
 
 /// Error type for Category
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum CategoryError {
     #[error("SYS_CATEGORY_ID: {0}")]
     InvalidId(#[from] nulid::Error),

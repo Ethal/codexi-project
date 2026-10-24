@@ -1,6 +1,6 @@
 // src/handler/counterparty.rs
 
-use anyhow::Result;
+use miette::{IntoDiagnostic, Result};
 
 use codexi::{
     core::DataPaths,
@@ -23,7 +23,7 @@ pub fn handle_counterparty_command(command: CounterpartyCommand, paths: &DataPat
         }
         CounterpartyCommand::Add { name, kind, note } => {
             let name_n = name.join(" ");
-            let kind_n = CounterpartyKind::try_from(kind.as_str())?;
+            let kind_n = CounterpartyKind::try_from(kind.as_str()).into_diagnostic()?;
             let note_n = note.as_deref();
             codexi.counterparties.create(&name_n, kind_n, note_n)?;
             FileManagement::save_current_state(&codexi, paths)?;

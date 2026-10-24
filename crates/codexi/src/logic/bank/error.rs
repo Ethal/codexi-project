@@ -1,11 +1,12 @@
 // src/logic/bank/error.rs
 
+use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::logic::utils::ResolveError;
 
 /// Error type for Bank
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum BankError {
     #[error("SYS_BANK_ID: {0}")]
     InvalidId(#[from] nulid::Error),

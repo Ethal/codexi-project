@@ -18,7 +18,7 @@ path = "src/main.rs"
 codexi = { path = "../codexi" }
 
 # Error
-anyhow  = { workspace = true }
+miette  = { workspace = true }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }

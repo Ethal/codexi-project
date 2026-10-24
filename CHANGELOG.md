@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] — 
+
+### Changed
+
+- **CLI error handling** – replaced "anyhow" with "miette" for consistent error reporting and enriched diagnostics.
+- **Core error** – added structured diagnostic codes and help messages for validation errors.
+- **External errors** – converted errors from "inquire" and other external crates into Miette reports where needed.
+
 ---
 ## [0.6.0] — 2026-09-20
 

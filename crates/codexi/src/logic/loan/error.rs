@@ -1,10 +1,11 @@
 // src/logic/loan/error.rs
 
+use miette::Diagnostic;
 use thiserror::Error;
 
 /*------------ LOAN ERROR --------------*/
 
-#[derive(Debug, PartialEq, Error)]
+#[derive(Debug, PartialEq, Error, Diagnostic)]
 pub enum LoanError {
     #[error("The free day period shall be above zero")]
     FreeDaysPeriodBelowZero,

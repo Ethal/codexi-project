@@ -1,6 +1,6 @@
 // src/handler/history.rs
 
-use anyhow::Result;
+use miette::Result;
 
 use codexi::{
     core::{DataPaths, parse_date, parse_decimal, parse_id, parse_text},

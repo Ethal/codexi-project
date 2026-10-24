@@ -1,11 +1,12 @@
 // src/logic/currency/error.rs
 
+use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::logic::utils::ResolveError;
 
 /// Error type for Currency
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum CurrencyError {
     #[error("SYS_CURRENCY_ID: {0}")]
     InvalidId(#[from] nulid::Error),

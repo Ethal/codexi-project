@@ -7,16 +7,15 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::struct_excessive_bools)]
 
-use anyhow::Result;
 use clap::Parser;
 use crossterm::{
     cursor::MoveTo,
     execute,
     terminal::{Clear, ClearType},
 };
-use std::io::stdout;
-
+use miette::IntoDiagnostic;
 use std::env;
+use std::io::stdout;
 
 mod command;
 mod export;
@@ -38,14 +37,20 @@ pub fn clear_terminal() {
     let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
 }
 
-fn main() -> Result<()> {
+fn main() -> miette::Result<()> {
     let cli = Cli::parse();
 
+    run_app(cli)?;
+
+    Ok(())
+}
+
+fn run_app(cli: Cli) -> miette::Result<()> {
     CodexiSettings::load_or_create()?;
     let data_dir = get_data_dir()?;
     let config_dir = get_config_dir()?;
     let paths = DataPaths::new(&data_dir, &config_dir);
-    let cwd = env::current_dir()?;
+    let cwd = env::current_dir().into_diagnostic()?;
 
     if cli.tui {
         clear_terminal();

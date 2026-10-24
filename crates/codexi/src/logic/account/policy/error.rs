@@ -1,13 +1,14 @@
 // src/logic/account/policy/error.rs
 
 use chrono::NaiveDate;
+use miette::Diagnostic;
 use rust_decimal::Decimal;
 use thiserror::Error;
 
 use crate::logic::account::AccountType;
 
 /// Error type for temporal policy
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum TemporalViolation {
     #[error("FIN_OP: Source: {0} Account have no operation, performed a command, init <DATE> <AMOUNT>")]
     HaveNoOperation(String),
@@ -27,7 +28,7 @@ pub enum TemporalViolation {
     TransferTwinArchived(String),
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum ComplianceViolation {
     #[error("Overdraft exceeded: limit {limit}, resulting balance {resulting}")]
     OverdraftExceeded { limit: Decimal, resulting: Decimal },
@@ -60,7 +61,7 @@ pub enum ComplianceViolation {
     InitNonZeroOnLoan,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum LifecycleViolation {
     #[error("Account type cannot be changed once operations exist")]
     AccountTypeImmutable,

@@ -1,7 +1,8 @@
 // src/handler/main.rs
 
-use anyhow::Result;
 use chrono::Local;
+use miette::IntoDiagnostic;
+use miette::Result;
 use std::path::Path;
 
 use codexi::{
@@ -271,7 +272,7 @@ pub fn handle_root_command(cli: Cli, paths: &DataPaths, cwd: &Path) -> Result<()
                 let html = export_statement_html(statement_results)?;
                 let file_path = FileManagement::export_html(&html, cwd)?;
                 msg_info!("search completed (report.html)");
-                opener::open_browser(file_path)?;
+                opener::open_browser(file_path).into_diagnostic()?;
             } else {
                 view_search(&search_items);
             }

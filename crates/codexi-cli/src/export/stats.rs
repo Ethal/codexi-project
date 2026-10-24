@@ -1,6 +1,7 @@
 // src/export/stats.rs
 
-use anyhow::Result;
+use miette::IntoDiagnostic;
+use miette::Result;
 use minijinja::{Environment, context};
 use rust_decimal::Decimal;
 use thousands::Separable;
@@ -11,7 +12,7 @@ const STATS_TEMPLATE: &str = include_str!("../assets/templates/stats.html");
 
 pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
     let mut env = Environment::new();
-    env.add_template("stats.html", STATS_TEMPLATE)?;
+    env.add_template("stats.html", STATS_TEMPLATE).into_diagnostic()?;
 
     // Savings bar : clamp 0–100 for the bar width, flag negative for color
 
@@ -85,8 +86,8 @@ pub fn export_stats_html(entry: StatsCollection) -> Result<String> {
         ignored => ignored,
     };
 
-    let template = env.get_template("stats.html")?;
-    let html = template.render(ctx)?;
+    let template = env.get_template("stats.html").into_diagnostic()?;
+    let html = template.render(ctx).into_diagnostic()?;
 
     Ok(html)
 }

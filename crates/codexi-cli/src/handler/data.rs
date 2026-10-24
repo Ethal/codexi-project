@@ -1,6 +1,6 @@
 // src/handler/data.rs
 
-use anyhow::Result;
+use miette::Result;
 use std::path::Path;
 
 use codexi::{

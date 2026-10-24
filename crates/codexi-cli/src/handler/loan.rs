@@ -1,6 +1,6 @@
 // src/handler/loan.rs
 
-use anyhow::Result;
+use miette::Result;
 
 use chrono::Duration;
 use codexi::{

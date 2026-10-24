@@ -1,6 +1,6 @@
 // src/handler/category.rs
 
-use anyhow::Result;
+use miette::Result;
 
 use codexi::{
     core::DataPaths,

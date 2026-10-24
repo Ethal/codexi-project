@@ -1,6 +1,7 @@
 // src/export/statement.rs
 
-use anyhow::Result;
+use miette::IntoDiagnostic;
+use miette::Result;
 use minijinja::{Environment, context};
 use rust_decimal::Decimal;
 use thousands::Separable;
@@ -13,7 +14,8 @@ const STATEMENT_TEMPLATE: &str = include_str!("../assets/templates/statement.htm
 
 pub fn export_statement_html(entry: StatementCollection) -> Result<String> {
     let mut env = Environment::new();
-    env.add_template("statement.html", STATEMENT_TEMPLATE)?;
+    env.add_template("statement.html", STATEMENT_TEMPLATE)
+        .into_diagnostic()?;
 
     let operations: Vec<serde_json::Value> = entry
         .items
@@ -50,6 +52,8 @@ pub fn export_statement_html(entry: StatementCollection) -> Result<String> {
         balance_total => &entry.balance.total.separate_with_commas(),
     };
 
-    let template = env.get_template("statement.html")?;
-    Ok(template.render(ctx)?)
+    let template = env.get_template("statement.html").into_diagnostic()?;
+    let html = template.render(ctx).into_diagnostic()?;
+
+    Ok(html)
 }

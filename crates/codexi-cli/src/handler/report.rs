@@ -1,6 +1,6 @@
 // src/handler/report.rs
 
-use anyhow::{Result, anyhow};
+use miette::{IntoDiagnostic, Result, miette};
 use rust_decimal::Decimal;
 use std::path::Path;
 
@@ -104,8 +104,8 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
             let all_ops = search(account, &SearchParamsBuilder::default().build()?)?;
             let range = DateRange::compute(&all_ops, range.from, range.to);
 
-            let from_date = range.from.ok_or(anyhow!("from is required"))?;
-            let to_date = range.to.ok_or(anyhow!("to is required"))?;
+            let from_date = range.from.ok_or(miette!("from is required"))?;
+            let to_date = range.to.ok_or(miette!("to is required"))?;
 
             let months = DateRange::month_periods(from_date, to_date);
 
@@ -133,7 +133,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
                 let html = export_stats_html(stats)?;
                 let file_path = FileManagement::export_html(&html, cwd)?;
                 msg_info!("stats completed (report.html)");
-                opener::open_browser(file_path)?;
+                opener::open_browser(file_path).into_diagnostic()?;
             } else {
                 view_financial(&stats);
             }
@@ -160,7 +160,7 @@ pub fn handle_report_command(command: ReportCommand, cwd: &Path, paths: &DataPat
             let file_path = FileManagement::export_html(&html, cwd)?;
             msg_info!("statement completed (report.html)");
             if open {
-                opener::open_browser(file_path)?;
+                opener::open_browser(file_path).into_diagnostic()?;
             }
         }
     }

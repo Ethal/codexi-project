@@ -1,5 +1,6 @@
 // src/exchange/error.rs
 
+use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::{
@@ -7,7 +8,7 @@ use crate::{
     logic::{account::AccountError, counterparty::CounterpartyKindError, operation::OperationError},
 };
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum ExchangeError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),

@@ -1,4 +1,4 @@
-use anyhow::Result;
+use miette::Result;
 
 use codexi::{core::DataPaths, dto::CodexiSettingsItem, file_management::FileManagement};
 

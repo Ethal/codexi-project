@@ -1,7 +1,7 @@
 // src/handler/admin.rs
 
-use anyhow::Result;
 use chrono::Local;
+use miette::{IntoDiagnostic, Result};
 use rust_decimal::Decimal;
 use std::path::{Path, PathBuf};
 
@@ -258,7 +258,7 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
             account.id
         );
         let file_path = cwd.join(&filename);
-        std::fs::write(&file_path, lines.join("\n"))?;
+        std::fs::write(&file_path, lines.join("\n")).into_diagnostic()?;
 
         msg_info!("Script exported: {}", file_path.display());
     }
@@ -271,7 +271,7 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
         codexi.id
     );
     let file_path = cwd.join(&filename);
-    std::fs::write(&file_path, lines_codexi.join("\n"))?;
+    std::fs::write(&file_path, lines_codexi.join("\n")).into_diagnostic()?;
     msg_info!("Script exported: {}", file_path.display());
     msg_warn!("-----------------------------------------------------------------");
     msg_warn!("Review all the script before launch");

@@ -1,3 +1,4 @@
+use miette::Diagnostic;
 ///src/logic/account/error.rs
 use thiserror::Error;
 
@@ -11,7 +12,7 @@ use crate::logic::{
 };
 
 /// Struct representing the Account Error
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum AccountError {
     #[error("VAL_DATE: Invalid Date format: {0}")]
     InvalidDate(#[from] chrono::ParseError),
@@ -50,7 +51,7 @@ pub enum AccountError {
 }
 
 /// Error type for AccountType
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum AccountTypeError {
     #[error("OP_ACCOUNT_TYPE: Unknown account type: {0}")]
     Unknown(String),

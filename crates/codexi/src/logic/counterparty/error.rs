@@ -1,11 +1,12 @@
 // src/logic/counterparty/error.rs
 
+use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::logic::utils::ResolveError;
 
 /// Error type for Counterparty
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum CounterpartyError {
     #[error("SYS_COUNTERPARTY_ID: {0}")]
     InvalidId(#[from] nulid::Error),

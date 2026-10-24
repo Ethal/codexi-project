@@ -1,7 +1,9 @@
-use anyhow::{Result, anyhow};
+// src/tui/root.rs
+
 use chrono::{Local, Months};
 use inquire::{Select, Text};
 use inquire_derive::Selectable;
+use miette::{IntoDiagnostic, Result, miette};
 use std::fmt;
 
 use codexi::{
@@ -56,7 +58,7 @@ impl fmt::Display for TuiDate {
 }
 
 fn tui_date() -> Result<Option<DateRange>> {
-    let choice = TuiDate::select("Select a period").prompt()?;
+    let choice = TuiDate::select("Select a period").prompt().into_diagnostic()?;
     let date_range = match choice {
         TuiDate::All => Some(DateRange { from: None, to: None }),
         TuiDate::ThisMonth => {
@@ -66,7 +68,7 @@ fn tui_date() -> Result<Option<DateRange>> {
         TuiDate::LastMonth => {
             let last_month = Local::now()
                 .checked_sub_months(Months::new(1))
-                .ok_or(anyhow!("invalid date"))?;
+                .ok_or(miette!("invalid date"))?;
             let last_month_s = &format_date(last_month.date_naive())[0..7];
             Some(DateRange::parse(Some(last_month_s), Some(last_month_s))?)
         }
@@ -77,14 +79,20 @@ fn tui_date() -> Result<Option<DateRange>> {
         TuiDate::LastYear => {
             let last_year = Local::now()
                 .checked_sub_months(Months::new(12))
-                .ok_or(anyhow!("invalid date"))?;
+                .ok_or(miette!("invalid date"))?;
             let last_year_s = &format_date(last_year.date_naive())[0..4];
             Some(DateRange::parse(Some(last_year_s), Some(last_year_s))?)
         }
         TuiDate::Custom => {
-            let from = Text::new("From date (YYYY-MM-DD)").with_default("").prompt()?;
+            let from = Text::new("From date (YYYY-MM-DD)")
+                .with_default("")
+                .prompt()
+                .into_diagnostic()?;
             let from_opt = Some(from).filter(|s| !s.is_empty());
-            let to = Text::new("To date (YYYY-MM-DD)").with_default("").prompt()?;
+            let to = Text::new("To date (YYYY-MM-DD)")
+                .with_default("")
+                .prompt()
+                .into_diagnostic()?;
             let to_opt = Some(to).filter(|s| !s.is_empty());
             Some(DateRange::parse(from_opt.as_deref(), to_opt.as_deref())?)
         }
@@ -133,13 +141,16 @@ pub fn tui_root(paths: &DataPaths) -> Result<()> {
             "Codexi - Current account: {}",
             codexi.get_current_account()?.name.clone()
         );
-        let choice = TuiRoot::select(&title).with_page_size(10).prompt()?;
+        let choice = TuiRoot::select(&title).with_page_size(10).prompt().into_diagnostic()?;
 
         match choice {
             TuiRoot::Overview => {
                 let accounts = AccountCollection::build(&codexi);
                 overview_account(&accounts);
-                Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                Text::new("Press Enter to continue")
+                    .with_placeholder("...")
+                    .prompt()
+                    .into_diagnostic()?;
             }
             TuiRoot::View => {
                 if let Some(date_range) = tui_date()? {
@@ -151,7 +162,10 @@ pub fn tui_root(paths: &DataPaths) -> Result<()> {
                     let s_ops = search(account, &params)?;
                     let items = SearchOperationCollection::build(&codexi, account, &s_ops);
                     view_search(&items);
-                    Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                    Text::new("Press Enter to continue")
+                        .with_placeholder("...")
+                        .prompt()
+                        .into_diagnostic()?;
                 }
             }
             TuiRoot::Report => tui_report(&codexi)?,
@@ -160,11 +174,17 @@ pub fn tui_root(paths: &DataPaths) -> Result<()> {
             TuiRoot::Category => tui_category(&codexi)?,
             TuiRoot::Backup => {
                 let default_dir = get_documents_dir()?.to_string_lossy().into_owned();
-                let target_dir = Text::new("Target directory").with_default(&default_dir).prompt()?;
+                let target_dir = Text::new("Target directory")
+                    .with_default(&default_dir)
+                    .prompt()
+                    .into_diagnostic()?;
                 let target_dir_opt = Some(target_dir).filter(|s| !s.is_empty());
                 let backup_file = FileManagement::create_backup(paths, target_dir_opt.as_deref())?;
                 msg_info!("Backup completed to: {}", backup_file.display());
-                Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                Text::new("Press Enter to continue")
+                    .with_placeholder("...")
+                    .prompt()
+                    .into_diagnostic()?;
             }
 
             TuiRoot::Quit => break,
@@ -212,7 +232,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
     loop {
         clear_terminal();
 
-        let choice = TuiReport::select("Report").with_page_size(10).prompt()?;
+        let choice = TuiReport::select("Report")
+            .with_page_size(10)
+            .prompt()
+            .into_diagnostic()?;
 
         match choice {
             TuiReport::Dashboard => {
@@ -232,7 +255,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
                     let cat_stats = CategoryStatsCollection::build(cat_groups);
                     let dashboard = DashboardCollection::build(stats, cp_stats, cat_stats);
                     view_dashboard(&dashboard);
-                    Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                    Text::new("Press Enter to continue")
+                        .with_placeholder("...")
+                        .prompt()
+                        .into_diagnostic()?;
                 }
             }
 
@@ -242,8 +268,8 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
                 let all_ops = search(account, &SearchParamsBuilder::default().build()?)?;
                 let range = DateRange::compute(&all_ops, None, None);
 
-                let from = range.from.ok_or(anyhow!("from required"))?;
-                let to = range.to.ok_or(anyhow!("to required"))?;
+                let from = range.from.ok_or(miette!("from required"))?;
+                let to = range.to.ok_or(miette!("to required"))?;
 
                 let months = DateRange::month_periods(from, to);
 
@@ -259,7 +285,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
 
                 let report = MonthlyReport::build(items);
                 view_monthly_report(&report);
-                Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                Text::new("Press Enter to continue")
+                    .with_placeholder("...")
+                    .prompt()
+                    .into_diagnostic()?;
             }
             TuiReport::Counterparty => {
                 if let Some(date_range) = tui_date()? {
@@ -272,7 +301,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
                     let groups = s_ops.group_by_counterparty(&codexi.counterparties);
                     let stats = CounterpartyStatsCollection::build(groups);
                     view_counterparty_stats(&stats);
-                    Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                    Text::new("Press Enter to continue")
+                        .with_placeholder("...")
+                        .prompt()
+                        .into_diagnostic()?;
                 }
             }
             TuiReport::Category => {
@@ -286,7 +318,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
                     let groups = s_ops.group_by_category(&codexi.categories);
                     let stats = CategoryStatsCollection::build(groups);
                     view_category_stats(&stats);
-                    Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                    Text::new("Press Enter to continue")
+                        .with_placeholder("...")
+                        .prompt()
+                        .into_diagnostic()?;
                 }
             }
             TuiReport::Tree => {
@@ -300,7 +335,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
                     let groups = s_ops.group_by_counterparty_category(&codexi.counterparties, &codexi.categories);
                     let tree = CounterpartyTreeCollection::build(groups);
                     view_tree(&tree);
-                    Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                    Text::new("Press Enter to continue")
+                        .with_placeholder("...")
+                        .prompt()
+                        .into_diagnostic()?;
                 }
             }
             TuiReport::Rate => {
@@ -313,7 +351,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
                     let s_ops = search(account, &params)?;
                     let rate_report = ExchangeRateCollection::build(codexi, account, &s_ops);
                     view_exchange_rate(&rate_report);
-                    Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                    Text::new("Press Enter to continue")
+                        .with_placeholder("...")
+                        .prompt()
+                        .into_diagnostic()?;
                 }
             }
             TuiReport::Financial => {
@@ -327,7 +368,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
                     let stats = StatsCollection::build(codexi, account, &ops);
 
                     view_financial(&stats);
-                    Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                    Text::new("Press Enter to continue")
+                        .with_placeholder("...")
+                        .prompt()
+                        .into_diagnostic()?;
                 }
             }
             TuiReport::Balance => {
@@ -340,7 +384,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
                     let balance_items = search(account, &params)?;
                     let balance = BalanceItem::from(Balance::build(&balance_items));
                     view_balance(&balance);
-                    Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                    Text::new("Press Enter to continue")
+                        .with_placeholder("...")
+                        .prompt()
+                        .into_diagnostic()?;
                 }
             }
             TuiReport::Summary => {
@@ -349,7 +396,10 @@ pub fn tui_report(codexi: &Codexi) -> Result<()> {
                 let s_ops = search(account, &params)?;
                 let summary = SummaryCollection::summary_entry(account, &s_ops);
                 view_summary(&summary);
-                Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                Text::new("Press Enter to continue")
+                    .with_placeholder("...")
+                    .prompt()
+                    .into_diagnostic()?;
             }
 
             TuiReport::Back => break,
@@ -423,7 +473,7 @@ fn select_account(items: &AccountCollection) -> Result<Option<String>> {
     };
     options.push(back);
 
-    let choice = Select::new("Select", options).prompt()?;
+    let choice = Select::new("Select", options).prompt().into_diagnostic()?;
 
     if choice.label == "← Back" {
         return Ok(None);
@@ -436,7 +486,7 @@ pub fn tui_account(paths: &DataPaths, codexi: &mut Codexi) -> Result<()> {
     loop {
         clear_terminal();
 
-        let choice = TuiAccount::select("Account").prompt()?;
+        let choice = TuiAccount::select("Account").prompt().into_diagnostic()?;
 
         match choice {
             TuiAccount::Use => {
@@ -445,7 +495,10 @@ pub fn tui_account(paths: &DataPaths, codexi: &mut Codexi) -> Result<()> {
                     let id = parse_id(&account_id)?;
                     codexi.set_current_account(&id)?;
                     FileManagement::save_current_state(codexi, paths)?;
-                    Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                    Text::new("Press Enter to continue")
+                        .with_placeholder("...")
+                        .prompt()
+                        .into_diagnostic()?;
                 }
             }
             TuiAccount::Context => {
@@ -453,7 +506,10 @@ pub fn tui_account(paths: &DataPaths, codexi: &mut Codexi) -> Result<()> {
                 let account = codexi.get_current_account()?;
                 let account_item = AccountItem::build(&codexi, account);
                 view_account_context(&account_item);
-                Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                Text::new("Press Enter to continue")
+                    .with_placeholder("...")
+                    .prompt()
+                    .into_diagnostic()?;
             }
 
             TuiAccount::Back => break,
@@ -485,13 +541,16 @@ pub fn tui_counterparty(codexi: &Codexi) -> Result<()> {
     loop {
         clear_terminal();
 
-        let choice = TuiCounterparty::select("Counterparty").prompt()?;
+        let choice = TuiCounterparty::select("Counterparty").prompt().into_diagnostic()?;
 
         match choice {
             TuiCounterparty::List => {
                 let items = CounterpartyCollection::build(&codexi.counterparties);
                 view_counterparty(&items);
-                Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                Text::new("Press Enter to continue")
+                    .with_placeholder("...")
+                    .prompt()
+                    .into_diagnostic()?;
             }
 
             TuiCounterparty::Back => break,
@@ -523,13 +582,16 @@ pub fn tui_category(codexi: &Codexi) -> Result<()> {
     loop {
         clear_terminal();
 
-        let choice = TuiCategory::select("Category").prompt()?;
+        let choice = TuiCategory::select("Category").prompt().into_diagnostic()?;
 
         match choice {
             TuiCategory::List => {
                 let items = CategoryCollection::build(&codexi.categories);
                 view_category(&items);
-                Text::new("Press Enter to continue").with_placeholder("...").prompt()?;
+                Text::new("Press Enter to continue")
+                    .with_placeholder("...")
+                    .prompt()
+                    .into_diagnostic()?;
             }
 
             TuiCategory::Back => break,

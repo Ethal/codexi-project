@@ -1,6 +1,6 @@
 // src/handler/operation.rs
 
-use anyhow::Result;
+use miette::Result;
 
 use codexi::{
     core::{DataPaths, parse_optional_decimal},

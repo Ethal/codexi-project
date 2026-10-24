@@ -1,12 +1,13 @@
 // src/logic/search/error.rs
 
+use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::core::CoreError;
 use crate::logic::utils::ResolveError;
 
 /// Error type for search in account
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum SearchError {
     #[error("SRCH_INVALID_DATE: {0}")]
     InvalidDate(String),

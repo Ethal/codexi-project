@@ -1,11 +1,11 @@
 // src/logic/operation/error.rs
 
+use crate::{core::CoreError, logic::utils::ResolveError};
+use miette::Diagnostic;
 use thiserror::Error;
 
-use crate::{core::CoreError, logic::utils::ResolveError};
-
 /// Error type for Operation
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum OperationError {
     #[error("SYS_OP_ID: {0}")]
     InvalidId(#[from] nulid::Error),
@@ -36,28 +36,28 @@ pub enum OperationError {
 }
 
 /// Error type for OperationFlow
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum OperationFlowError {
     #[error("OP_INVALID_FLOW: Unknown OperationFlow type: {0}")]
     Unknown(String),
 }
 
 /// Error type for OperationKind
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum OperationKindError {
     #[error("OP_INVALID_OPERATION_KIND: Unknown Operation Kind: {0}")]
     Unknown(String),
 }
 
 /// Error type for RegularKind
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum RegularKindError {
     #[error("OP_INVALID_REGULAR_KIND: Unknown Regular Kind: {0}")]
     Unknown(String),
 }
 
 /// Error type for SystemKind
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum SystemKindError {
     #[error("OP_INVALID_SYSTEM_KIND: Unknown System Kind: {0}")]
     Unknown(String),

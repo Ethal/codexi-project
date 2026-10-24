@@ -1,5 +1,6 @@
 // src/file_management/error.rs
 
+use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::core::CoreError;
@@ -9,14 +10,14 @@ use crate::logic::account::AccountError;
 use crate::logic::codexi::CodexiError;
 
 /// Error type for FileManagement
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum FileManagementError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
 }
 
 /// Error type for archive file (.cld)
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum FileArchiveError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
@@ -24,8 +25,8 @@ pub enum FileArchiveError {
     Storage(#[from] StorageError),
 }
 
-/// Error type for backup file (.zip)
-#[derive(Debug, Error)]
+/// Error type for backup file (.tar.gz)
+#[derive(Debug, Error, Diagnostic)]
 pub enum FileBackupError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
@@ -52,7 +53,7 @@ pub enum FileBackupError {
 }
 
 /// Error type for ledger file (codexi.dat)
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum FileCodexiError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
@@ -65,7 +66,7 @@ pub enum FileCodexiError {
 }
 
 /// Error type for Storage
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum StorageError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
@@ -86,7 +87,7 @@ pub enum StorageError {
 }
 
 /// Error type for archive file (.cld)
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum FileMaintenanceError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
@@ -101,7 +102,7 @@ pub enum FileMaintenanceError {
 }
 
 /// Error type for snapshot (.snp)
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum FileSnapshotError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
@@ -112,7 +113,7 @@ pub enum FileSnapshotError {
 }
 
 /// Error type for toml,json,csv file
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum FileExchangeError {
     #[error("SYS_IO: {0}")]
     Io(#[from] std::io::Error),
