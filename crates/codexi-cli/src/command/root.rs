@@ -318,7 +318,7 @@ pub enum RootCommand {
     /// Manage categories
     Category(CategoryArgs),
 
-    /// Manage accounting timeline (init, checkpoint, adjust, void, close)
+    /// Manage accounting timeline (init, adjust, void, close)
     History(HistoryArgs),
 
     /// Generate financial reports (dashboard, balance, monthly, etc.)

@@ -76,10 +76,10 @@ pub struct ArchiveArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum ArchiveCommand {
-    /// 📂 List closed period archives
+    /// List closed period archives
     List,
 
-    /// 📂 View archive file content
+    ///  View archive file content
     View {
         /// Account ID
         #[arg(
