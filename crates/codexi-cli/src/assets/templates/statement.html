@@ -76,6 +76,22 @@
         font-size: 0.875rem;
       }
     }
+    @media print {
+     @page {
+       size: A4;
+       margin: 20mm;
+     }
+  
+     thead {
+       display: table-header-group;
+     }
+
+     tr {
+       page-break-inside: avoid;
+       break-inside: avoid;
+     }
+   }
+
   </style>
 </head>
 <body>
