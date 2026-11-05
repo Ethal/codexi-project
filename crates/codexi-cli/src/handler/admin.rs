@@ -6,7 +6,7 @@ use rust_decimal::Decimal;
 use std::path::{Path, PathBuf};
 
 use codexi::{
-    core::{DataPaths, format_optional_date, format_optional_id, format_optional_u32},
+    core::{DataPaths, format_optional_date, format_optional_u32},
     file_management::FileManagement,
     logic::{
         codexi::Codexi,
@@ -160,6 +160,24 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
 
         lines.push(format!("codexi-cli account use \"{}\"", account.name));
         for op in &account.operations {
+            let counterparty_name = if let Some(id) = op.context.counterparty_id {
+                if let Ok(counterparty) = codexi.counterparties.get_by_id(&id) {
+                    format!("-c \"{}\"", counterparty.name)
+                } else {
+                    String::new()
+                }
+            } else {
+                String::new()
+            };
+            let category_name = if let Some(id) = op.context.category_id {
+                if let Ok(category) = codexi.categories.get_by_id(&id) {
+                    format!("-g \"{}\"", category.name)
+                } else {
+                    String::new()
+                }
+            } else {
+                String::new()
+            };
             let line = match op.kind {
                 OperationKind::System(SystemKind::Init) => {
                     let amount = match op.flow {
@@ -200,11 +218,13 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
                         )
                     } else {
                         format!(
-                            "codexi-cli {} {} {} \"{}\"",
+                            "codexi-cli {} {} {} \"{}\" {} {}",
                             op.flow.as_str().to_lowercase(),
                             op.date,
                             op.amount,
-                            op.description
+                            op.description,
+                            counterparty_name,
+                            category_name
                         )
                     }
                 }
@@ -222,13 +242,23 @@ fn handle_export_script(codexi: &Codexi, cwd: &Path) -> Result<()> {
                 }
                 OperationKind::Regular(RegularKind::Transfer) => match op.flow {
                     OperationFlow::Debit => {
+                        let account_to_name = if let Some(id) = op.links.transfer_account_id {
+                            if let Ok(account) = codexi.get_account_by_id(&id) {
+                                format!("\"{}\"", account.name)
+                            } else {
+                                String::new()
+                            }
+                        } else {
+                            String::new()
+                        };
                         format!(
-                            "#TRANSFER codexi-cli transfer {} {} {:?} {:?} \"{}\"",
+                            "#TRANSFER codexi-cli transfer {} {} {:?} {} \"{}\" {}",
                             op.date,
                             op.amount,
                             op.amount * op.context.exchange_rate,
-                            format_optional_id(op.links.transfer_account_id),
-                            op.description
+                            account_to_name,
+                            op.description,
+                            category_name
                         )
                     }
                     OperationFlow::Credit => {
