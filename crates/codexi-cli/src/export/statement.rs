@@ -6,7 +6,7 @@ use minijinja::{Environment, context};
 use rust_decimal::Decimal;
 use thousands::Separable;
 
-use codexi::dto::StatementCollection;
+use codexi::{core::format_decimal, dto::StatementCollection};
 
 use crate::ui::{format_optional_bank_item, format_optional_currency_item};
 
@@ -47,9 +47,9 @@ pub fn export_statement_html(entry: StatementCollection) -> Result<String> {
         account_number => &entry.account.id,
         account_bank => format_optional_bank_item(&entry.account.bank),
         account_currency => format_optional_currency_item(&entry.account.currency),
-        balance_debit => &entry.balance.debit.separate_with_commas(),
-        balance_credit => &entry.balance.credit.separate_with_commas(),
-        balance_total => &entry.balance.total.separate_with_commas(),
+        balance_debit => format_decimal(entry.balance.debit).separate_with_commas(),
+        balance_credit => format_decimal(entry.balance.credit).separate_with_commas(),
+        balance_total => format_decimal(entry.balance.total).separate_with_commas(),
     };
 
     let template = env.get_template("statement.html").into_diagnostic()?;
